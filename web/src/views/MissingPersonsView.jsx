@@ -3,6 +3,8 @@ import { supabase } from '../supabase';
 import { Plus, Search, Phone, MessageCircle, AlertTriangle, CheckCircle, MapPin, Trash2, Smile, Image as ImageIcon, X } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 import { z } from 'zod';
+import { compressImage } from '../utils/imageCompression';
+import { dbLocal } from '../utils/dbLocal';
 
 const AVATAR_PERSON = '/avatar_person.png';
 
@@ -19,7 +21,10 @@ const formSchema = z.object({
 
 export default function MissingPersonsView({ user }) {
   const [people, setPeople] = useState([]);
+  const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(!navigator.onLine);
+  const [compressing, setCompressing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -29,28 +34,138 @@ export default function MissingPersonsView({ user }) {
     nombre: '', edad: '', descripcion: '', ultima_ubicacion: '',
     contacto: user?.contacto || '', instagram: '', facebook: ''
   });
-  const [fotoBase64, setFotoBase64] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
-  useEffect(() => { fetchPeople(); }, []);
+  useEffect(() => {
+    fetchPeople();
+    fetchDrafts();
+
+    if (navigator.onLine) {
+      syncOfflineDrafts();
+    }
+
+    const handleOnline = () => {
+      console.log('[Red] Conectado a internet. Sincronizando personas offline...');
+      syncOfflineDrafts();
+      fetchPeople();
+    };
+
+    const handleOffline = () => {
+      console.log('[Red] Dispositivo offline. Cargando personas desde caché...');
+      fetchPeople();
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const fetchPeople = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from('desaparecidos').select('*').order('created_at', { ascending: false });
-      setPeople(data || []);
-    } finally { setLoading(false); }
+      if (navigator.onLine) {
+        const { data, error } = await supabase.from('desaparecidos').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        
+        await dbLocal.personasCache.clear();
+        if (data && data.length > 0) {
+          await dbLocal.personasCache.bulkAdd(data);
+        }
+        setPeople(data || []);
+        setIsOfflineData(false);
+      } else {
+        const cached = await dbLocal.personasCache.toArray();
+        setPeople(cached || []);
+        setIsOfflineData(true);
+      }
+    } catch (err) {
+      console.error('Error fetching people, usando caché local:', err);
+      const cached = await dbLocal.personasCache.toArray();
+      setPeople(cached || []);
+      setIsOfflineData(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleImageUpload = (e) => {
+  const fetchDrafts = async () => {
+    try {
+      const localDrafts = await dbLocal.personasDrafts.toArray();
+      setDrafts(localDrafts || []);
+    } catch (err) {
+      console.error('Error fetching local drafts:', err);
+    }
+  };
+
+  const syncOfflineDrafts = async () => {
+    if (!navigator.onLine) return;
+
+    try {
+      const localDrafts = await dbLocal.personasDrafts.toArray();
+      if (localDrafts.length === 0) return;
+
+      console.log(`[Sync] Sincronizando ${localDrafts.length} reportes de personas guardados offline...`);
+
+      for (const draft of localDrafts) {
+        let imageUrls = [];
+
+        if (draft.fotoBlob) {
+          try {
+            const fileName = `persona-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+            const uploadRes = await fetch(`https://venezuelasos-media-api.filocentraldemando.workers.dev/upload?file=${fileName}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'image/jpeg' },
+              body: draft.fotoBlob
+            });
+
+            if (uploadRes.ok) {
+              const resData = await uploadRes.json();
+              imageUrls.push(resData.url);
+            } else {
+              continue;
+            }
+          } catch (picErr) {
+            console.error('Error de red al subir foto del borrador:', picErr);
+            continue;
+          }
+        }
+
+        const { error } = await supabase.from('desaparecidos').insert({
+          nombre_y_edad: draft.nombre.trim() + (draft.edad ? ` (${draft.edad} años)` : ''),
+          descripcion: draft.descripcion,
+          ultima_ubicacion: draft.ultima_ubicacion,
+          contacto: draft.contacto,
+          redes_sociales: { instagram: draft.instagram, facebook: draft.facebook },
+          fotos: imageUrls
+        });
+
+        if (error) {
+          console.error('Error al guardar borrador en Supabase:', error);
+          continue;
+        }
+
+        await dbLocal.personasDrafts.delete(draft.id);
+      }
+
+      fetchPeople();
+      fetchDrafts();
+    } catch (err) {
+      console.error('Error en proceso de sincronización:', err);
+    }
+  };
+
+  const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("La imagen es muy grande. Máximo 2MB.");
-      return;
-    }
+    
+    setImageFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => setFotoBase64(reader.result);
+    reader.onloadend = () => setFotoPreview(reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -68,23 +183,111 @@ export default function MissingPersonsView({ user }) {
       return;
     }
 
+    setLoading(true);
     try {
-      await supabase.from('desaparecidos').insert({
-        nombre_y_edad: formData.nombre.trim() + (formData.edad ? ` (${formData.edad} años)` : ''),
-        descripcion: formData.descripcion.trim(),
-        ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
-        contacto: formData.contacto.trim(),
-        redes_sociales: { instagram: formData.instagram.trim(), facebook: formData.facebook.trim() },
-        fotos: fotoBase64 ? [fotoBase64] : []
-      });
-      
+      let compressedBlob = null;
+      if (imageFile) {
+        setCompressing(true);
+        compressedBlob = await compressImage(imageFile);
+        setCompressing(false);
+      }
+
+      if (navigator.onLine) {
+        let imageUrls = [];
+        if (compressedBlob) {
+          const fileName = `persona-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+          const uploadRes = await fetch(`https://venezuelasos-media-api.filocentraldemando.workers.dev/upload?file=${fileName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: compressedBlob
+          });
+
+          if (uploadRes.ok) {
+            const resData = await uploadRes.json();
+            imageUrls.push(resData.url);
+          } else {
+            throw new Error('Error al subir imagen a Cloudflare.');
+          }
+        }
+
+        const { error } = await supabase.from('desaparecidos').insert({
+          nombre_y_edad: formData.nombre.trim() + (formData.edad ? ` (${formData.edad} años)` : ''),
+          descripcion: formData.descripcion.trim(),
+          ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
+          contacto: formData.contacto.trim(),
+          redes_sociales: { instagram: formData.instagram.trim(), facebook: formData.facebook.trim() },
+          fotos: imageUrls
+        });
+
+        if (error) throw error;
+        alert('Reporte publicado exitosamente.');
+      } else {
+        await dbLocal.personasDrafts.add({
+          nombre: formData.nombre.trim(),
+          edad: formData.edad,
+          descripcion: formData.descripcion.trim(),
+          ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
+          contacto: formData.contacto.trim(),
+          instagram: formData.instagram.trim(),
+          facebook: formData.facebook.trim(),
+          fotoBlob: compressedBlob,
+          created_at: new Date().toISOString()
+        });
+        alert('Sin conexión. Se guardó localmente y se sincronizará automáticamente al reconectar.');
+      }
+
       setShowAddForm(false);
       setFormData({ nombre: '', edad: '', descripcion: '', ultima_ubicacion: '', contacto: user?.contacto || '', instagram: '', facebook: '' });
-      setFotoBase64(null);
+      setImageFile(null);
+      setFotoPreview(null);
       fetchPeople();
-    } catch (err) { 
-      console.error(err); 
-      alert("Error al publicar: " + err.message);
+      fetchDrafts();
+    } catch (err) {
+      console.error(err);
+      try {
+        let compressedBlob = imageFile ? await compressImage(imageFile) : null;
+        await dbLocal.personasDrafts.add({
+          nombre: formData.nombre.trim(),
+          edad: formData.edad,
+          descripcion: formData.descripcion.trim(),
+          ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
+          contacto: formData.contacto.trim(),
+          instagram: formData.instagram.trim(),
+          facebook: formData.facebook.trim(),
+          fotoBlob: compressedBlob,
+          created_at: new Date().toISOString()
+        });
+        alert('Error de conexión. Se guardó localmente de forma segura.');
+        setShowAddForm(false);
+        setFormData({ nombre: '', edad: '', descripcion: '', ultima_ubicacion: '', contacto: user?.contacto || '', instagram: '', facebook: '' });
+        setImageFile(null);
+        setFotoPreview(null);
+        fetchPeople();
+        fetchDrafts();
+      } catch (backupErr) {
+        alert('Error al guardar reporte localmente.');
+      }
+    } finally {
+      setLoading(false);
+      setCompressing(false);
+    }
+  };
+
+  const handleDelete = async (id, isDraft) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este reporte?')) return;
+    try {
+      if (isDraft) {
+        await dbLocal.personasDrafts.delete(id);
+        fetchDrafts();
+      } else {
+        const { error } = await supabase.from('desaparecidos').delete().eq('id', id);
+        if (error) throw error;
+        fetchPeople();
+      }
+      setSelected(null);
+    } catch (err) {
+      console.error(err);
+      alert('Error al eliminar.');
     }
   };
 
@@ -100,7 +303,23 @@ export default function MissingPersonsView({ user }) {
     fetchPeople();
   };
 
-  const filtered = people.filter(p => {
+  const getImageUrl = (p) => {
+    if (p.isDraft && p.fotoBlob) {
+      return URL.createObjectURL(p.fotoBlob);
+    }
+    return p.fotos?.[0];
+  };
+
+  const combinedPeople = [
+    ...drafts.map(d => ({ 
+      ...d, 
+      isDraft: true,
+      nombre_y_edad: d.nombre + (d.edad ? ` (${d.edad} años)` : '')
+    })),
+    ...people
+  ];
+
+  const filtered = combinedPeople.filter(p => {
     const q = search.toLowerCase();
     const match = p.nombre_y_edad?.toLowerCase().includes(q) ||
                   p.descripcion?.toLowerCase().includes(q) ||
@@ -127,23 +346,45 @@ export default function MissingPersonsView({ user }) {
         </button>
       </div>
 
+      {isOfflineData && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.75rem 1rem',
+          backgroundColor: 'rgba(217,119,6,0.1)',
+          border: '1px solid rgba(217,119,6,0.3)',
+          color: '#d97706',
+          borderRadius: '0.5rem',
+          marginBottom: '1.5rem',
+          fontSize: '0.85rem'
+        }}>
+          <AlertTriangle size={16} />
+          <span>Estás en modo sin conexión. Mostrando datos guardados localmente.</span>
+        </div>
+      )}
+
       {/* Historias / Carousel (Instagram style) */}
-      {people.length > 0 && (
+      {combinedPeople.length > 0 && (
         <div style={{ 
           display: 'flex', gap: '0.875rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', scrollbarWidth: 'none' 
         }}>
-          {people.map(p => (
-            <div key={p.id} onClick={() => setSelected(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }}>
+          {combinedPeople.map(p => (
+            <div key={p.isDraft ? `draft-avatar-${p.id}` : p.id} onClick={() => setSelected(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }}>
               <div style={{ 
                 width: '68px', height: '68px', borderRadius: '50%', padding: '3px',
                 background: isLocated(p) ? '#16a34a' : 'linear-gradient(45deg, #f59e0b, #dc2626)',
-                marginBottom: '6px'
+                marginBottom: '6px',
+                position: 'relative'
               }}>
                 <img 
-                  src={p.fotos?.[0] || AVATAR_PERSON} 
+                  src={getImageUrl(p) || AVATAR_PERSON} 
                   alt="Avatar" 
                   style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--bg-primary)' }} 
                 />
+                {p.isDraft && (
+                  <span style={{ position: 'absolute', bottom: '0', right: '0', fontSize: '0.75rem', background: '#eab308', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>⏳</span>
+                )}
               </div>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', fontWeight: '500' }}>
                 {p.nombre_y_edad?.split(' ')[0]}
@@ -173,7 +414,7 @@ export default function MissingPersonsView({ user }) {
       </div>
 
       {/* Listado de Tarjetas */}
-      {loading ? (
+      {loading && people.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Cargando...</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>No se encontraron personas con esos criterios.</div>
@@ -183,18 +424,19 @@ export default function MissingPersonsView({ user }) {
             const located = isLocated(p);
             return (
               <div 
-                key={p.id} 
+                key={p.isDraft ? `draft-card-${p.id}` : p.id} 
                 className="card" 
                 onClick={() => setSelected(p)}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', cursor: 'pointer',
                   borderLeft: `4px solid ${located ? '#16a34a' : '#ef4444'}`,
                   boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.15s ease'
+                  transition: 'transform 0.15s ease',
+                  position: 'relative'
                 }}
               >
                 <img 
-                  src={p.fotos?.[0] || AVATAR_PERSON} 
+                  src={getImageUrl(p) || AVATAR_PERSON} 
                   alt="Foto" 
                   style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', backgroundColor: 'var(--bg-surface-soft)' }} 
                 />
@@ -205,11 +447,18 @@ export default function MissingPersonsView({ user }) {
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
                     <MapPin size={12} /> {p.ultima_ubicacion || 'No especificada'}
                   </div>
-                  {located && (
-                    <div style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.5rem', backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a', borderRadius: '0.25rem' }}>
-                      ✓ LOCALIZADO A SALVO
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    {located && (
+                      <div style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.5rem', backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a', borderRadius: '0.25rem' }}>
+                        ✓ LOCALIZADO A SALVO
+                      </div>
+                    )}
+                    {p.isDraft && (
+                      <span style={{ fontSize: '0.65rem', backgroundColor: '#fef08a', color: '#854d0e', padding: '0.2rem 0.4rem', borderRadius: '0.25rem', fontWeight: 'bold' }}>
+                        ⏳ OFFLINE
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -223,12 +472,12 @@ export default function MissingPersonsView({ user }) {
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <div style={{ width: '96px', height: '96px', borderRadius: '50%', backgroundColor: 'var(--bg-surface)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
-              {fotoBase64 ? (
-                <img src={fotoBase64} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
+              {fotoPreview ? (
+                <img src={fotoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
               ) : (
                 <ImageIcon size={32} style={{ color: 'var(--text-muted)' }} />
               )}
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
+              <input type="file" accept="image/*" onChange={handleImageSelect} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Toca para añadir foto (Opcional)</span>
           </div>
@@ -264,8 +513,8 @@ export default function MissingPersonsView({ user }) {
             {formErrors.contacto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem', display: 'block' }}>{formErrors.contacto}</span>}
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }}>
-            Publicar Reporte
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }} disabled={loading || compressing}>
+            {compressing ? 'Optimizando foto...' : loading ? 'Publicando...' : 'Publicar Reporte'}
           </button>
         </form>
       </BottomModal>
@@ -275,12 +524,17 @@ export default function MissingPersonsView({ user }) {
         {selected && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <img src={selected.fotos?.[0] || AVATAR_PERSON} alt="Foto" style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover' }} />
+              <img src={getImageUrl(selected) || AVATAR_PERSON} alt="Foto" style={{ width: '90px', height: '90px', borderRadius: '1rem', objectFit: 'cover' }} />
               <div>
                 <h2 className="font-display" style={{ fontSize: '1.35rem', fontWeight: '800', lineHeight: 1.1 }}>{selected.nombre_y_edad}</h2>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.5rem' }}>
                   <MapPin size={14} /> {selected.ultima_ubicacion || 'No especificada'}
                 </div>
+                {selected.isDraft && (
+                  <span style={{ display: 'inline-block', fontSize: '0.75rem', color: '#854d0e', backgroundColor: '#fef08a', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', marginTop: '0.5rem', fontWeight: 'bold' }}>
+                    ⏳ Borrador en tu celular (sin sincronizar)
+                  </span>
+                )}
               </div>
             </div>
 
@@ -295,21 +549,25 @@ export default function MissingPersonsView({ user }) {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <a 
-                  href={`https://wa.me/${selected.contacto.replace(/[^0-9]/g, '')}?text=Hola,%20tengo%20información%20sobre%20${selected.nombre_y_edad}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="btn btn-primary" style={{ backgroundColor: '#25D366', color: '#fff', padding: '0.875rem' }}
-                >
-                  <MessageCircle size={18} /> WhatsApp
-                </a>
-                <a 
-                  href={`tel:${selected.contacto}`}
-                  className="btn btn-secondary" style={{ padding: '0.875rem' }}
-                >
-                  <Phone size={18} /> Llamar
-                </a>
+                {!selected.isDraft && (
+                  <>
+                    <a 
+                      href={`https://wa.me/${selected.contacto.replace(/[^0-9]/g, '')}?text=Hola,%20tengo%20información%20sobre%20${selected.nombre_y_edad}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="btn btn-primary" style={{ backgroundColor: '#25D366', color: '#fff', padding: '0.875rem' }}
+                    >
+                      <MessageCircle size={18} /> WhatsApp
+                    </a>
+                    <a 
+                      href={`tel:${selected.contacto}`}
+                      className="btn btn-secondary" style={{ padding: '0.875rem' }}
+                    >
+                      <Phone size={18} /> Llamar
+                    </a>
+                  </>
+                )}
                 
-                {user && (
+                {user && !selected.isDraft && (
                   <button 
                     onClick={() => handleUpdateStatus(selected.id)}
                     style={{ gridColumn: '1 / -1', padding: '0.75rem', backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.3)', borderRadius: '0.5rem', fontWeight: '700', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
@@ -318,6 +576,16 @@ export default function MissingPersonsView({ user }) {
                   </button>
                 )}
               </div>
+            )}
+
+            {(user?.rol === 'admin' || selected.isDraft) && (
+              <button 
+                onClick={() => handleDelete(selected.id, selected.isDraft)}
+                className="btn btn-secondary"
+                style={{ color: '#ef4444', borderColor: '#fee2e2', backgroundColor: '#fef2f2', padding: '0.75rem', marginTop: '0.5rem', width: '100%' }}
+              >
+                <Trash2 size={16} /> Eliminar Reporte
+              </button>
             )}
           </div>
         )}

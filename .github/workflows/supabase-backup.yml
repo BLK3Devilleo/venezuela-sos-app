@@ -1,0 +1,29 @@
+name: Supabase Database Backup to R2
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 00:00 UTC (aproximadamente 8:00 PM hora de Venezuela)
+    - cron: '0 0 * * *'
+  # Permite ejecutar el backup manualmente desde la pestaña de Actions en GitHub
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar herramientas de PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Ejecutar pg_dump de Supabase
+        run: |
+          pg_dump "${{ secrets.SUPABASE_DB_URL }}" -F p -f backup_diario.sql
+
+      - name: Subir Backup a Cloudflare R2 a través del Worker
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/sql" \
+            --data-binary @backup_diario.sql \
+            "https://venezuelasos-media-api.filocentraldemando.workers.dev/upload?file=backup_diario.sql"
