@@ -676,7 +676,7 @@ export default function MapView({ user }) {
         </div>
       ) : (
         /* ================== CONFIGURATION & DIRECTORY MODE ================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease', width: '100%', padding: '1rem 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease', width: '100%', padding: '1rem 1.25rem' }}>
           
           {/* Guide Header */}
           <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
@@ -848,34 +848,68 @@ export default function MapView({ user }) {
             })}
           </div>
 
-          {/* 2. Open Map Action Button (Tricolor) */}
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0' }}>
-            <button
+          {/* 2. Open Map Action Card / Button */}
+          <div style={{ margin: '0.5rem 0' }}>
+            <div 
               onClick={() => {
                 setMapZoom(13);
                 setShowMap(true);
               }}
-              className="btn-tricolor"
-              style={{
-                width: '100%',
-                display: 'block'
-              }}
+              className="btn-map-card"
             >
-              <div className="btn-tricolor-inner">
-                <span style={{ fontSize: '1.2rem' }}>🗺️</span>
-                <span>ABRIR MAPA INTERACTIVO</span>
+              {/* Top tricolor indicator strip */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(to right, #ffcc00 33.3%, #00247d 33.3% 66.6%, #cf142b 66.6%)'
+              }} />
+
+              {/* Left side: Icon and Info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '0.75rem',
+                  background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.15) 0%, rgba(29, 78, 216, 0.15) 100%)',
+                  border: '1px solid rgba(13, 148, 136, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  flexShrink: 0
+                }}>
+                  🗺️
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span className="font-display" style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', letterSpacing: '0.02em', textAlign: 'left' }}>
+                    Ver Mapa Interactivo
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                    Explorar incidentes en pantalla completa
+                  </span>
+                </div>
+              </div>
+
+              {/* Right side: Badge with count */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '1rem',
+                  backgroundColor: 'var(--primary-glow)',
+                  border: '1px solid var(--primary)',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '2rem',
                   fontSize: '0.75rem',
                   fontWeight: '800',
-                  color: '#ffcc00'
+                  color: '#fff',
+                  whiteSpace: 'nowrap'
                 }}>
-                  {filteredItems.length} reportes
+                  {filteredItems.length} {filteredItems.length === 1 ? 'reporte' : 'reportes'}
                 </span>
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>→</span>
               </div>
-            </button>
+            </div>
           </div>
 
           {/* 3. Directory Section */}
@@ -1155,43 +1189,29 @@ export default function MapView({ user }) {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .btn-tricolor {
+        .btn-map-card {
           position: relative;
-          background: linear-gradient(90deg, #ffcc00, #00247d, #cf142b);
-          padding: 3px;
+          background-color: var(--bg-surface);
+          border: 1px solid var(--border);
           border-radius: 1rem;
-          border: none;
+          padding: 1.25rem;
           cursor: pointer;
-          box-shadow: 0 8px 32px rgba(0, 36, 125, 0.25);
-          transition: all 0.3s ease;
-          animation: pulse-tricolor 3s infinite ease-in-out;
-        }
-        .btn-tricolor:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 40px rgba(207, 20, 43, 0.35);
-        }
-        .btn-tricolor-inner {
-          background-color: #0b0f19;
-          color: #fff;
-          padding: 1.1rem;
-          border-radius: calc(1rem - 3px);
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          font-weight: 900;
-          font-size: 1rem;
-          letter-spacing: 0.05em;
-          transition: background-color 0.2s;
-          pointer-events: none;
+          justify-content: space-between;
+          gap: 1rem;
+          box-shadow: var(--shadow-md);
+          overflow: hidden;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          user-select: none;
         }
-        .btn-tricolor:hover .btn-tricolor-inner {
-          background-color: #131c2e;
+        .btn-map-card:hover {
+          transform: translateY(-2px);
+          border-color: var(--primary);
+          box-shadow: 0 12px 30px rgba(13, 148, 136, 0.15);
         }
-        @keyframes pulse-tricolor {
-          0% { box-shadow: 0 8px 32px rgba(0, 36, 125, 0.2); }
-          50% { box-shadow: 0 8px 32px rgba(220, 38, 38, 0.35); }
-          100% { box-shadow: 0 8px 32px rgba(0, 36, 125, 0.2); }
+        .btn-map-card:active {
+          transform: translateY(1px);
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;

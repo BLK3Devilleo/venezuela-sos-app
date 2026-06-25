@@ -10,13 +10,49 @@ const loginSchema = z.object({
   telefono: z.string().regex(phoneRegex, "Teléfono inválido. Ej: 04141234567")
 });
 
-export default function LoginView({ onLogin }) {
-  const [step, setStep] = useState(1);
-  const [nombre, setNombre] = useState('');
+export default function LoginView({ onLogin, needsOnboarding = false, authUserId = null, authUserName = '' }) {
+  const [step, setStep] = useState(needsOnboarding ? 3 : 1);
+  const [nombre, setNombre] = useState(authUserName || '');
   const [telefono, setTelefono] = useState('');
   const [rol, setRol] = useState('afectado');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (needsOnboarding) {
+      setStep(3);
+      if (authUserName) {
+        setNombre(authUserName);
+      }
+      const savedRol = localStorage.getItem('onboarding_rol');
+      if (savedRol) {
+        setRol(savedRol);
+      }
+    } else {
+      setStep(1);
+    }
+  }, [needsOnboarding, authUserName]);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // Guardar el rol temporalmente para recuperarlo tras el redirect
+      localStorage.setItem('onboarding_rol', rol);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error al iniciar Google Auth:', err);
+      setError('No se pudo conectar con Google. Inténtalo de nuevo.');
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,18 +65,21 @@ export default function LoginView({ onLogin }) {
 
     setLoading(true);
     setError('');
-    const customId = `google_sim_${Date.now()}`;
+    
+    // Si estamos en onboarding, usamos el ID de autenticación de Google de Supabase
+    const targetUserId = authUserId || `google_sim_${Date.now()}`;
     try {
       const { data, error: dbError } = await supabase
         .from('usuarios')
-        .insert({ id: customId, nombre: nombre.trim(), contacto: telefono.trim(), rol })
+        .insert({ id: targetUserId, nombre: nombre.trim(), contacto: telefono.trim(), rol })
         .select();
       if (dbError) throw dbError;
+      
       localStorage.setItem('sos_user', JSON.stringify(data[0]));
       onLogin(data[0]);
     } catch (err) {
-      console.error(err);
-      setError('Error al registrarse. Inténtalo de nuevo.');
+      console.error('Error al registrar perfil:', err);
+      setError('Error al registrar tu perfil. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -169,17 +208,18 @@ export default function LoginView({ onLogin }) {
           </div>
 
           <button
-            onClick={() => setStep(2)}
+            onClick={handleGoogleLogin}
+            disabled={loading}
             style={{
               width: '100%',
               padding: '1rem',
               borderRadius: '0.875rem',
-              background: 'linear-gradient(135deg, #0d9488, #0891b2)',
+              background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)',
               border: 'none',
               color: '#fff',
               fontSize: '1rem',
               fontWeight: '700',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -187,7 +227,7 @@ export default function LoginView({ onLogin }) {
               boxShadow: '0 8px 32px rgba(13,148,136,0.35)'
             }}
           >
-            <span>Continuar con Google</span>
+            <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
             <ArrowRight size={18} />
           </button>
           <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
@@ -195,7 +235,7 @@ export default function LoginView({ onLogin }) {
           </p>
         </div>
       ) : (
-        /* --- FORMULARIO --- */
+        /* --- FORMULARIO & ONBOARDING --- */
         <div style={{
           width: '100%', maxWidth: '380px',
           backgroundColor: 'rgba(255,255,255,0.04)',
@@ -204,23 +244,39 @@ export default function LoginView({ onLogin }) {
           padding: '2rem 1.5rem',
           animation: 'slideUp 0.3s ease'
         }}>
-          <button
-            onClick={() => setStep(1)}
-            style={{
-              background: 'none', border: 'none',
-              color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
-              fontSize: '0.875rem', marginBottom: '1.25rem',
-              display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0
-            }}
-          >
-            ← Volver
-          </button>
+          {needsOnboarding ? (
+            <button
+              onClick={() => supabase.auth.signOut()}
+              style={{
+                background: 'none', border: 'none',
+                color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+                fontSize: '0.875rem', marginBottom: '1.25rem',
+                display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0
+              }}
+            >
+              ← Cancelar y salir
+            </button>
+          ) : (
+            <button
+              onClick={() => setStep(1)}
+              style={{
+                background: 'none', border: 'none',
+                color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+                fontSize: '0.875rem', marginBottom: '1.25rem',
+                display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0
+              }}
+            >
+              ← Volver
+            </button>
+          )}
 
           <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: '800', color: '#fff', marginBottom: '0.25rem' }}>
-            Tus datos de contacto
+            {needsOnboarding ? 'Completa tu perfil' : 'Tus datos de contacto'}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', marginBottom: '1.75rem' }}>
-            Para que puedan contactarte en caso de que tengas información relevante.
+            {needsOnboarding 
+              ? 'Has ingresado con Google. Por favor completa tus datos para finalizar el registro.' 
+              : 'Para que puedan contactarte en caso de que tengas información relevante.'}
           </p>
 
           {error && (
@@ -270,13 +326,38 @@ export default function LoginView({ onLogin }) {
 
             <div>
               <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
+                Tu Rol en la Plataforma
+              </label>
+              <select
+                value={rol}
+                onChange={e => setRol(e.target.value)}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '0.75rem',
+                  color: '#fff',
+                  fontSize: '0.9375rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="afectado" style={{ backgroundColor: '#0b1c2e' }}>🆘 Necesito Ayuda / Afectado</option>
+                <option value="voluntario" style={{ backgroundColor: '#0b1c2e' }}>🤝 Quiero Ayudar / Voluntario</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
                 WhatsApp / Teléfono
               </label>
               <div style={{ position: 'relative' }}>
                 <Phone size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                 <input
                   type="tel"
-                  placeholder="+584121234567"
+                  placeholder="Ej. 04121234567"
                   value={telefono}
                   onChange={e => setTelefono(e.target.value)}
                   disabled={loading}
@@ -313,7 +394,7 @@ export default function LoginView({ onLogin }) {
                 boxShadow: '0 8px 32px rgba(13,148,136,0.3)'
               }}
             >
-              {loading ? 'Entrando...' : 'Ingresar a VenezuelaSOS'}
+              {loading ? 'Guardando...' : 'Completar Registro'}
             </button>
           </form>
         </div>

@@ -25,16 +25,63 @@ const TAB_ITEMS = [
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [view, setView] = useState('dashboard');
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('sos_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // 1. Obtener la sesión inicial de Supabase Auth
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      if (initialSession) {
+        checkUserProfile(initialSession.user);
+      } else {
+        setLoadingProfile(false);
+      }
+    });
+
+    // 2. Escuchar cambios en la sesión de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession) {
+        checkUserProfile(currentSession.user);
+      } else {
+        setUser(null);
+        setNeedsOnboarding(false);
+        setLoadingProfile(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const checkUserProfile = async (authUser) => {
+    setLoadingProfile(true);
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error || !data) {
+        // Usuario logueado en Google, pero no registrado en la BD de perfiles
+        setUser({ id: authUser.id, nombre: authUser.user_metadata?.full_name || '' });
+        setNeedsOnboarding(true);
+      } else {
+        // El perfil existe, entra directo
+        setUser(data);
+        setNeedsOnboarding(false);
+      }
+    } catch (err) {
+      console.error('Error al verificar perfil en Supabase:', err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const handleConsentChange = (consent) => {
     if (consent.analytics) {
@@ -79,12 +126,16 @@ export default function App() {
 
   const handleLogin = (loggedUser) => {
     setUser(loggedUser);
+    setNeedsOnboarding(false);
     setView('dashboard');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('sos_user');
     setUser(null);
+    setSession(null);
+    setNeedsOnboarding(false);
     setView('dashboard');
   };
 
@@ -134,8 +185,32 @@ export default function App() {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
 
-  if (!user) {
-    return <LoginView onLogin={handleLogin} />;
+  if (loadingProfile) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#060d1a',
+        color: '#fff',
+        fontFamily: 'sans-serif'
+      }}>
+        <p style={{ fontSize: '0.95rem', fontWeight: '500' }}>Verificando sesión...</p>
+      </div>
+    );
+  }
+
+  if (!user || needsOnboarding) {
+    return (
+      <LoginView 
+        onLogin={handleLogin} 
+        needsOnboarding={needsOnboarding} 
+        authUserId={user?.id}
+        authUserName={user?.nombre}
+      />
+    );
   }
 
   const isMapView = view === 'map';
