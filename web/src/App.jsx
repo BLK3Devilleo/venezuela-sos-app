@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from './supabase';
 import LoginView from './views/LoginView';
 import SplashScreen from './components/SplashScreen';
 import Logo from './components/Logo';
