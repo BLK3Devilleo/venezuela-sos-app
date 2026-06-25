@@ -1,0 +1,196 @@
+{
+  "site": {
+    "title": "Desaparecidos Terremoto Venezuela",
+    "url": "https://desaparecidosterremotovenezuela.com/",
+    "description": "Herramienta ciudadana para reconectar a las familias tras el sismo."
+  },
+  "context": {
+    "emergency_label": "EMERGENCIA · SISMO DEL 24 DE JUNIO",
+    "purpose": "Reconectar a cada familia tras el terremoto.",
+    "message": "Si no logras comunicarte con alguien, repórtalo aquí. Y si ya lo encontraste, avísanos.",
+    "note": "Es gratis y toma menos de un minuto. Solo necesitas su nombre y dónde se le vio por última vez."
+  },
+  "stats": {
+    "people_reported": 27408,
+    "still_uncontacted": 26096,
+    "located_safe": 1312
+  },
+  "emergency_phones_caracas": [
+    { "name": "Teléfono fijo CANTV", "number": "171", "tel": "tel:171" },
+    { "name": "Movilnet", "number": "*1", "tel": "tel:*1" },
+    { "name": "Digitel", "number": "112", "tel": "tel:112" },
+    { "name": "Movistar", "number": "911", "tel": "tel:911" }
+  ],
+  "ambulance_contacts": {
+    "Aeroambulancias": [
+      { "number": "(0212) 993.25.41", "tel": "tel:02129932541" },
+      { "number": "992.89.80", "tel": "tel:9928980" },
+      { "number": "992.89.90", "tel": "tel:9928990" },
+      { "number": "991.79.40", "tel": "tel:9917940" }
+    ],
+    "Rescarven": [
+      { "number": "(0212) 993.69.11", "tel": "tel:02129936911" },
+      { "number": "993.69.91", "tel": "tel:9936991" },
+      { "number": "993.13.10", "tel": "tel:9931310" },
+      { "number": "993.33.67", "tel": "tel:9933367" }
+    ],
+    "Ambulancia Metropolitano": [
+      { "number": "(0212) 545.45.45", "tel": "tel:02125454545" },
+      { "number": "545.46.55", "tel": "tel:5454655" },
+      { "number": "577.92.09", "tel": "tel:5779209" }
+    ]
+  },
+  "records_page_1": [
+    {
+      "name": "Carmen Guzmán",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "La guaira Edifc. Tahiti",
+      "date": null
+    },
+    {
+      "name": "Yerson Manuel natera mieres",
+      "status": "Sin contacto",
+      "age": "23 años",
+      "last_seen": "Caracas- La Guaira",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Riccardo Guzmán Velásquez",
+      "status": "Sin contacto",
+      "age": "52 años",
+      "last_seen": "La Guairá estado Vargas barrio Atanasio",
+      "date": "15 jun 2026"
+    },
+    {
+      "name": "Efraín Ibarra",
+      "status": "Sin contacto",
+      "age": "45 años",
+      "last_seen": "Catia la mar",
+      "date": "23 jun 2026"
+    },
+    {
+      "name": "Yugoeslavia Hernández",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "La Guaira",
+      "date": "25 jun 2026"
+    },
+    {
+      "name": "Yorlene conde",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "La guaira",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Yandel Jesús Briceño",
+      "status": "Sin contacto",
+      "age": "19 años",
+      "last_seen": "La Guaira caribe",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "María Virginia Rivero Cardenas",
+      "status": "Sin contacto",
+      "age": "76 años",
+      "last_seen": "Tanaguarena",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "José Sebastián Gomes de Aguiar",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "La guaira",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Deisy Briceño",
+      "status": "Sin contacto",
+      "age": "54 años",
+      "last_seen": "Caribe",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Maria de los angeles Castillo Ostos",
+      "status": "Sin contacto",
+      "age": "22 años",
+      "last_seen": "Los edificios costa brava",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Jenaro guerra",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "Catia la mar",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Ana Luisa Lovera Gonzales",
+      "status": "Sin contacto",
+      "age": "62 años",
+      "last_seen": "Avenida la costanera con avenida la playa sector las parcelamiento pino edificio vista al mar",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Francys Cristina Arocha Erazo",
+      "status": "Sin contacto",
+      "age": "53 años",
+      "last_seen": "Edificio Mar de Leva Caraballeda La Guaira",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Adela Taberneiro García",
+      "status": "Sin contacto",
+      "age": null,
+      "last_seen": "Catia La mar",
+      "date": "25 jun 2026"
+    },
+    {
+      "name": "Josefa Maria Moreno de Espinoza",
+      "status": "Localizado a salvo",
+      "age": "73 años",
+      "last_seen": "La llanada",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Abrahamyerlin",
+      "status": "Sin contacto",
+      "age": "12 años",
+      "last_seen": "La Guaira",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "William José López Rivas",
+      "status": "Sin contacto",
+      "age": "52 años",
+      "last_seen": "Catia la mar la mar",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Griska Nella Peréz Rodriguez",
+      "status": "Sin contacto",
+      "age": "54 años",
+      "last_seen": "Los Corales, catia La Mar",
+      "date": "24 jun 2026"
+    },
+    {
+      "name": "Valentina Da Silva",
+      "status": "Sin contacto",
+      "age": "21 años",
+      "last_seen": "Residencia Karina",
+      "date": "24 jun 2026"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 1371,
+    "total_results": 27408
+  },
+  "site_footer": {
+    "classification": "herramienta ciudadana y no partidista",
+    "medical_warning": "Ante una emergencia médica, llama a los organismos de rescate.",
+    "verification_note": "Verifica siempre la información antes de difundirla.",
+    "contact": "developer@theempire.tech"
+  }
+}

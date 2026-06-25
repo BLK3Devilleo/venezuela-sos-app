@@ -1,0 +1,79 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <group
+        android:translateX="23.0"
+        android:translateY="23.0"
+        android:scaleX="0.62"
+        android:scaleY="0.62">
+
+        <!-- Outer Glowing Venezuelan Gradient Ring -->
+        <path
+            android:pathData="M 31,3 h 38 a 28,28 0 0 1 28,28 v 38 a 28,28 0 0 1 -28,28 h -38 a 28,28 0 0 1 -28,-28 v -38 a 28,28 0 0 1 28,-28 Z"
+            android:strokeWidth="4"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round">
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:startX="3"
+                    android:startY="3"
+                    android:endX="97"
+                    android:endY="97"
+                    android:type="linear">
+                    <item android:offset="0.0" android:color="#EAB308" /> <!-- Yellow -->
+                    <item android:offset="0.5" android:color="#2563EB" /> <!-- Blue -->
+                    <item android:offset="1.0" android:color="#DC2626" /> <!-- Red -->
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- White Squircle Button Body -->
+        <path
+            android:pathData="M 30,5 h 40 a 25,25 0 0 1 25,25 v 40 a 25,25 0 0 1 -25,25 h -40 a 25,25 0 0 1 -25,-25 v -40 a 25,25 0 0 1 25,-25 Z"
+            android:fillColor="#FFFFFF" />
+
+        <!-- Lightning Bolt (⚡) -->
+        <path
+            android:pathData="M 54 22 L 31 52 H 48 L 44 78 L 69 48 H 52 L 54 22 Z"
+            android:fillColor="#1E293B"
+            android:strokeColor="#1E293B"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+        <!-- SOS Emergency Badge -->
+        <path
+            android:pathData="M 73,12 h 18 a 6,6 0 0 1 6,6 v 0 a 6,6 0 0 1 -6,6 h -18 a 6,6 0 0 1 -6,-6 v 0 a 6,6 0 0 1 6,-6 Z"
+            android:fillColor="#DC2626"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1" />
+
+        <!-- SOS Text: 'S' -->
+        <path
+            android:strokeWidth="1.2"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 74.5,15.5 H 71.5 A 1.2,1.2 0 0 0 71.5,17.9 H 74.5 A 1.2,1.2 0 0 1 74.5,20.3 H 71.5" />
+
+        <!-- SOS Text: 'O' -->
+        <path
+            android:strokeWidth="1.2"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 78,15.5 H 80 A 2.4,2.4 0 0 1 80,20.3 H 78 A 2.4,2.4 0 0 1 78,15.5 Z" />
+
+        <!-- SOS Text: 'S' -->
+        <path
+            android:strokeWidth="1.2"
+            android:strokeColor="#FFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 86.5,15.5 H 83.5 A 1.2,1.2 0 0 0 83.5,17.9 H 86.5 A 1.2,1.2 0 0 1 86.5,20.3 H 83.5" />
+    </group>
+</vector>

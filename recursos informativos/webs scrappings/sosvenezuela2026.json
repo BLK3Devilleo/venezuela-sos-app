@@ -1,0 +1,185 @@
+{
+  "site": {
+    "name": "SOS Venezuela 2026",
+    "title": "SOS Venezuela 2026 — Mapa en vivo del terremoto",
+    "url": "https://sosvenezuela2026.com/",
+    "purpose": "Mapa colaborativo en tiempo real del terremoto M7.5 en Venezuela",
+    "language": "es",
+    "category": "emergencia / ayuda humanitaria",
+    "status": "activo"
+  },
+  "navigation": {
+    "links": [
+      { "label": "Mapa", "url": "https://sosvenezuela2026.com/#mapa" },
+      { "label": "Primeros auxilios", "url": "https://sosvenezuela2026.com/recomendaciones" },
+      { "label": "Buscar persona", "url": "https://sosvenezuela2026.com/buscar" },
+      { "label": "Acerca", "url": "https://sosvenezuela2026.com/acerca" },
+      { "label": "Reportar / Buscar", "url": "https://sosvenezuela2026.com/login" }
+    ]
+  },
+  "live_stats": {
+    "reportes": 189,
+    "criticos": 126,
+    "recursos": 6,
+    "en_linea": 1,
+    "desaparecidos": 9832,
+    "encontrados": 393
+  },
+  "hero": {
+    "headline": "Red de apoyo ciudadana en vivo",
+    "description": "Reporta daños y busca personas en el mapa en tiempo real.",
+    "privacy_note": "Tu ubicación exacta nunca se comparte."
+  },
+  "actions": [
+    {
+      "label": "Reportar un daño",
+      "url": "https://sosvenezuela2026.com/reportar"
+    },
+    {
+      "label": "Buscar persona",
+      "url": "https://sosvenezuela2026.com/buscar"
+    }
+  ],
+  "map": {
+    "title": "Mapa en vivo",
+    "provider": ["Leaflet", "OpenStreetMap", "CARTO"],
+    "mode": "EMERGENCIA ACTIVA",
+    "event_magnitude": "M7.5",
+    "privacy": "Coordenadas aproximadas — protección anti-saqueo activa",
+    "status_categories": {
+      "colapso": 48,
+      "severo": 78,
+      "danado": 57,
+      "seguro": 0,
+      "recursos_refugios": 6
+    }
+  },
+  "latest_reports": [
+    {
+      "type": "reporte",
+      "label": "Los Mangos torre E",
+      "location": "Maracay",
+      "time": "hace 12 min"
+    },
+    {
+      "type": "auxilio",
+      "label": "Edificio Perlamar, Urbanización Caribe",
+      "location": "Caraballeda 1165 / Caribe",
+      "time": "hace 37 min"
+    },
+    {
+      "type": "reporte",
+      "label": "Residencias la Paz",
+      "location": "Altagracia De Orituco",
+      "time": "hace 55 min"
+    },
+    {
+      "type": "reporte",
+      "label": "Torre Vivienda C.C Los Chaguaramos",
+      "location": "Caracas",
+      "time": "hace 55 min"
+    },
+    {
+      "type": "reporte",
+      "label": "C.C Metropolis Barquisimeto",
+      "location": "Barquisimeto",
+      "time": "hace 55 min"
+    },
+    {
+      "type": "reporte",
+      "label": "Ritamar Palace",
+      "location": "Caraballeda",
+      "time": "hace 55 min"
+    }
+  ],
+  "community_channel": {
+    "title": "Canal comunitario",
+    "policy": "Solo información verificada · sin datos de contacto",
+    "status_message": "Canal operativo activo. Por favor solo información verificada.",
+    "messages": [
+      {
+        "author": "Administrador",
+        "time": "hace 11 h",
+        "text": "Canal operativo activo. Por favor solo información verificada. 🙏"
+      },
+      {
+        "author": "Santiago Rodriguez",
+        "time": "hace 7 h",
+        "text": "Alguien con información de caribe, edificios frente a la parada de camionetas qué suben a Caracas"
+      },
+      {
+        "author": "Santiago Rodriguez",
+        "time": "hace 7 h",
+        "text": "??"
+      },
+      {
+        "author": "Juan Fernandez",
+        "time": "hace 7 h",
+        "text": "https://x.com/manuelsilva18/status/2069969160482820177?s=20 esto encontré al respecto"
+      }
+    ]
+  },
+  "emergency_summary": {
+    "updated": "25-jun-2026",
+    "preliminares": {
+      "fallecidos_estimacion_usgs_pager": "10.000–100.000",
+      "edificios_colapsados_reportes": "15+ La Guaira",
+      "replicas_registradas": "~20"
+    },
+    "confirmadas": {
+      "fallecidos_confirmados": "3 (Caracas)",
+      "estado_emergencia": "Activo",
+      "aeropuerto_maiquetia": "Cerrado"
+    },
+    "notes": "Preliminares = estimaciones/reportes sin confirmación oficial. Confirmadas = fuentes oficiales o medios verificados."
+  },
+  "earthquake_info": {
+    "event": "Doble sismo del 24 de junio de 2026",
+    "sismo_1": {
+      "magnitud": "M7.1",
+      "hora": "17:04 VET",
+      "ubicacion": "~Yumare (Yaracuy)"
+    },
+    "sismo_2": {
+      "magnitud": "M7.5",
+      "hora": "17:05 VET",
+      "ubicacion": "Morón / Puerto Cabello"
+    },
+    "warning": "Se esperan réplicas. Mantente alejado de estructuras dañadas.",
+    "emergencias": "171",
+    "source_note": "Datos USGS"
+  },
+  "first_aid": {
+    "title": "Primeros auxilios",
+    "count": 12,
+    "sources": ["Cruz Roja", "OMS", "FEMA"],
+    "offline_available": true,
+    "urgent_guides": [
+      {
+        "title": "Durante el sismo",
+        "instruction": "Agáchate, cúbrete y agárrate. El 'triángulo de la vida' es un mito peligroso."
+      },
+      {
+        "title": "Hemorragias",
+        "instruction": "Presión directa firme. Si traspasa, añade tela encima — no retires la primera."
+      },
+      {
+        "title": "RCP",
+        "instruction": "100–120 compresiones/min, 5 cm profundidad. No pares hasta que llegue ayuda."
+      },
+      {
+        "title": "Si quedas atrapado",
+        "instruction": "Golpea tuberías, no grites. No enciendas fuego (posible fuga de gas)."
+      }
+    ]
+  },
+  "footer": {
+    "brand": "VenezuelaSOS Venezuela 2026",
+    "site_domain": "sosvenezuela2026.com",
+    "use": "Uso humanitario",
+    "commercial": "Sin fines comerciales",
+    "privacy_link": "https://sosvenezuela2026.com/privacidad",
+    "about_link": "https://sosvenezuela2026.com/acerca",
+    "login_link": "https://sosvenezuela2026.com/login"
+  }
+}

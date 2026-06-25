@@ -1,0 +1,273 @@
+{
+  "site": {
+    "title": "Venezuela Resiste — Mapa Ciudadano de Emergencia",
+    "short_title": "Venezuela Resiste",
+    "tagline": "Respuesta ciudadana · Venezuela 2026",
+    "description": "Mapa ciudadano del terremoto en Venezuela. Tras el terremoto, cada reporte cuenta. Este mapa colaborativo registra edificios colapsados y personas desaparecidas para coordinar la búsqueda y la ayuda. Si sabes algo, repórtalo.",
+    "main_cta": {
+      "view_map": {
+        "label": "Ver el mapa completo",
+        "url": "https://kf.kobotoolbox.org/#/forms/a8XWDsdUcpBzXGtgQmiiro/data/map"
+      },
+      "make_report": {
+        "label": "Hacer un reporte",
+        "url": "https://ee.kobotoolbox.org/x/eaEmQ9YW"
+      }
+    },
+    "navigation": [
+      {
+        "label": "Inicio",
+        "url": "https://terremotove.netlify.app/#inicio"
+      },
+      {
+        "label": "Qué pasó",
+        "url": "https://terremotove.netlify.app/#que-paso"
+      },
+      {
+        "label": "Cómo reportar",
+        "url": "https://terremotove.netlify.app/#como-reportar"
+      },
+      {
+        "label": "Emergencias",
+        "url": "https://terremotove.netlify.app/#emergencias"
+      },
+      {
+        "label": "Recursos",
+        "url": "https://terremotove.netlify.app/#recursos"
+      },
+      {
+        "label": "Ayudar",
+        "url": "https://terremotove.netlify.app/#ayudar"
+      }
+    ]
+  },
+  "context": {
+    "section_title": "Qué pasó",
+    "event_date": "24 de junio de 2026",
+    "time_info": "Poco después de las 6 de la tarde",
+    "location": {
+      "state": "Yaracuy",
+      "country": "Venezuela",
+      "region": "Norte de Venezuela",
+      "epicenter_city": "San Felipe",
+      "distance_to_caracas_km": 200
+    },
+    "earthquakes": [
+      {
+        "order": 1,
+        "magnitude": 7.2,
+        "time_difference_seconds_to_next": 39
+      },
+      {
+        "order": 2,
+        "magnitude": 7.5,
+        "time_difference_seconds_to_previous": 39
+      }
+    ],
+    "effects": {
+      "felt_in": "Gran parte del país",
+      "building_collapses_cities_including": [
+        "Caracas"
+      ],
+      "aftershocks": "Se registraron réplicas en las horas siguientes",
+      "victims_status": "El número de víctimas aún no está confirmado"
+    }
+  },
+  "project": {
+    "section_title": "Qué es este mapa y para qué sirve",
+    "initiative": "Acceso Libre",
+    "initiative_url": "https://acceso-libre.org/",
+    "goal": "Documentar edificios colapsados y personas desaparecidas tras el terremoto.",
+    "purpose": "Centralizar la información dispersa y facilitar la coordinación entre familias, equipos de rescate y organismos de respuesta.",
+    "data_source": "Datos aportados por la ciudadanía",
+    "verification_status": "No verificados de forma independiente.",
+    "disclaimer": "Los datos son aportados por la ciudadanía y no han sido verificados de forma independiente. Si encuentras un error o tienes información más actualizada, contáctanos.",
+    "access": {
+      "is_free_access": true,
+      "is_commercial": false,
+      "access_note": "El mapa es de acceso libre y sin fines comerciales."
+    }
+  },
+  "instructions": {
+    "section_title": "Cómo hacer un reporte",
+    "intro": "Cualquier persona puede agregar información al mapa. El proceso toma menos de tres minutos.",
+    "steps": [
+      {
+        "order": 1,
+        "title": "Abre el formulario",
+        "description": "Accede al formulario de reporte desde el mapa o directamente desde el botón de esta página. No necesitas crear una cuenta.",
+        "cta": {
+          "label": "Ir al formulario de reporte",
+          "url": "https://ee.kobotoolbox.org/x/eaEmQ9YW"
+        }
+      },
+      {
+        "order": 2,
+        "title": "Ingresa la ubicación",
+        "description": "Selecciona el punto en el mapa o ingresa la dirección lo más exacta posible. Si puedes, incluye referencias como referencias locales."
+      },
+      {
+        "order": 3,
+        "title": "Describe la situación",
+        "description": "Indica si se trata de un edificio colapsado, personas desaparecidas, o ambos. Agrega cualquier información adicional que pueda ayudar."
+      },
+      {
+        "order": 4,
+        "title": "Envía el reporte",
+        "description": "Tu reporte aparecerá en el mapa en cuestión de minutos. Puedes incluir fotos si tienes conexión suficiente."
+      }
+    ]
+  },
+  "emergency_numbers": {
+    "section_title": "Contactos de rescate y auxilio",
+    "intro": "Si hay una emergencia activa, llama primero. El mapa es para documentación, no reemplaza a los servicios de rescate.",
+    "numbers": [
+      {
+        "category": "Emergencias generales",
+        "label": "EMERGENCIAS GENERALES",
+        "number": "171",
+        "description": "Línea nacional de emergencias"
+      },
+      {
+        "category": "Policía",
+        "label": "POLICÍA",
+        "number": "911",
+        "description": "Cuerpo de Policía Nacional"
+      },
+      {
+        "category": "Tránsito y vías",
+        "label": "TRÁNSITO Y VÍAS",
+        "number": "167",
+        "description": "Emergencias viales nacionales"
+      },
+      {
+        "category": "Rescate estructural",
+        "label": "RESCATE HUMBOLDT",
+        "number": "0414-3056868",
+        "description": "Recomendado para rescate estructural"
+      },
+      {
+        "category": "Protección Civil",
+        "label": "PROTECCIÓN CIVIL NACIONAL",
+        "number": "0800-7248451",
+        "description": "Coordinación de desastres y rescate"
+      },
+      {
+        "category": "Cruz Roja",
+        "label": "CRUZ ROJA",
+        "number": "(0212) 571.47.13",
+        "description": "Asistencia humanitaria, Caracas"
+      }
+    ],
+    "notes": [
+      "Algunos números pueden estar saturados.",
+      "Si no logras comunicarte, intenta con Protección Civil de tu estado o municipio."
+    ],
+    "extended_info_url": "https://terremotove.netlify.app/emergencias"
+  },
+  "other_resources": {
+    "section_title": "Iniciativas similares y fuentes de información",
+    "intro": "Hay otras organizaciones y mapas haciendo trabajo complementario. Aquí una lista curada.",
+    "resources": [
+      {
+        "name": "SOS Venezuela 2026",
+        "description": "Plataforma de coordinación de emergencia y reportes ciudadanos",
+        "url": "https://sosvenezuela2026.com/"
+      },
+      {
+        "name": "terremotovenezuela.app",
+        "description": "Mapa y recursos de respuesta al terremoto",
+        "url": "https://terremotovenezuela.app/"
+      },
+      {
+        "name": "Desaparecidos Terremoto Venezuela",
+        "description": "Plataforma específica para búsqueda de personas desaparecidas",
+        "url": "https://desaparecidosterremotovenezuela.com/"
+      },
+      {
+        "name": "terremotovenezuela2026",
+        "description": "Otra iniciativa ciudadana de documentación y respuesta",
+        "url": "https://terremotovenezuela2026.vercel.app/"
+      }
+    ],
+    "contact_for_new_resources": {
+      "email": "accesolibreve@gmail.com",
+      "note": "¿Conoces otro mapa o recurso que deba estar aquí? Escríbenos."
+    }
+  },
+  "how_to_help": {
+    "section_title": "Formas de contribuir",
+    "intro": "No tienes que estar en Venezuela para ayudar. Hay cosas concretas que puedes hacer desde donde estés.",
+    "actions": [
+      {
+        "title": "Difunde el mapa",
+        "description": "Comparte este sitio con venezolanos en tu red, especialmente con quienes tienen familiares en las zonas afectadas. La información llega donde llegue la gente.",
+        "cta": {
+          "label": "Compartir en X",
+          "url": "https://twitter.com/intent/tweet?text=Mapa%20ciudadano%20de%20emergencia%20%23TerremotoVE%3A&url=https%3A%2F%2Fterremotove.acceso-libre.org"
+        }
+      },
+      {
+        "title": "Reporta lo que sabes",
+        "description": "Si tienes información sobre un edificio colapsado o una persona desaparecida, cada reporte ayuda a coordinar la respuesta. No necesitas estar seguro de todo.",
+        "cta": {
+          "label": "Ir al formulario",
+          "url": "https://ee.kobotoolbox.org/x/eaEmQ9YW"
+        }
+      },
+      {
+        "title": "Verifica información",
+        "description": "Si puedes confirmar o corregir un reporte existente, escríbenos. La verificación cruzada hace el mapa más útil para los equipos de rescate.",
+        "cta": {
+          "label": "Escribirnos",
+          "url": "mailto:accesolibreve@gmail.com"
+        }
+      }
+    ]
+  },
+  "footer": {
+    "tools": [
+      {
+        "name": "KoboToolbox",
+        "url": "https://www.kobotoolbox.org/",
+        "note": "Mapa construido con KoboToolbox."
+      }
+    ],
+    "initiative": {
+      "name": "Acceso Libre",
+      "url": "https://acceso-libre.org/",
+      "note": "Una iniciativa de Acceso Libre."
+    },
+    "contact": {
+      "email": "accesolibreve@gmail.com",
+      "label": "Contacto",
+      "mailto": "mailto:accesolibreve@gmail.com"
+    },
+    "legal_disclaimers": [
+      "Datos aportados por la ciudadanía.",
+      "No afiliados al gobierno venezolano ni a ningún partido político.",
+      "Este sitio no tiene fines comerciales.",
+      "El código es libre.",
+      "Los datos son de quien los aporta."
+    ]
+  },
+  "raw_links": [
+    "https://terremotove.netlify.app/#inicio",
+    "https://terremotove.netlify.app/#que-paso",
+    "https://terremotove.netlify.app/#como-reportar",
+    "https://terremotove.netlify.app/#emergencias",
+    "https://terremotove.netlify.app/#recursos",
+    "https://terremotove.netlify.app/#ayudar",
+    "https://kf.kobotoolbox.org/#/forms/a8XWDsdUcpBzXGtgQmiiro/data/map",
+    "https://ee.kobotoolbox.org/x/eaEmQ9YW",
+    "https://acceso-libre.org/",
+    "https://terremotove.netlify.app/emergencias",
+    "https://sosvenezuela2026.com/",
+    "https://terremotovenezuela.app/",
+    "https://desaparecidosterremotovenezuela.com/",
+    "https://terremotovenezuela2026.vercel.app/",
+    "mailto:accesolibreve@gmail.com",
+    "https://twitter.com/intent/tweet?text=Mapa%20ciudadano%20de%20emergencia%20%23TerremotoVE%3A&url=https%3A%2F%2Fterremotove.acceso-libre.org",
+    "https://www.kobotoolbox.org/"
+  ]
+}

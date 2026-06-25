@@ -1,0 +1,459 @@
+{
+  "meta": {
+    "titulo": "Mapa de Emergencia y Rescate · Terremoto en Venezuela",
+    "descripcion": "Reporte ciudadano en tiempo real para coordinar rescates, identificar daños estructurales y organizar la entrega de ayuda humanitaria tras el terremoto en Venezuela.",
+    "banner": "En memoria de las víctimas del terremoto",
+    "plataforma": "Plataforma de ayuda humanitaria"
+  },
+  "estadisticas_globales": {
+    "personas_desaparecidas_total_header": 8225,
+    "personas_desaparecidas_bloque_lista": 8227,
+    "personas_desaparecidas_bloque_tabla": 8226,
+    "personas_localizadas_a_salvo": 442,
+    "reportes_mapa": {
+      "total_reportes": 86,
+      "con_punto_en_el_mapa": 3814
+    }
+  },
+  "navegacion": {
+    "ir_al_mapa_y_reportar": "https://terremotovenezuela.app/#mapa",
+    "personas_desaparecidas": "https://terremotovenezuela.app/#desaparecidas",
+    "localizados_a_salvo": "https://terremotovenezuela.app/#localizados",
+    "guia_rapida": "https://terremotovenezuela.app/#guia",
+    "telefonos_emergencia": "https://terremotovenezuela.app/#telefonos",
+    "compartir_mapa": true
+  },
+  "personas_desaparecidas_destacadas": [
+    {
+      "nombre": "Miguel Angel Gavidia Salas",
+      "edad": 68,
+      "ubicacion": "Caraballeda Residencia Caribe La Guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Frank Jose Amundarain",
+      "ubicacion": "Via la Costa",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Maya",
+      "ubicacion": "Del Valle Urb. Ravell",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Daisy Velasquez",
+      "edad": 64,
+      "ubicacion": "las tunitas",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Trufas",
+      "ubicacion": "El Paraiso",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Rocco",
+      "ubicacion": "Palos Grandes",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Bryan Soria",
+      "edad": 23,
+      "ubicacion": "La Guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Kira",
+      "ubicacion": "Lara URB Luis Hurtado",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Meleys",
+      "ubicacion": "Agua salud",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Barbara Pacheco",
+      "edad": 65,
+      "ubicacion": "Caraballeda San Julian La Guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Valentina Juliette Azócar Milano",
+      "edad": 15,
+      "ubicacion": "La guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Jose Colina",
+      "ubicacion": "La Guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Domingo Milano",
+      "edad": 65,
+      "ubicacion": "San Julian La Guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Maia Maia",
+      "ubicacion": "Guataparo",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    },
+    {
+      "nombre": "Ronald Sandoval",
+      "edad": 8,
+      "ubicacion": "Caribe, la guaira",
+      "tipo": "SE BUSCA",
+      "detalle_url": null
+    }
+  ],
+  "como_reportar_emergencia": {
+    "pasos": [
+      {
+        "titulo": "Ubica el lugar",
+        "descripcion": "Toca un punto del mapa o escribe la dirección en el buscador (ej.: “Av. Francisco de Miranda, Chacao”).",
+        "tip": "Acércate con el zoom para mayor precisión."
+      },
+      {
+        "titulo": "Elige el tipo de marcador",
+        "descripcion": "Selecciona uno de los 5 tipos según la situación: emergencia crítica, suministros, centro de acopio, zona sin luz o persona buscada.",
+        "tip": "Cada color y icono ayuda a priorizar el rescate."
+      },
+      {
+        "titulo": "Describe y agrega foto",
+        "descripcion": "Llena los datos del lugar, personas afectadas y qué se necesita. Si puedes, sube una foto: ayuda a verificar la situación.",
+        "tip": "Sé específico: paramédicos, agua, maquinaria, medicinas…"
+      },
+      {
+        "titulo": "Publica y comparte",
+        "descripcion": "Tu alerta aparece de inmediato en el mapa de toda la comunidad. Comparte el enlace para que más gente pueda ayudar.",
+        "tip": "Si la emergencia ya fue atendida, avisa para limpiar el mapa."
+      }
+    ],
+    "tipos_marcador": [
+      "Emergencia Crítica",
+      "Suministros",
+      "Centro de Acopio",
+      "Zona estable (sin electricidad)",
+      "Se busca (persona)",
+      "Edificación"
+    ],
+    "recomendaciones_antes_publicar": [
+      "Asegúrate de que la ubicación esté correcta.",
+      "Indica claramente qué tipo de ayuda se necesita.",
+      "Si tienes una foto del lugar, súbela."
+    ],
+    "evitar_confusiones": [
+      "No envíes reportes falsos ni duplicados.",
+      "Si ya hay un punto similar cerca, no lo repitas.",
+      "Avisa cuando una emergencia ya fue atendida."
+    ]
+  },
+  "filtros_mapa": {
+    "desaparecidos_activos": 8227,
+    "reportes_mapa": 86,
+    "reportes_con_punto_mapa": 3814,
+    "tipos": {
+      "critica": 23,
+      "suministros": 2,
+      "acopio": 0,
+      "sin_luz": 5,
+      "buscan": 8227,
+      "edificios": 2
+    },
+    "filtros_tiempo": ["1 h", "24 h", "7 d"]
+  },
+  "reportes_en_mapa_listado": [
+    {
+      "tipo_icono_color": "morado",
+      "titulo": "Desconocido",
+      "personas_afectadas": 1,
+      "descripcion": "Tés delgada, señor de 3era edad, piel morena, sin pelo. Su nombre es José Manuel Ortega figueredo",
+      "hace": "13 min",
+      "confirmaciones": 0
+    },
+    {
+      "tipo_icono_color": "rojo",
+      "titulo": "Bloque de pinto salinas",
+      "personas_afectadas": 5,
+      "descripcion": "Colapso edificio 5 pisos",
+      "hace": "15 min",
+      "confirmaciones": 0
+    }
+    /* ... se podrían incluir todos los elementos, pero la lista es muy larga.
+       El patrón es siempre:
+       { tipo_icono_color, titulo, personas_afectadas, descripcion, hace, confirmaciones } */
+  ],
+  "buscador_mapa": {
+    "placeholder": "Buscar dirección",
+    "tecnologias_mapa": [
+      "Leaflet",
+      "OpenStreetMap"
+    ],
+    "mensaje_interaccion": "Toca un punto del mapa para reportar"
+  },
+  "lista_personas_desaparecidas": {
+    "total_reportadas": 8226,
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 172
+    },
+    "items": [
+      {
+        "nombre": "Frank Jose Amundarain",
+        "edad": null,
+        "ubicacion": "Via la Costa",
+        "nota": "Serv, Social: Padres buscan a Frank Jose Amundarain y A Frangelis Amundarain Iba camino a la costa",
+        "telefono_contacto": ["04127196229", "04242015569"]
+      },
+      {
+        "nombre": "Maya",
+        "ubicacion": "Del Valle Urb. Ravell",
+        "telefono_contacto": []
+      },
+      {
+        "nombre": "Daisy Velasquez",
+        "edad": 64,
+        "ubicacion": "las tunitas",
+        "telefono_contacto": ["José Andarcia 04221110641"]
+      }
+      /* ... sigue una lista muy extensa; se mantiene mismo esquema */
+    ]
+  },
+  "personas_localizadas_a_salvo": {
+    "total_localizadas": 442,
+    "paginacion": {
+      "pagina_actual": 1,
+      "total_paginas": 10
+    },
+    "items": [
+      {
+        "nombre": "Kenia Garcia",
+        "edad": 40,
+        "ubicacion": "Catia la Mar - la Soublette, edo. la Guaira",
+        "fecha_localizacion": "25 jun. 2026"
+      },
+      {
+        "nombre": "Joseph Gudiño",
+        "edad": 40,
+        "ubicacion": "Catia la Mar - la Soublette, edo. la Guaira",
+        "fecha_localizacion": "25 jun. 2026"
+      },
+      {
+        "nombre": "Sandra cañate",
+        "edad": 45,
+        "ubicacion": "la guaira",
+        "fecha_localizacion": "25 jun. 2026"
+      }
+      /* ... resto de elementos con mismo esquema */
+    ]
+  },
+  "guia_rapida_comunidad": {
+    "fuente": "Operación Todos con VZLA",
+    "secciones": {
+      "revision_rapida_comunidad": [
+        "Verifiquen si hay personas heridas.",
+        "Revisen si alguien quedó atrapado.",
+        "Confirmen que ningún niño esté separado de su familia.",
+        "Revisen a adultos mayores y personas con discapacidad."
+      ],
+      "guarda_agua_y_esenciales": [
+        "Guarda agua potable.",
+        "Mantén cerca medicamentos.",
+        "Ten listas linternas y artículos básicos."
+      ],
+      "si_hay_personas_atrapadas": [
+        "Habla con la persona para mantenerla consciente y tranquila.",
+        "No muevan grandes escombros sin evaluar antes los riesgos.",
+        "Marca claramente el lugar para facilitar el trabajo de los rescatistas."
+      ],
+      "grupos_apoyo_vigilancia": [
+        "Mantengan comunicación entre vecinos.",
+        "Ayuden a quienes sean más vulnerables.",
+        "Definan un punto de encuentro seguro."
+      ],
+      "mensaje_general": "Comparte esta información. Las primeras horas son las más importantes para salvar vidas."
+    }
+  },
+  "telefonos_emergencia": {
+    "total_registrados": 35,
+    "buscador": {
+      "placeholder": "Buscar teléfono por zona o servicio",
+      "zona_principal": "Caracas y Gran Caracas (0212)"
+    },
+    "emergencias_linea_directa": [
+      { "nombre": "Cantv (desde fijo)", "telefonos": ["171"] },
+      { "nombre": "Movilnet", "telefonos": ["*1"] },
+      { "nombre": "Digitel", "telefonos": ["112"] },
+      { "nombre": "Movistar", "telefonos": ["911"] }
+    ],
+    "ambulancias": [
+      {
+        "nombre": "Aeroambulancias",
+        "telefonos": ["(0212) 993.25.41", "(0212) 992.89.80", "(0212) 992.89.90", "(0212) 991.79.40"]
+      },
+      {
+        "nombre": "Rescarven",
+        "telefonos": ["(0212) 993.69.11", "(0212) 993.69.91", "(0212) 993.13.10", "(0212) 993.33.67"]
+      },
+      {
+        "nombre": "Servicio de Ambulancia Metropolitano",
+        "telefonos": ["(0212) 545.45.45", "(0212) 545.46.55", "(0212) 577.92.09"]
+      }
+    ],
+    "bomberos": [
+      { "zona": "Antímano", "telefonos": ["(0212) 472.20.54"] },
+      { "zona": "Catia la Mar", "telefonos": ["(0212) 351.99.66"] },
+      { "zona": "Chacao", "telefonos": ["(0212) 265.32.61"] },
+      { "zona": "del Este (Cafetal)", "telefonos": ["(0212) 987.43.34", "(0212) 985.50.60"] },
+      { "zona": "Sucre", "telefonos": ["(0212) 985.36.40"] },
+      { "zona": "El Cafetal", "telefonos": ["(0212) 985.36.40", "(0212) 985.29.77"] },
+      { "zona": "El Paraíso", "telefonos": ["(0212) 481.09.61"] },
+      { "zona": "El Valle", "telefonos": ["(0212) 672.01.75", "(0212) 672.06.36"] },
+      { "zona": "La Guaira", "telefonos": ["(0212) 332.76.20", "(0212) 331.04.45"] },
+      { "zona": "La Trinidad", "telefonos": ["(0212) 943.43.61"] },
+      { "zona": "La Urbina", "telefonos": ["(0212) 241.66.41"] },
+      { "zona": "Metropolitanos", "telefonos": ["(0212) 545.45.45"] },
+      { "zona": "Miranda", "telefonos": ["(0212) 235.69.67"] },
+      { "zona": "Plaza Venezuela", "telefonos": ["(0212) 793.00.39", "(0212) 793.64.57"] },
+      { "zona": "San Bernardino", "telefonos": ["(0212) 577.92.09"] }
+    ],
+    "nota": "Si un número no responde, intenta con la línea de emergencia general (171 / 911)."
+  },
+  "leyenda_marcadores": {
+    "Emergencia Crítica": "Personas atrapadas, heridos de gravedad o colapso estructural inminente. Prioridad máxima de rescate.",
+    "Suministros": "Zonas seguras pero con necesidad urgente de suministros (falta de agua, comida, cobijo o primeros auxilios).",
+    "Centro de Acopio": "Punto verificado y habilitado para recibir donaciones físicas o resguardar familias (Refugio seguro).",
+    "Zona estable (sin electricidad)": "Zona sin daños graves y segura, pero sin servicio eléctrico (y posiblemente sin señal). Útil para saber qué sectores están bien.",
+    "Se busca (persona)": "Búsqueda de una persona desaparecida. Indica su última ubicación conocida y una descripción para ayudar a localizarla.",
+    "Edificación": "Registro fotográfico del estado de un edificio o construcción. Útil para que ingenieros y autoridades evalúen daños estructurales."
+  },
+  "aviso_importante": {
+    "mensaje": "Esta plataforma funciona con reportes ciudadanos para salvar vidas. Por favor, no envíes reportes falsos ni dupliques alertas. Los recursos logísticos son limitados y cada segundo cuenta.",
+    "recomendacion": "Si la emergencia en un punto ya fue atendida por las autoridades, notifícalo para limpiar el mapa y redirigir los esfuerzos a quienes aún esperan ayuda."
+  },
+  "espacio_voluntarios_chat": {
+    "descripcion": "Espacio de intercambio de información entre voluntarios para coordinar ayuda.",
+    "mensajes": [
+      {
+        "autor": "hola",
+        "hora": "04:44 a. m.",
+        "texto": "donde estas?"
+      },
+      {
+        "autor": "Allan",
+        "hora": "04:58 a. m.",
+        "texto": "Parece que estamos bien"
+      },
+      {
+        "autor": "Luisana",
+        "hora": "06:22 a. m.",
+        "texto": "Por favor si conocen alguna información sobre cómo está la situación en la trinidad, les pido la dejen aca"
+      },
+      {
+        "autor": "Marco",
+        "hora": "07:24 a. m.",
+        "texto": "Saludos de ARGENTINA. Fuerzas y un abrazo gigante 🫶🏼"
+      },
+      {
+        "autor": "Anónimo",
+        "hora": "07:39 a. m.",
+        "texto": "Alguien que me pueda brindar algún contacto de alguien que esté en la guaira??"
+      },
+      {
+        "autor": "AllanOD",
+        "hora": "07:40 a. m.",
+        "texto": "hola chicos"
+      },
+      {
+        "autor": "AllanOD",
+        "hora": "07:41 a. m.",
+        "texto": "Estamos tratando de organizar grupos de busqueda!! porfavor dejen por aca a quienes buscan!"
+      },
+      {
+        "autor": "María",
+        "hora": "07:43 a. m.",
+        "texto": "Hola en la guaira edificio el Molino Hildebran y su hija en piso 7 desde el sismo está atrapado pidiendo ayuda, espero puedan ir por el"
+      },
+      {
+        "autor": "María",
+        "hora": "07:52 a. m.",
+        "texto": "J574+288, Caraballeda 1165, La Guaira, Venezuela Ahí en el edificio el molino piso 7 hildebrans y su hija están atrapados él estuvo escribiendo por sus estados pidiendo ayuda, desde las 12 am no responde"
+      },
+      {
+        "autor": "AllanOD",
+        "hora": "07:53 a. m.",
+        "texto": "estamos organizando la ayuda porfavor dejen sus mensajes! ya tenemos gente en la guaira! dejen direcciones y diganle a sus seres queridos QUE YA VAMOS EN CAMINO"
+      },
+      {
+        "autor": "Ana",
+        "hora": "07:54 a. m.",
+        "texto": "Este mapa marca creado por una usuaria en Twitter (@mariannedh) ha hecho un mapa para reportar edificios caídos, personas encontradas o desaparecidas, y cualquier otra cosa que se necesite: https://kf.kobotoolbox.org/#/forms/a8XWDsdUcpBzXGtgQmiiro/data/map (enlace para visualizar el mapa) y este enlace para añadir información: https://ee.kobotoolbox.org/x/eaEmQ9YW"
+      },
+      {
+        "autor": "Ana",
+        "hora": "07:55 a. m.",
+        "texto": "Se reporta persona desaparecia en la Guaira: Lourdes Malou Torres y su ultima ubicación conocida: Edificio Cimarrón - Sector Caraballeda, La Guaira"
+      },
+      {
+        "autor": "Robert",
+        "hora": "08:00 a. m.",
+        "texto": "En este hilo de búsqueda publican gente desaparecida en la guaira, por si saben algo de ellos 😢 https://x.com/CaracasTerremot/status/2070005643306549709"
+      },
+      {
+        "autor": "yajaira",
+        "hora": "08:04 a. m.",
+        "texto": "se necesitan socorristas en el edificio ARICHUNA en Los Corales la Guaira"
+      },
+      {
+        "autor": "Julian",
+        "hora": "08:27 a. m.",
+        "texto": "Un grupo de barcos van yendo desde margarita a tierra firme, esperen ayuda inmediata"
+      },
+      {
+        "autor": "Anónimo",
+        "hora": "09:19 a. m.",
+        "texto": "Alguien por favor tiene noticias sobre edificio Los palafitos en la guaira???"
+      },
+      {
+        "autor": "Marlin",
+        "hora": "09:30 a. m.",
+        "texto": "Busco a mi hermano Teobaldo Hernández vive en Playa los cocos no he podido comunicarme con él.. contacto 04123682908(solo WhatsApp) 04164533454 cualquier información, gracias"
+      },
+      {
+        "autor": "Carolina De Alcaíno",
+        "hora": "09:49 a. m.",
+        "texto": "Alguien sabe que paso con los repatriados que se encontraban en el hotelito por favor 🙏"
+      },
+      {
+        "autor": "Leticia",
+        "hora": "01:16 p. m.",
+        "texto": "Busco a mi papá se llama julio cesar colmenarez se encuentra en la Guaira"
+      },
+      {
+        "autor": "Leticia",
+        "hora": "01:17 p. m.",
+        "texto": "Busco a mi papá que se encuentra en la Guaira se llama julio cesar colmenarez se pueden comunicar a este número 04245728097"
+      }
+    ],
+    "formulario_mensaje": {
+      "campo_nombre": "Tu nombre (opcional)",
+      "campo_texto": "Escribe un mensaje"
+    }
+  }
+}

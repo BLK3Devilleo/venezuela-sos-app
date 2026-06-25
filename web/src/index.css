@@ -1,0 +1,290 @@
+/* Stylesheet for VenezuelaSOS - Premium Modern UI */
+
+:root {
+  --bg-primary: #0b0f19;
+  --bg-surface: #131c2e;
+  --bg-surface-soft: #1e293b;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --primary: #0d9488;       /* Teal - Principal */
+  --primary-glow: rgba(13, 148, 136, 0.15);
+  
+  --ve-blue: #1d4ed8;       /* Azul - Refugios y Normal */
+  --ve-blue-glow: rgba(29, 78, 216, 0.15);
+  
+  --ve-red: #dc2626;        /* Rojo - Emergencia Crítica */
+  --ve-red-glow: rgba(220, 38, 38, 0.2);
+  
+  --ve-yellow: #ea580c;     /* Naranja/Amarillo - Suministros */
+  --ve-yellow-glow: rgba(234, 88, 12, 0.15);
+  
+  --ve-green: #16a34a;      /* Verde - Localizados / Actividades */
+  --ve-green-glow: rgba(22, 163, 74, 0.15);
+
+  --ve-yellow-glow-strong: rgba(234, 179, 8, 0.4);
+  --ve-blue-glow-strong: rgba(37, 99, 235, 0.35);
+  --ve-red-glow-strong: rgba(220, 38, 38, 0.35);
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(255, 255, 255, 0.18);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+
+  font-family: var(--font-sans);
+  color-scheme: dark;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface-soft);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(19, 28, 46, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Tricolor superior */
+.tricolor-bar {
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(to right, 
+    #ffcc00 0% 33.3%, 
+    #00247d 33.3% 66.6%, 
+    #cf142b 66.6% 100%
+  );
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Contenedor principal */
+.app-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Botones Premium */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+.btn-primary:hover {
+  background-color: #0f766e;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface-soft);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+.btn-secondary:hover {
+  background-color: #334155;
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: var(--ve-red);
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--ve-red-glow);
+}
+.btn-danger:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background-color: var(--ve-yellow);
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--ve-yellow-glow);
+}
+.btn-warning:hover {
+  background-color: #c2410c;
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Tarjetas */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Inputs y Formularios */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.input-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input-field {
+  background-color: var(--bg-surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: all 0.2s;
+}
+.input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+/* Animación de Punto Live */
+.live-pulse {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+}
+.live-pulse::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: pulse 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* Modificaciones de Leaflet para diseño premium */
+.leaflet-container {
+  background: var(--bg-primary) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+}
+
+/* Clases de utilidad */
+.text-gradient {
+  background: linear-gradient(135deg, #0d9488 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.font-display {
+  font-family: var(--font-display);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
