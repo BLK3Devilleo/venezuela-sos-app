@@ -32,83 +32,59 @@ export default function DashboardView({ user, setView }) {
   return (
     <div style={{ paddingTop: '0.5rem', paddingBottom: '2rem' }}>
 
-      {/* Saludo Cálido */}
+      {/* Guía de Uso Formal/Cercana */}
       <div style={{
-        marginBottom: '1.5rem',
+        marginBottom: '2rem',
         padding: '0.5rem 0'
       }}>
-        <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.25rem' }}>
-          Hola, {user?.nombre || 'Amigo'} 👋
+        <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.5rem' }}>
+          ¿Cómo funciona VenezuelaSOS? 🇻🇪
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          ¿Cómo podemos ayudarte hoy? Juntos somos más fuertes.
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>
+          Aquí te explicamos de forma rápida cómo utilizar esta plataforma para apoyarnos mutuamente, porque juntos somos más fuertes:
         </p>
-      </div>
 
-      {/* Alerta de emergencia (Más suave) */}
-      <div style={{
-        backgroundColor: 'rgba(234, 179, 8, 0.1)',
-        border: '1px solid rgba(234, 179, 8, 0.2)',
-        borderRadius: '1.25rem',
-        padding: '1rem',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.875rem',
-        marginBottom: '1.5rem',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          width: '40px', height: '40px', borderRadius: '50%',
-          backgroundColor: 'rgba(234, 179, 8, 0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <Heart size={20} style={{ color: '#eab308' }} />
-        </div>
-        <div>
-          <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#facc15', marginBottom: '0.25rem' }}>
-            Red de Apoyo Activa
-          </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-            Tu comunidad está conectada. Usa el mapa para encontrar ayuda cerca de ti o publica si necesitas asistencia.
-          </div>
-        </div>
-      </div>
-
-      {/* Stats grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '1rem',
-        marginBottom: '2rem'
-      }}>
-        {[
-          { num: stats.desaparecidos, label: 'Desaparecidos', icon: '🆘', bg: 'linear-gradient(135deg, rgba(220,38,38,0.15), rgba(220,38,38,0.05))', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' },
-          { num: stats.mascotas, label: 'Mascotas', icon: '🐾', bg: 'linear-gradient(135deg, rgba(217,119,6,0.15), rgba(217,119,6,0.05))', borderColor: 'rgba(217,119,6,0.3)', color: '#fbbf24' },
-          { num: stats.recursos, label: 'Recursos', icon: '🍲', bg: 'linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.05))', borderColor: 'rgba(22,163,74,0.3)', color: '#4ade80' },
-          { num: stats.servicios, label: 'Servicios', icon: '⚕️', bg: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(37,99,235,0.05))', borderColor: 'rgba(37,99,235,0.3)', color: '#60a5fa' },
-        ].map((s, i) => (
-          <div key={i} style={{
-            background: s.bg,
-            border: `1px solid ${s.borderColor}`,
-            borderRadius: '1.25rem',
-            padding: '1.25rem 1rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{s.icon}</div>
-            <div className="font-display" style={{ fontSize: '2rem', fontWeight: '800', color: s.color, lineHeight: '1' }}>
-              {s.num}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          {[
+            { icon: '🗺️', title: 'Revisa el Mapa en Vivo', desc: 'Visualiza en tiempo real quién necesita ayuda en tu zona o dónde se han habilitado refugios y centros de acopio.' },
+            { icon: '🆘', title: 'Reporta en la sección Buscar', desc: 'Si estás buscando a un familiar, amigo o incluso a tu mascota, publícalo aquí para que toda la red esté pendiente.' },
+            { icon: '📦', title: 'Pide u Ofrece Apoyo (Servicios)', desc: 'Si tienes insumos médicos, alimentos, o si por el contrario necesitas asistencia, repórtalo en la sección de Servicios. Échanos una mano si está a tu alcance.' },
+            { icon: '💬', title: 'Conéctate en los Chats', desc: 'Ingresa a las salas temáticas para coordinar acciones directas con la comunidad en tiempo real, sin intermediarios.' }
+          ].map((item, i) => (
+            <div key={i} style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '1rem',
+              padding: '1rem',
+              display: 'flex',
+              gap: '1rem',
+              alignItems: 'flex-start',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{
+                fontSize: '1.5rem',
+                backgroundColor: 'var(--bg-surface-soft)',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                {item.icon}
+              </div>
+              <div>
+                <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
+                  {item.title}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                  {item.desc}
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', marginTop: '0.25rem' }}>
-              {s.label}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Tips de emergencia */}

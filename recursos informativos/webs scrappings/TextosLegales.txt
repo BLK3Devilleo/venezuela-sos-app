@@ -1,0 +1,127 @@
+Aviso Legal
+
+
+
+
+1. Información General
+
+
+En cumplimiento con los deberes de información generales propios de las plataformas y servicios digitales, se hace constar que el presente sitio web y la aplicación informática (en adelante, "Filo:SOS") son una iniciativa tecnológica desarrollada bajo la marca Filo Digital Solutions (en adelante, "Filo DS"), con el único propósito de servir como canal de resiliencia comunitaria y enlace de recursos humanitarios ante la situación de emergencia por sismos en el territorio de Venezuela.
+
+
+2. Objeto y Alcance
+
+
+Filo:SOS funciona de manera exclusiva como un directorio y mapa colaborativo abierto en tiempo real. Su fin fundamental es poner en contacto a ciudadanos, voluntarios, organizaciones no gubernamentales y agrupaciones civiles locales para coordinar la entrega de recursos, alimentos, material de rescate, medicinas y asistencia de emergencia de forma ágil y descentralizada.
+
+
+3. Condiciones de Uso y Responsabilidad del Usuario
+
+
+El acceso y uso de Filo:SOS confiere la condición de Usuario. Al utilizar las herramientas de geolocalización, reporte e interacción, el Usuario se compromete a:
+
+
+Proporcionar información fidedigna, veraz, actualizada y exacta respecto a las necesidades reportadas o recursos disponibles.
+No publicar información falsa, alarmista, duplicada o malintencionada que pueda desviar los esfuerzos de rescate y asistencia.
+Hacer un uso exclusivamente humanitario y solidario de la herramienta, quedando terminantemente prohibido cualquier fin comercial, lucrativo, político o de propaganda.
+4. Exención de Responsabilidad Absoluta
+Filo DS proporciona la infraestructura técnica de Filo:SOS "tal cual está" y según su disponibilidad técnica en zonas afectadas. Debido a la naturaleza del servicio y al contexto de crisis:
+Filo DS no realiza validaciones previas en el terreno sobre la identidad de los Usuarios ni sobre la veracidad o estado físico de los recursos ofrecidos (alimentos, medicinas o herramientas).
+Filo DS queda completamente exento de cualquier responsabilidad derivada de la pérdida de conectividad, mal funcionamiento del software, o inexactitud de los mapas cartográficos o datos de ubicación satelital aportados por terceros. 
+
+MEDIDAS DE PRECAUCIÓN Y DISCLAIMERS
+
+
+1. Disclaimer de Interacciones en el Mundo Real (Seguridad Ciudadana)
+⚠️ ADVERTENCIA DE SEGURIDAD CRÍTICA — INTERACCIONES FÍSICAS
+
+Dado que Filo:SOS actúa únicamente como un puente digital de enlace entre particulares y desconocidos, es fundamental que priorices tu integridad física al momento de realizar la entrega o recepción de recursos y suministros de emergencia. Se establecen las siguientes directrices de obligado cumplimiento:
+
+Lugares Públicos y Concurrentes: Todos los encuentros físicos orientados al traspaso de medicinas, ropa o alimentos deben acordarse y ejecutarse estrictamente en zonas públicas, concurridas, iluminadas o en las inmediaciones de puntos oficiales de control (plazas, centros de acopio institucionales, iglesias o estaciones de servicio).
+Prohibición de Domicilios Privados: Queda terminantemente desaconsejado y prohibido acudir en solitario a viviendas particulares de usuarios desconocidos detectados a través del mapa de la aplicación para hacer transacciones de bienes.
+Acompañamiento: No acudas nunca solo a un punto de encuentro acordado. Desplázate siempre en compañía de familiares, miembros de tu comunidad local o brigadas vecinales de confianza.
+
+2. Disclaimer Específico para el Uso de Viviendas Privadas y Refugios
+⚠️ AVISO COMPLEMENTARIO: OFERTAS DE REFUGIO O SERVICIOS SANITARIOS
+
+En caso de que un reporte listado en el mapa involucre el ofrecimiento voluntario de uso de instalaciones sanitarias (baños) o alojamiento provisional (refugio) dentro de inmuebles de propiedad privada:
+
+"Estás ingresando o interactuando con la propiedad de un posible desconocido. Toma extremas precauciones personales y evalúa el entorno antes de acceder. Los creadores y administradores de Filo:SOS no validamos la seguridad estructural de los inmuebles ni la idoneidad moral de sus ocupantes. No nos hacemos responsables bajo ningún concepto legal, civil o penal de los incidentes, daños, pérdidas o perjuicios que se puedan suscitar en el interior de dichas propiedades privadas."
+
+Política de Cookies
+
+
+
+
+1. Definición y Uso Técnico de las Tecnologías de Rastreo
+
+
+Filo:SOS utiliza "cookies" y tecnologías de almacenamiento local equivalentes. Debido al contexto de infraestructura degradada y baja conectividad que impera en las regiones afectadas por los sismos, el almacenamiento local se utiliza de forma estratégica para disminuir el consumo de datos móviles, agilizar los tiempos de carga de los mapas y evitar la descarga repetitiva de datos estáticos en el dispositivo del usuario.
+
+
+2. Tipología de Cookies Empleadas
+
+
+Cookies Estrictamente Necesarias (Técnicas): Requeridas para mantener la sesión del usuario, almacenar las coordenadas temporales de búsqueda y asegurar la transmisión del formulario de ayuda.
+No pueden ser desactivadas ya que la aplicación no funcionará sin ellas.
+Cookies de Rendimiento y Optimización (Estadísticas): Almacenan de forma anónima métricas sobre fallos de carga o latencia de red, con el único fin de permitir al equipo de Filo DS optimizar el rendimiento del código fuente de la app bajo conexiones limitadas a internet.
+
+
+3. Mecanismo de Consentimiento y Configuración
+
+
+Al acceder por primera vez a Filo:SOS, se desplegará de forma obligatoria un aviso o banner informativo.
+El usuario podrá de forma transparente aceptar la totalidad de las cookies, rechazar las de Optimización, o gestionar las preferencias del sistema. La desactivación de las cookies técnicas puede perjudicar drásticamente la capacidad de la aplicación para guardar reportes en el mapa.
+
+
+Política de Privacidad
+
+
+
+
+1. Responsable del Tratamiento de Datos
+
+
+El responsable de la recogida y tratamiento de sus datos personales a través de la infraestructura digital es el equipo de desarrollo tecnológico de la iniciativa Filo DS.
+
+
+2. Tipos de Datos Objeto de Tratamiento
+
+
+Dependiendo del nivel de uso de Filo:SOS, se podrán recolectar las siguientes categorías de datos:
+
+
+Datos de Identificación Básica: Nombre, alias o seudónimo del Usuario.
+Datos de Contacto: Número de teléfono celular, credenciales de mensajería instantánea o correo electrónico (indispensables para coordinar el traspaso de suministros).
+Datos de Geolocalización: Ubicación exacta en coordenadas geográficas aportadas por el dispositivo del Usuario para situar el recurso o la necesidad en el mapa.
+Datos Sensibles y de Vulnerabilidad: Información estrictamente necesaria sobre condiciones críticas reportadas por el propio usuario (por ejemplo, personas con discapacidad, menores de edad a cargo o requerimientos médicos urgentes).
+
+
+3. Finalidad del Tratamiento
+
+
+Los datos suministrados serán tratados de manera única y exclusiva para la gestión, canalización y optimización de ayuda humanitaria post-terremoto en Venezuela, permitiendo el enlace directo entre personas que necesitan recursos y aquellas que desean aportarlos.
+
+
+4. Base Legal y Legitimación
+La legitimación para llevar a cabo el tratamiento de los datos es el consentimiento inequívoco y expreso que el Usuario otorga al completar y enviar de forma voluntaria cualquiera de los formularios digitales integrados en la aplicación (Reportes de Necesidad, Registro de suministros o Altas de Voluntarios).
+
+
+5. Confidencialidad y Seguridad de la Información
+Filo:SOS implementa medidas técnicas de seguridad informática orientadas a restringir el acceso a bases de datos únicamente a entidades aliadas autorizadas. 
+
+
+6. Destinatarios y Cesión de Datos
+Los datos de contacto y localización se publicarán de forma abierta dentro del mapa interactivo de la app para permitir que la comunidad civil asista de manera inmediata. Fuera de esta finalidad de enlace humanitario, Filo DS no comercializará, transferirá ni cederá bajo ningún concepto las bases de datos a terceras empresas o corporaciones con fines ajenos a la emergencia.
+
+
+7. Plazo de Conservación y Eliminación Directa
+Los datos serán conservados de forma activa exclusivamente durante el periodo que dure la presente contingencia humanitaria derivada de los movimientos sísmicos. Una vez estabilizada la crisis y cumplida la tarea de auxilio comunitario, todas las bases de datos serán eliminadas y destruidas de forma segura y permanente, salvo que el usuario marque de forma explícita la casilla de retención voluntaria para futuros registros de mitigación de desastres.
+
+
+8. Derechos del Usuario (ARCO)
+Cualquier Usuario puede ejercer en cualquier instante sus derechos de acceso, rectificación, supresión ("derecho al olvido") u oposición sobre sus datos publicados, enviando una comunicación interna o utilizando el botón automático de baja de reporte integrado en la misma aplicación.
+
+
+
+

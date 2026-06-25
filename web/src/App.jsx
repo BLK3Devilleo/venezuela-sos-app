@@ -8,17 +8,19 @@ import ResourcesView from './views/ResourcesView';
 import ServicesView from './views/ServicesView';
 import MissingPersonsView from './views/MissingPersonsView';
 import MissingPetsView from './views/MissingPetsView';
-import ChatbotView from './views/ChatbotView';
+import ChatRoomsView from './views/ChatRoomsView';
 import MarketplaceView from './views/MarketplaceView';
 import ProfileView from './views/ProfileView';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User } from 'lucide-react';
+import LegalView from './views/LegalView';
+import CookieBanner from './components/CookieBanner';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare } from 'lucide-react';
 
 const TAB_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: Home },
   { id: 'map', label: 'Mapa', icon: Map },
   { id: 'missing_persons', label: 'Buscar', icon: Users },
+  { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
   { id: 'services', label: 'Servicios', icon: Activity },
-  { id: 'marketplace', label: 'Market', icon: ShoppingBag },
 ];
 
 export default function App() {
@@ -33,6 +35,47 @@ export default function App() {
       setUser(JSON.parse(savedUser));
     }
   }, []);
+
+  const handleConsentChange = (consent) => {
+    if (consent.analytics) {
+      injectTrackingScripts();
+    }
+  };
+
+  const injectTrackingScripts = () => {
+    // Inject Microsoft Clarity
+    if (!window.clarityLoaded) {
+      const clarityScript = document.createElement('script');
+      clarityScript.type = 'text/javascript';
+      clarityScript.innerHTML = `
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "xcs11wj1kv");
+      `;
+      document.head.appendChild(clarityScript);
+      window.clarityLoaded = true;
+    }
+
+    // Inject Google Analytics
+    if (!window.gaLoaded) {
+      const gaScript1 = document.createElement('script');
+      gaScript1.async = true;
+      gaScript1.src = 'https://www.googletagmanager.com/gtag/js?id=G-8DW9DFCTX6';
+      document.head.appendChild(gaScript1);
+
+      const gaScript2 = document.createElement('script');
+      gaScript2.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-8DW9DFCTX6');
+      `;
+      document.head.appendChild(gaScript2);
+      window.gaLoaded = true;
+    }
+  };
 
   const handleLogin = (loggedUser) => {
     setUser(loggedUser);
@@ -61,7 +104,15 @@ export default function App() {
       );
       case 'missing_persons': return <MissingPersonsView user={user} />;
       case 'missing_pets': return <MissingPetsView user={user} />;
-      case 'chatbot': return <ChatbotView />;
+      case 'chat_rooms': return (
+        <ChatRoomsView 
+          user={user} 
+          onViewProfile={(id) => {
+            setViewUserId(id);
+            setView('profile');
+          }} 
+        />
+      );
       case 'marketplace': return <MarketplaceView user={user} />;
       case 'profile': return (
         <ProfileView 
@@ -74,6 +125,7 @@ export default function App() {
           setView={setView} 
         />
       );
+      case 'legal': return <LegalView setView={setView} />;
       default: return <DashboardView user={user} setView={setView} />;
     }
   };
@@ -259,6 +311,9 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* Cookie Banner */}
+      <CookieBanner onConsentChange={handleConsentChange} />
     </div>
   );
 }

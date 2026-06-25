@@ -624,6 +624,25 @@ export default function ProfileView({ user, onUserUpdate, viewUserId, setView })
             )}
           </div>
 
+          {/* Legal / Privacy Links */}
+          {isOwnProfile && (
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setView('legal')}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  fontSize: '0.8rem', 
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
+                }}
+              >
+                Aviso Legal, Privacidad y Cookies
+              </button>
+            </div>
+          )}
+
         </div>
       )}
     </div>

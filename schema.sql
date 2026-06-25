@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
 CREATE TABLE IF NOT EXISTS public.recursos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     creador_id TEXT REFERENCES public.usuarios(id) ON DELETE CASCADE,
-    tipo TEXT NOT NULL CHECK (tipo IN ('mueble', 'inmueble')),
-    categoria TEXT NOT NULL CHECK (categoria IN ('alimentos', 'baños', 'refugio', 'medicamentos')),
+    tipo TEXT NOT NULL,
+    categoria TEXT NOT NULL,
     nombre TEXT NOT NULL,
     descripcion TEXT,
     cantidad TEXT,
@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS public.recursos (
 CREATE TABLE IF NOT EXISTS public.servicios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     creador_id TEXT REFERENCES public.usuarios(id) ON DELETE CASCADE,
-    tipo_servicio TEXT NOT NULL CHECK (tipo_servicio IN ('medico', 'apoyo')),
+    tipo_servicio TEXT NOT NULL,
     subtipo TEXT NOT NULL, -- Ej: 'pediatria', 'escombros', 'reconstruccion', etc.
-    rol_servicio TEXT NOT NULL CHECK (rol_servicio IN ('ofrece', 'solicita')),
+    rol_servicio TEXT NOT NULL,
     descripcion TEXT,
     disponibilidad TEXT,
     ubicacion_lat DOUBLE PRECISION,
@@ -132,4 +132,20 @@ CREATE POLICY "Permitir eliminacion de servicios" ON public.servicios FOR DELETE
 CREATE POLICY "Permitir eliminacion de desaparecidos" ON public.desaparecidos FOR DELETE USING (true);
 CREATE POLICY "Permitir eliminacion de mascotas" ON public.mascotas FOR DELETE USING (true);
 CREATE POLICY "Permitir eliminacion de iniciativas" ON public.iniciativas FOR DELETE USING (true);
+
+-- Tabla: chat_messages (Salas de chat temáticas globales)
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id TEXT NOT NULL,
+    user_id TEXT REFERENCES public.usuarios(id) ON DELETE CASCADE NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir lectura publica de chats" ON public.chat_messages FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion de chats" ON public.chat_messages FOR INSERT WITH CHECK (true);
+
+-- Habilitar Realtime para la tabla chat_messages
+ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 
