@@ -80,8 +80,8 @@ fun WebViewScreen(onWebViewCreated: (WebView) -> Unit) {
                     }
                 }
 
-                // Carga la app local (usando adb reverse en localhost)
-                loadUrl("http://localhost:5173")
+                // Carga la app en producción
+                loadUrl("https://filosos.site")
 
                 // Registrar el WebView para el control de back
                 onWebViewCreated(this)

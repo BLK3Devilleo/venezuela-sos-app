@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { supabase } from '../supabase';
-import { Plus, RefreshCw, X, MapPin, Navigation2, Search, MessageCircle, Phone, ArrowLeft, Filter } from 'lucide-react';
+import { Plus, X, MapPin, Navigation2, Search, MessageCircle, Phone, ArrowLeft } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 
 // Fix Leaflet marker icon URLs
@@ -22,14 +22,14 @@ const createCustomIcon = (color, emoji) => {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         background-color: ${color};
         border: 2px solid white;
         border-radius: 50%;
         box-shadow: 0 4px 16px rgba(0,0,0,0.4);
       ">
-        <span style="font-size: 15px; transform: translateY(-1px);">${emoji}</span>
+        <span style="font-size: 16px; transform: translateY(-1px);">${emoji}</span>
         <div style="
           position: absolute;
           width: 100%;
@@ -43,45 +43,60 @@ const createCustomIcon = (color, emoji) => {
       </div>
     `,
     className: 'custom-map-icon',
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    popupAnchor: [0, -17]
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18]
   });
 };
 
 const MACRO_CATEGORIES = {
   salud: {
-    label: 'Salud y Sanidad',
+    label: 'Salud y Bienestar',
     color: '#ef4444', // Red
     bg: 'rgba(239, 68, 68, 0.1)',
+    icon: '❤️',
     sub: {
       'primeros_auxilios': { label: 'Primeros Auxilios', icon: '⚕️' },
       'medicamentos': { label: 'Medicamentos', icon: '💊' },
-      'atencion_medica': { label: 'Atención Médica', icon: '🏥' },
-      'atencion_psicologica': { label: 'Atención Mental', icon: '🧠' }
+      'atencion_medica': { label: 'Hospitales/Clínicas', icon: '🏥' },
+      'atencion_psicologica': { label: 'Apoyo Mental', icon: '🧠' }
     }
   },
   rescate: {
-    label: 'Rescate y Seguridad',
-    color: '#f59e0b', // Orange/Yellow
-    bg: 'rgba(245, 158, 11, 0.1)',
+    label: 'Rescate y Refugio',
+    color: '#ea580c', // Orange/Yellow
+    bg: 'rgba(234, 88, 12, 0.1)',
+    icon: '🆘',
     sub: {
-      'atrapados': { label: 'Personas Atrapadas', icon: '🆘' },
-      'colapsos': { label: 'Zonas Colapsadas', icon: '⚠️' },
-      'refugios': { label: 'Refugios Habilitados', icon: '🎪' },
-      'acampada': { label: 'Zonas de Acampada', icon: '⛺' },
+      'atrapados': { label: 'Auxilio Inmediato', icon: '🚨' },
+      'colapsos': { label: 'Zonas de Riesgo', icon: '⚠️' },
+      'refugios': { label: 'Refugios Oficiales', icon: '🎪' },
+      'acampada': { label: 'Campamentos', icon: '⛺' },
       'control': { label: 'Puntos de Control', icon: '🚧' }
     }
   },
   suministros: {
-    label: 'Suministros Básicos',
+    label: 'Alimentos y Agua',
     color: '#3b82f6', // Blue
     bg: 'rgba(59, 130, 246, 0.1)',
+    icon: '🍲',
     sub: {
-      'comida': { label: 'Reparto de Comida', icon: '🍲' },
-      'agua': { label: 'Agua Potable', icon: '💧' },
-      'donaciones': { label: 'Ropa / Mantas', icon: '👕' },
-      'acopio': { label: 'Centro de Acopio', icon: '📦' }
+      'comida': { label: 'Comida / Ollas', icon: '🍲' },
+      'agua': { label: 'Puntos de Agua', icon: '💧' },
+      'donaciones': { label: 'Ropa / Abrigo', icon: '👕' },
+      'acopio': { label: 'Centros de Acopio', icon: '📦' }
+    }
+  },
+  servicios_com: {
+    label: 'Servicios y Conexión',
+    color: '#a855f7', // Purple
+    bg: 'rgba(168, 85, 247, 0.1)',
+    icon: '🔌',
+    sub: {
+      'electricidad': { label: 'Puntos de Carga', icon: '🔌' },
+      'internet': { label: 'Zonas WiFi', icon: '📶' },
+      'transporte': { label: 'Transporte', icon: '🚌' },
+      'combustible': { label: 'Combustible / Gas', icon: '⛽' }
     }
   }
 };
@@ -99,10 +114,93 @@ const legacyIcons = {
   emergencia: createCustomIcon('#ef4444', '🆘'),
   alimentos: createCustomIcon('#3b82f6', '🍲'),
   baños: createCustomIcon('#3b82f6', '🚿'),
-  refugio: createCustomIcon('#f59e0b', '🎪'),
+  refugio: createCustomIcon('#ea580c', '🎪'),
   medicamentos: createCustomIcon('#ef4444', '💊'),
   servicio_medico: createCustomIcon('#ef4444', '⚕️'),
-  servicio_apoyo: createCustomIcon('#f59e0b', '🛠️')
+  servicio_apoyo: createCustomIcon('#ea580c', '🛠️'),
+  servicio_comunes: createCustomIcon('#a855f7', '🔌')
+};
+
+// Helper to map any resource or service (including legacy ones) to our modern macro/sub categories
+const mapItemToModernCategory = (item) => {
+  const isResource = item.tipo !== undefined && (item.tipo === 'mueble' || item.tipo === 'inmueble' || MACRO_CATEGORIES[item.tipo]);
+  
+  if (isResource) {
+    const tipo = item.tipo;
+    const cat = item.categoria;
+    
+    // If it already matches our modern schema, keep it!
+    if (MACRO_CATEGORIES[tipo] && MACRO_CATEGORIES[tipo].sub[cat]) {
+      return { macro: tipo, sub: cat };
+    }
+    
+    // Legacy resources mapping
+    if (cat === 'alimentos') {
+      return { macro: 'suministros', sub: 'comida' };
+    }
+    if (cat === 'baños') {
+      return { macro: 'suministros', sub: 'agua' }; 
+    }
+    if (cat === 'refugio') {
+      return { macro: 'rescate', sub: 'refugios' };
+    }
+    if (cat === 'medicamentos') {
+      return { macro: 'salud', sub: 'medicamentos' };
+    }
+    
+    // Default fallback for resources
+    return { macro: 'suministros', sub: 'acopio' };
+  } else {
+    // It's a service (from 'servicios' table)
+    const tipoServ = item.tipo_servicio; // 'medico' or 'apoyo'
+    const subtipo = (item.subtipo || '').toLowerCase();
+    
+    if (tipoServ === 'medico') {
+      if (subtipo.includes('mental') || subtipo.includes('psicol') || subtipo.includes('emocional')) {
+        return { macro: 'salud', sub: 'atencion_psicologica' };
+      }
+      if (subtipo.includes('auxilio') || subtipo.includes('urgenc') || subtipo.includes('emergenc')) {
+        return { macro: 'salud', sub: 'primeros_auxilios' };
+      }
+      if (subtipo.includes('medicamento') || subtipo.includes('pastilla') || subtipo.includes('farmacia')) {
+        return { macro: 'salud', sub: 'medicamentos' };
+      }
+      return { macro: 'salud', sub: 'atencion_medica' };
+    }
+    
+    if (tipoServ === 'apoyo') {
+      if (subtipo.includes('luz') || subtipo.includes('energia') || subtipo.includes('carg') || subtipo.includes('electri')) {
+        return { macro: 'servicios_com', sub: 'electricidad' };
+      }
+      if (subtipo.includes('wifi') || subtipo.includes('internet') || subtipo.includes('señal') || subtipo.includes('comun')) {
+        return { macro: 'servicios_com', sub: 'internet' };
+      }
+      if (subtipo.includes('transp') || subtipo.includes('trasla') || subtipo.includes('bus') || subtipo.includes('carro')) {
+        return { macro: 'servicios_com', sub: 'transporte' };
+      }
+      if (subtipo.includes('gas') || subtipo.includes('combust') || subtipo.includes('gasol')) {
+        return { macro: 'servicios_com', sub: 'combustible' };
+      }
+      if (subtipo.includes('rescate') || subtipo.includes('escombro') || subtipo.includes('atrapado') || subtipo.includes('colapso')) {
+        return { macro: 'rescate', sub: 'colapsos' };
+      }
+      if (subtipo.includes('refugio') || subtipo.includes('albergue') || subtipo.includes('carpa')) {
+        return { macro: 'rescate', sub: 'refugios' };
+      }
+      if (subtipo.includes('comida') || subtipo.includes('alimento') || subtipo.includes('sopa') || subtipo.includes('comedor')) {
+        return { macro: 'suministros', sub: 'comida' };
+      }
+      if (subtipo.includes('agua') || subtipo.includes('hidrata') || subtipo.includes('filtro')) {
+        return { macro: 'suministros', sub: 'agua' };
+      }
+      if (subtipo.includes('ropa') || subtipo.includes('manta') || subtipo.includes('abrigo') || subtipo.includes('vestir')) {
+        return { macro: 'suministros', sub: 'donaciones' };
+      }
+    }
+    
+    // Default fallback for services
+    return { macro: 'servicios_com', sub: 'transporte' };
+  }
 };
 
 // Component to dynamically update map center and zoom level
@@ -121,6 +219,7 @@ export default function MapView({ user }) {
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activePopupId, setActivePopupId] = useState(null);
   
   // Set all subcategories as enabled by default
   const [activeFilters, setActiveFilters] = useState(() => {
@@ -154,6 +253,7 @@ export default function MapView({ user }) {
   }, []);
 
   const fetchMapData = async () => {
+    console.log('Fetching map data...');
     setLoading(true);
     try {
       const [resRec, resServ] = await Promise.all([
@@ -162,41 +262,44 @@ export default function MapView({ user }) {
       ]);
 
       const formattedRecursos = (resRec.data || []).map(r => {
-        let icon = null;
-        let displayType = '';
-        const cacheKey = `${r.tipo}_${r.categoria}`;
-
-        if (MACRO_CATEGORIES[r.tipo] && MACRO_CATEGORIES[r.tipo].sub[r.categoria]) {
-          icon = iconsCache[cacheKey];
-          displayType = `${MACRO_CATEGORIES[r.tipo].label} - ${MACRO_CATEGORIES[r.tipo].sub[r.categoria].label}`;
-        } else {
-          icon = legacyIcons[r.categoria] || legacyIcons.alimentos;
-          displayType = r.categoria;
-        }
+        const modernCat = mapItemToModernCategory(r);
+        const cacheKey = `${modernCat.macro}_${modernCat.sub}`;
+        const icon = iconsCache[cacheKey] || legacyIcons.alimentos;
+        const displayType = `${MACRO_CATEGORIES[modernCat.macro]?.label || 'Recurso'} - ${MACRO_CATEGORIES[modernCat.macro]?.sub[modernCat.sub]?.label || 'Detalle'}`;
 
         return {
           ...r,
-          mapType: r.tipo,
+          mapType: 'recurso',
           displayType,
           icon,
-          categoryKey: cacheKey
+          categoryKey: cacheKey,
+          tipo: modernCat.macro,
+          categoria: modernCat.sub
         };
       });
 
       const formattedServicios = (resServ.data || []).map(s => {
+        const modernCat = mapItemToModernCategory(s);
+        const cacheKey = `${modernCat.macro}_${modernCat.sub}`;
+        const icon = iconsCache[cacheKey] || legacyIcons.servicio_comunes;
+        const displayType = `${MACRO_CATEGORIES[modernCat.macro]?.label || 'Voluntariado'} - ${MACRO_CATEGORIES[modernCat.macro]?.sub[modernCat.sub]?.label || 'Detalle'}`;
+
         return {
           ...s,
           mapType: 'servicio',
-          displayType: s.subtipo || s.tipo_servicio,
+          displayType,
           nombre: s.nombre || s.subtipo,
-          icon: s.tipo_servicio === 'medico' ? legacyIcons.servicio_medico : legacyIcons.servicio_apoyo,
-          categoryKey: `legacy_${s.tipo_servicio}`
+          icon,
+          categoryKey: cacheKey,
+          tipo: modernCat.macro,
+          categoria: modernCat.sub
         };
       });
 
       const allItems = [...formattedRecursos, ...formattedServicios].filter(
         item => item.ubicacion_lat != null && item.ubicacion_lng != null
       );
+      console.log(`Loaded ${allItems.length} map items in total.`);
       setItems(allItems);
     } catch (err) {
       console.error('Error fetching map data:', err);
@@ -209,6 +312,22 @@ export default function MapView({ user }) {
     setActiveFilters(prev => 
       prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]
     );
+  };
+
+  const toggleMacroCategory = (macroKey) => {
+    const subKeys = Object.keys(MACRO_CATEGORIES[macroKey].sub).map(s => `${macroKey}_${s}`);
+    const isAllActive = subKeys.every(k => activeFilters.includes(k));
+    
+    if (isAllActive) {
+      // Deactivate all subcategories under this macro
+      setActiveFilters(prev => prev.filter(f => !subKeys.includes(f)));
+    } else {
+      // Activate all subcategories under this macro (avoiding duplicates)
+      setActiveFilters(prev => {
+        const clean = prev.filter(f => !subKeys.includes(f));
+        return [...clean, ...subKeys];
+      });
+    }
   };
 
   const selectAllFilters = () => {
@@ -283,10 +402,7 @@ export default function MapView({ user }) {
 
   // Filter items based on active filters and search query
   const filteredItems = items.filter(item => {
-    // If it's a legacy type, check if we have legacy matches, otherwise filter by macro_sub key
-    const isLegacy = item.categoryKey.startsWith('legacy_');
-    const matchesFilter = isLegacy || activeFilters.includes(item.categoryKey);
-    
+    const matchesFilter = activeFilters.includes(item.categoryKey);
     const matchesSearch = 
       item.nombre?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.descripcion?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -297,13 +413,13 @@ export default function MapView({ user }) {
 
   const handleLocateOnMap = (item) => {
     setMapCenter([item.ubicacion_lat, item.ubicacion_lng]);
-    setMapZoom(16); // High zoom focus
+    setMapZoom(17); // Close zoom focus
+    setActivePopupId(item.id); // Open popup automatically
     setShowMap(true); // Open the full-screen map view
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
-      
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', width: '100%' }}>
       {showMap ? (
         /* ================== FULL SCREEN MAP MODE ================== */
         <div style={{ 
@@ -360,11 +476,76 @@ export default function MapView({ user }) {
               padding: '0.6rem 1.2rem',
               color: 'var(--text-primary)',
               fontSize: '0.8rem',
-              fontWeight: '600',
+              fontWeight: '700',
               boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
             }}>
               Mostrando {filteredItems.length} puntos
             </div>
+          </div>
+
+          {/* Floating Macro Filter Bar inside Map */}
+          <div style={{
+            position: 'absolute',
+            top: 'calc(env(safe-area-inset-top, 16px) + 50px)',
+            left: '1rem',
+            right: '1rem',
+            zIndex: 1000,
+            display: 'flex',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            paddingBottom: '8px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }} className="hide-scrollbar">
+            {Object.keys(MACRO_CATEGORIES).map(macroKey => {
+              const macro = MACRO_CATEGORIES[macroKey];
+              const subKeys = Object.keys(macro.sub).map(s => `${macroKey}_${s}`);
+              const isAnyActive = subKeys.some(k => activeFilters.includes(k));
+              const isAllActive = subKeys.every(k => activeFilters.includes(k));
+              const countInMap = filteredItems.filter(item => item.tipo === macroKey).length;
+              
+              return (
+                <button
+                  key={macroKey}
+                  onClick={() => toggleMacroCategory(macroKey)}
+                  style={{
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '2rem',
+                    border: '1px solid',
+                    borderColor: isAnyActive ? macro.color : 'var(--border)',
+                    backgroundColor: isAllActive 
+                      ? `${macro.color}e0` 
+                      : isAnyActive 
+                        ? `${macro.color}35` 
+                        : 'rgba(19, 28, 46, 0.85)',
+                    backdropFilter: 'blur(12px)',
+                    color: isAnyActive ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: '800',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                    transition: 'all 0.2s ease',
+                    userSelect: 'none'
+                  }}
+                >
+                  <span style={{ fontSize: '0.85rem' }}>{macro.icon}</span>
+                  <span>{macro.label.split(' ')[0]}</span>
+                  <span style={{ 
+                    backgroundColor: 'rgba(255,255,255,0.18)', 
+                    padding: '0.1rem 0.4rem', 
+                    borderRadius: '1rem', 
+                    fontSize: '0.65rem',
+                    fontWeight: '800'
+                  }}>
+                    {countInMap}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Interactive Leaflet Map */}
@@ -386,49 +567,59 @@ export default function MapView({ user }) {
                 key={item.id}
                 position={[item.ubicacion_lat, item.ubicacion_lng]}
                 icon={item.icon || legacyIcons.alimentos}
+                eventHandlers={{
+                  click: () => setActivePopupId(item.id)
+                }}
               >
-                <Popup>
-                  <div style={{ color: '#111', fontSize: '0.85rem', width: '220px', fontFamily: 'var(--font-sans)' }}>
-                    <div style={{ 
-                      fontSize: '0.65rem', 
-                      fontWeight: '800', 
-                      textTransform: 'uppercase', 
-                      marginBottom: '4px', 
-                      color: MACRO_CATEGORIES[item.tipo]?.color || '#2563eb' 
-                    }}>
-                      {item.displayType}
-                    </div>
-                    <div style={{ fontWeight: '800', fontSize: '1rem', marginBottom: '4px', lineHeight: '1.2', color: '#1e293b' }}>
-                      {item.nombre || item.subtipo}
-                    </div>
-                    {item.descripcion && (
-                      <div style={{ color: '#555', fontSize: '0.8rem', marginBottom: '8px', lineHeight: '1.3' }}>
-                        {item.descripcion}
+                {activePopupId === item.id && (
+                  <Popup position={[item.ubicacion_lat, item.ubicacion_lng]} onClose={() => setActivePopupId(null)}>
+                    <div style={{ color: '#111', fontSize: '0.85rem', width: '220px', fontFamily: 'var(--font-sans)' }}>
+                      <div style={{ 
+                        fontSize: '0.65rem', 
+                        fontWeight: '800', 
+                        textTransform: 'uppercase', 
+                        marginBottom: '4px', 
+                        color: MACRO_CATEGORIES[item.tipo]?.color || '#2563eb' 
+                      }}>
+                        {item.displayType}
                       </div>
-                    )}
-                    <a
-                      href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, vi tu publicación en el mapa de VenezuelaSOS.')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        padding: '8px 12px', 
-                        backgroundColor: '#25D366', 
-                        color: '#fff', 
-                        borderRadius: '8px', 
-                        textDecoration: 'none', 
-                        fontWeight: '700', 
-                        fontSize: '0.8rem', 
-                        marginTop: '10px',
-                        boxShadow: '0 2px 8px rgba(37,211,102,0.3)'
-                      }}
-                    >
-                      <MessageCircle size={14} /> Contactar por WhatsApp
-                    </a>
-                  </div>
-                </Popup>
+                      <div style={{ fontWeight: '800', fontSize: '1rem', marginBottom: '4px', lineHeight: '1.2', color: '#1e293b' }}>
+                        {item.nombre || item.subtipo}
+                      </div>
+                      {item.descripcion && (
+                        <div style={{ color: '#555', fontSize: '0.8rem', marginBottom: '8px', lineHeight: '1.3' }}>
+                          {item.descripcion}
+                        </div>
+                      )}
+                      {item.cantidad && (
+                        <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '8px' }}>
+                          <strong>Cantidad/Estado:</strong> {item.cantidad}
+                        </div>
+                      )}
+                      <a
+                        href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, vi tu publicación en el mapa de VenezuelaSOS.')}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                          padding: '8px 12px', 
+                          backgroundColor: '#25D366', 
+                          color: '#fff', 
+                          borderRadius: '8px', 
+                          textDecoration: 'none', 
+                          fontWeight: '700', 
+                          fontSize: '0.8rem', 
+                          marginTop: '10px',
+                          boxShadow: '0 2px 8px rgba(37,211,102,0.3)'
+                        }}
+                      >
+                        <MessageCircle size={14} /> Contactar por WhatsApp
+                      </a>
+                    </div>
+                  </Popup>
+                )}
               </Marker>
             ))}
 
@@ -457,7 +648,7 @@ export default function MapView({ user }) {
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
             }}>
-              <MapPin size={14} style={{ color: '#ef4444' }} /> Toca un punto en el mapa para reportar ayuda
+              <MapPin size={14} style={{ color: '#ef4444' }} /> Toca el mapa para reportar ayuda en ese punto
             </div>
           </div>
 
@@ -485,7 +676,7 @@ export default function MapView({ user }) {
         </div>
       ) : (
         /* ================== CONFIGURATION & DIRECTORY MODE ================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease', width: '100%', padding: '1rem 0' }}>
           
           {/* Guide Header */}
           <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
@@ -493,159 +684,193 @@ export default function MapView({ user }) {
               Mapa de Emergencias
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto', lineHeight: '1.5' }}>
-              Configura qué ayuda o reportes deseas visualizar antes de ingresar al mapa interactivo.
+              Red comunitaria en tiempo real. Gestiona la ayuda para Venezuela de forma transparente y eficiente.
             </p>
           </div>
 
-          {/* 1. Category Filter Card */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.9rem' }}>
-                <Filter size={16} className="text-primary" />
-                <span>1. Configurar Filtros de Mapa</span>
+          {/* Explanation Banner */}
+          <div className="card" style={{
+            background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(29, 78, 216, 0.08) 100%)',
+            borderColor: 'rgba(13, 148, 136, 0.25)',
+            padding: '1.25rem',
+            borderRadius: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, width: '4px', height: '100%',
+              background: 'linear-gradient(to bottom, var(--ve-yellow), var(--ve-blue), var(--ve-red))'
+            }} />
+            <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>Antes de ver el mapa, configura qué quieres ver:</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+              Personaliza el mapa marcando o desmarcando categorías a continuación. Esto filtrará tanto los pines en el mapa interactivo como el listado del directorio en tiempo real.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button 
+                onClick={selectAllFilters}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', borderRadius: '2rem' }}
+              >
+                👀 Mostrar Todo
+              </button>
+              <button 
+                onClick={clearAllFilters}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', borderRadius: '2rem' }}
+              >
+                🧹 Limpiar
+              </button>
+              <div style={{ 
+                display: 'flex', alignItems: 'center', gap: '0.35rem', 
+                fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', marginLeft: 'auto' 
+              }}>
+                <span className="live-pulse" style={{ backgroundColor: activeFilters.length > 0 ? '#10b981' : '#ef4444' }} />
+                <span>{activeFilters.length} filtros activos</span>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
-                <button 
-                  onClick={selectAllFilters}
-                  style={{ background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', padding: '0.3rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: '600' }}
-                >
-                  Marcar todos
-                </button>
-                <button 
-                  onClick={clearAllFilters}
-                  style={{ background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', padding: '0.3rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.7rem', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: '600' }}
-                >
-                  Limpiar
-                </button>
-              </div>
-            </div>
-
-            {/* Macro categories grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {Object.keys(MACRO_CATEGORIES).map(macroKey => {
-                const macro = MACRO_CATEGORIES[macroKey];
-                return (
-                  <div 
-                    key={macroKey} 
-                    style={{ 
-                      backgroundColor: 'rgba(255,255,255,0.01)', 
-                      border: '1px solid var(--border)', 
-                      borderRadius: '0.875rem', 
-                      padding: '0.875rem 1rem' 
-                    }}
-                  >
-                    {/* Macro Title */}
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: '800', 
-                      color: macro.color, 
-                      textTransform: 'uppercase', 
-                      letterSpacing: '0.05em',
-                      marginBottom: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
-                    }}>
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: macro.color }} />
-                      {macro.label}
-                    </div>
-
-                    {/* Subcategories buttons */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                      gap: '0.5rem' 
-                    }}>
-                      {Object.keys(macro.sub).map(subKey => {
-                        const sub = macro.sub[subKey];
-                        const filterKey = `${macroKey}_${subKey}`;
-                        const isActive = activeFilters.includes(filterKey);
-                        return (
-                          <button
-                            key={subKey}
-                            onClick={() => handleFilterToggle(filterKey)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              padding: '0.6rem 0.8rem',
-                              borderRadius: '0.65rem',
-                              border: '1px solid',
-                              borderColor: isActive ? macro.color : 'var(--border)',
-                              backgroundColor: isActive ? `${macro.color}15` : 'var(--bg-surface-soft)',
-                              color: isActive ? '#fff' : 'var(--text-secondary)',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              fontSize: '0.75rem',
-                              fontWeight: isActive ? '700' : '500',
-                              transition: 'all 0.2s',
-                              userSelect: 'none',
-                              boxShadow: isActive ? `0 0 10px ${macro.color}15` : 'none'
-                            }}
-                          >
-                            <span style={{ fontSize: '1rem', flexShrink: 0 }}>{sub.icon}</span>
-                            <span style={{ 
-                              whiteSpace: 'nowrap', 
-                              overflow: 'hidden', 
-                              textOverflow: 'ellipsis' 
-                            }}>
-                              {sub.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
-          {/* 2. Open Map Action Button */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {/* The 4 Category Cards Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            {Object.keys(MACRO_CATEGORIES).map(macroKey => {
+              const macro = MACRO_CATEGORIES[macroKey];
+              const subKeys = Object.keys(macro.sub).map(s => `${macroKey}_${s}`);
+              const activeCount = subKeys.filter(k => activeFilters.includes(k)).length;
+              const allSubKeysCount = subKeys.length;
+              const isAllActive = activeCount === allSubKeysCount;
+              
+              return (
+                <div 
+                  key={macroKey} 
+                  className="card"
+                  style={{ 
+                    borderColor: activeCount > 0 ? `${macro.color}40` : 'var(--border)',
+                    boxShadow: activeCount > 0 ? `0 8px 30px ${macro.color}08` : 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    padding: '1.25rem',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {/* Card Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ 
+                        width: '32px', height: '32px', borderRadius: '50%', 
+                        backgroundColor: `${macro.color}15`, display: 'flex', 
+                        alignItems: 'center', justifyContent: 'center', color: macro.color,
+                        fontSize: '1rem'
+                      }}>
+                        {macro.icon}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <h4 className="font-display" style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', lineHeight: '1.2' }}>
+                          {macro.label}
+                        </h4>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                          {activeCount} de {allSubKeysCount} activos
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => toggleMacroCategory(macroKey)}
+                      style={{
+                        background: activeCount > 0 ? `${macro.color}15` : 'var(--bg-surface-soft)',
+                        border: '1px solid',
+                        borderColor: activeCount > 0 ? `${macro.color}30` : 'var(--border)',
+                        padding: '0.3rem 0.75rem',
+                        borderRadius: '2rem',
+                        fontSize: '0.7rem',
+                        color: activeCount > 0 ? '#fff' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: '700',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isAllActive ? 'Ocultar todo' : 'Mostrar todo'}
+                    </button>
+                  </div>
+
+                  {/* Subcategories grid */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                    gap: '0.5rem' 
+                  }}>
+                    {Object.keys(macro.sub).map(subKey => {
+                      const sub = macro.sub[subKey];
+                      const filterKey = `${macroKey}_${subKey}`;
+                      const isActive = activeFilters.includes(filterKey);
+                      return (
+                        <button
+                          key={subKey}
+                          onClick={() => handleFilterToggle(filterKey)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            padding: '0.65rem 0.8rem',
+                            borderRadius: '0.65rem',
+                            border: '1px solid',
+                            borderColor: isActive ? macro.color : 'var(--border)',
+                            backgroundColor: isActive ? `${macro.color}18` : 'var(--bg-surface-soft)',
+                            color: isActive ? '#fff' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
+                            fontWeight: isActive ? '800' : '500',
+                            transition: 'all 0.2s ease',
+                            userSelect: 'none',
+                            boxShadow: isActive ? `0 2px 10px ${macro.color}15` : 'none'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{sub.icon}</span>
+                          <span style={{ 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis' 
+                          }}>
+                            {sub.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. Open Map Action Button (Tricolor) */}
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0' }}>
             <button
               onClick={() => {
-                setMapZoom(13); // Reset zoom
+                setMapZoom(13);
                 setShowMap(true);
               }}
+              className="btn-tricolor"
               style={{
                 width: '100%',
-                padding: '1.1rem',
-                borderRadius: '0.875rem',
-                background: 'linear-gradient(to right, #ffcc00 0% 33.3%, #00247d 33.3% 66.6%, #cf142b 66.6%)',
-                border: 'none',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 8px 32px rgba(0, 36, 125, 0.35)',
-                position: 'relative',
-                overflow: 'hidden'
+                display: 'block'
               }}
             >
-              {/* Internal layout to make sure text is high contrast and matches the premium gradient */}
-              <div style={{
-                position: 'absolute', inset: '1px', borderRadius: '0.8rem',
-                backgroundColor: 'rgba(7, 11, 21, 0.9)', display: 'flex',
-                alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(7, 11, 21, 0.82)'}
-              onMouseOut={e => e.currentTarget.style.backgroundColor = 'rgba(7, 11, 21, 0.9)'}
-              >
-                <span>🗺️</span>
+              <div className="btn-tricolor-inner">
+                <span style={{ fontSize: '1.2rem' }}>🗺️</span>
                 <span>ABRIR MAPA INTERACTIVO</span>
                 <span style={{ 
                   backgroundColor: 'rgba(255,255,255,0.08)',
-                  padding: '0.2rem 0.5rem',
+                  padding: '0.2rem 0.6rem',
                   borderRadius: '1rem',
                   fontSize: '0.75rem',
-                  fontWeight: '700',
-                  color: 'var(--primary)'
+                  fontWeight: '800',
+                  color: '#ffcc00'
                 }}>
                   {filteredItems.length} reportes
                 </span>
@@ -654,9 +879,14 @@ export default function MapView({ user }) {
           </div>
 
           {/* 3. Directory Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.9rem' }}>
-              <span>2. Directorio de Reportes Activos</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '1.1rem' }}>
+                <span>Directorio de Emergencias Activas</span>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+                {filteredItems.length} encontrados
+              </span>
             </div>
 
             {/* Directory Search Bar */}
@@ -668,7 +898,7 @@ export default function MapView({ user }) {
               <Search size={18} style={{ color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                placeholder="Buscar por palabra clave o categoría..."
+                placeholder="Buscar por palabra clave, estado o tipo..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{
@@ -688,21 +918,22 @@ export default function MapView({ user }) {
 
             {/* List of Report Cards */}
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                 Cargando directorio...
               </div>
             ) : filteredItems.length === 0 ? (
               <div style={{
-                textAlign: 'center', padding: '3rem 1rem', background: 'var(--bg-surface)',
+                textAlign: 'center', padding: '3rem 1.5rem', background: 'var(--bg-surface)',
                 border: '1px dashed var(--border)', borderRadius: '1rem',
                 color: 'var(--text-muted)', fontSize: '0.85rem'
               }}>
-                No se encontraron reportes con los filtros o búsquedas seleccionadas.
+                No hay ningún reporte que coincida con los filtros y la búsqueda seleccionada.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {filteredItems.map((item) => {
                   const macroColor = MACRO_CATEGORIES[item.tipo]?.color || '#0d9488';
+                  const isRec = item.mapType === 'recurso';
                   return (
                     <div 
                       key={item.id}
@@ -710,27 +941,41 @@ export default function MapView({ user }) {
                       style={{ 
                         padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem',
                         borderLeft: `4px solid ${macroColor}`,
-                        backgroundColor: 'var(--bg-surface)'
+                        backgroundColor: 'var(--bg-surface)',
+                        transition: 'transform 0.15s ease'
                       }}
                     >
                       {/* Top Category Indicator */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ 
-                          fontSize: '0.65rem', 
-                          fontWeight: '800', 
-                          color: macroColor, 
-                          textTransform: 'uppercase', 
-                          letterSpacing: '0.05em' 
-                        }}>
-                          {item.displayType}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ 
+                            fontSize: '0.65rem', 
+                            fontWeight: '800', 
+                            color: macroColor, 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '0.05em' 
+                          }}>
+                            {item.displayType}
+                          </span>
+                          <span style={{
+                            fontSize: '0.6rem',
+                            fontWeight: '800',
+                            padding: '0.15rem 0.4rem',
+                            borderRadius: '0.25rem',
+                            backgroundColor: isRec ? 'rgba(13, 148, 136, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                            color: isRec ? 'var(--primary)' : '#a855f7',
+                            textTransform: 'uppercase'
+                          }}>
+                            {isRec ? 'Bienes/Recurso' : 'Servicio/Ayuda'}
+                          </span>
+                        </div>
                         
                         {/* Compact Whatsapp link */}
                         <a
                           href={`https://wa.me/${item.contacto_whatsapp.replace(/[^0-9]/g, '')}?text=Hola,%20vi%20tu%20anuncio%20en%20el%20mapa%20de%20VenezuelaSOS.`}
                           target="_blank" rel="noopener noreferrer"
                           style={{
-                            fontSize: '0.7rem', fontWeight: '700', color: '#25D366',
+                            fontSize: '0.7rem', fontWeight: '800', color: '#25D366',
                             textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.2rem'
                           }}
                         >
@@ -739,7 +984,7 @@ export default function MapView({ user }) {
                       </div>
 
                       {/* Title & Description */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <h4 className="font-display" style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', lineHeight: '1.2' }}>
                           {item.nombre || item.subtipo}
                         </h4>
@@ -762,7 +1007,7 @@ export default function MapView({ user }) {
                           style={{
                             flex: 1, padding: '0.5rem', borderRadius: '0.5rem',
                             background: 'var(--bg-surface-soft)', border: '1px solid var(--border)',
-                            color: 'var(--primary)', fontWeight: '700', fontSize: '0.75rem',
+                            color: 'var(--primary)', fontWeight: '800', fontSize: '0.75rem',
                             cursor: 'pointer', display: 'flex', alignItems: 'center',
                             justifyContent: 'center', gap: '0.3rem', transition: 'all 0.15s'
                           }}
@@ -832,7 +1077,7 @@ export default function MapView({ user }) {
               value={formData.sub} 
               onChange={e => setFormData({ ...formData, sub: e.target.value })}
             >
-              {Object.keys(MACRO_CATEGORIES[formData.macro].sub).map(key => (
+              {MACRO_CATEGORIES[formData.macro] && Object.keys(MACRO_CATEGORIES[formData.macro].sub).map(key => (
                 <option key={key} value={key}>
                   {MACRO_CATEGORIES[formData.macro].sub[key].icon} {MACRO_CATEGORIES[formData.macro].sub[key].label}
                 </option>
@@ -863,7 +1108,7 @@ export default function MapView({ user }) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">WhatsApp de Contacto / Coordinador *</label>
+            <label className="input-label">WhatsApp de Contacto *</label>
             <input 
               type="tel" 
               className="input-field" 
@@ -881,8 +1126,8 @@ export default function MapView({ user }) {
               width: '100%', 
               padding: '0.9rem', 
               fontSize: '1rem', 
-              background: MACRO_CATEGORIES[formData.macro].color, 
-              borderColor: MACRO_CATEGORIES[formData.macro].color 
+              background: MACRO_CATEGORIES[formData.macro]?.color || 'var(--primary)', 
+              borderColor: MACRO_CATEGORIES[formData.macro]?.color || 'var(--primary)' 
             }}
           >
             <Plus size={18} /> Añadir al Mapa de Catástrofe
@@ -910,22 +1155,50 @@ export default function MapView({ user }) {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .filter-chip {
-          padding: 0.4rem 0.8rem;
-          background-color: var(--bg-surface-soft);
-          border: 1px solid var(--border);
-          border-radius: 2rem;
-          color: var(--text-secondary);
-          font-size: 0.75rem;
-          font-weight: 600;
+        .btn-tricolor {
+          position: relative;
+          background: linear-gradient(90deg, #ffcc00, #00247d, #cf142b);
+          padding: 3px;
+          border-radius: 1rem;
+          border: none;
           cursor: pointer;
-          transition: all 0.2s;
-          white-space: nowrap;
+          box-shadow: 0 8px 32px rgba(0, 36, 125, 0.25);
+          transition: all 0.3s ease;
+          animation: pulse-tricolor 3s infinite ease-in-out;
         }
-        .filter-chip.active {
-          background-color: var(--primary-glow);
-          border-color: var(--primary);
+        .btn-tricolor:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px rgba(207, 20, 43, 0.35);
+        }
+        .btn-tricolor-inner {
+          background-color: #0b0f19;
           color: #fff;
+          padding: 1.1rem;
+          border-radius: calc(1rem - 3px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          font-weight: 900;
+          font-size: 1rem;
+          letter-spacing: 0.05em;
+          transition: background-color 0.2s;
+          pointer-events: none;
+        }
+        .btn-tricolor:hover .btn-tricolor-inner {
+          background-color: #131c2e;
+        }
+        @keyframes pulse-tricolor {
+          0% { box-shadow: 0 8px 32px rgba(0, 36, 125, 0.2); }
+          50% { box-shadow: 0 8px 32px rgba(220, 38, 38, 0.35); }
+          100% { box-shadow: 0 8px 32px rgba(0, 36, 125, 0.2); }
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>
