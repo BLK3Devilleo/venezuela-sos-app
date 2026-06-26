@@ -60,6 +60,10 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
   const [advTelefono, setAdvTelefono] = useState('');
   const [randomSeed, setRandomSeed] = useState(() => Math.random());
   
+  const handleShuffle = () => {
+    setRandomSeed(Math.random());
+  };
+  
   // Extended form states
   const [formData, setFormData] = useState({
     nombre: '',
