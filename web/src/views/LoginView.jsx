@@ -40,13 +40,27 @@ export default function LoginView({ onLogin, needsOnboarding = false, authUserId
       // Guardar el rol temporalmente para recuperarlo tras el redirect
       localStorage.setItem('onboarding_rol', rol);
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Determinar si estamos corriendo en Capacitor (Android/iOS)
+      const { Capacitor } = await import('@capacitor/core');
+      const isNative = Capacitor.isNativePlatform();
+      const redirectUrl = isNative 
+        ? 'com.venezuelasos.app://login-callback/'
+        : window.location.origin;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: isNative // Si es nativo, obtenemos la URL y la abrimos manualmente
         }
       });
+      
       if (error) throw error;
+
+      if (isNative && data?.url) {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: data.url });
+      }
     } catch (err) {
       console.error('Error al iniciar Google Auth:', err);
       setError('No se pudo conectar con Google. Inténtalo de nuevo.');

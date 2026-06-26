@@ -39,6 +39,31 @@ export default function App() {
     if (savedZoom) {
       document.documentElement.style.fontSize = savedZoom;
     }
+
+    // Configuración para Capacitor (Deep Linking OAuth)
+    const initCapacitorAuth = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { App: CapApp } = await import('@capacitor/app');
+          const { Browser } = await import('@capacitor/browser');
+          
+          CapApp.addListener('appUrlOpen', (event) => {
+            // Si la URL contiene el token, es el callback de login
+            if (event.url.includes('#access_token') || event.url.includes('?code=')) {
+              Browser.close(); // Cerramos la pestaña de Chrome
+              // Reemplazamos la URL del webview para que Supabase la procese
+              // Solo agarramos la parte después del dominio (ej. /#access_token=...)
+              const urlObj = new URL(event.url);
+              window.location.replace(urlObj.pathname + urlObj.search + urlObj.hash);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Capacitor no detectado o error al cargar:', e);
+      }
+    };
+    initCapacitorAuth();
   }, []);
 
   useEffect(() => {
