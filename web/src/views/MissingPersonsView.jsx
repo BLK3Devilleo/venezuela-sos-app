@@ -278,6 +278,19 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
         errors[err.path[0]] = err.message;
       });
       setFormErrors(errors);
+      const firstErr = result.error.errors[0].message;
+      window.showToast(`${result.error.errors[0].path[0].toUpperCase()}: ${firstErr}`, 'error');
+      return;
+    }
+
+    if (!formData.ultimo_lugar_visto.trim()) {
+      window.showToast("La última ubicación es obligatoria para el reporte.", "error");
+      setFormErrors(prev => ({ ...prev, ultimo_lugar_visto: "Última ubicación requerida" }));
+      return;
+    }
+
+    if (!imageFile && !fotoPreview) {
+      window.showToast("La foto de la persona es obligatoria para el reporte.", "error");
       return;
     }
 
@@ -308,6 +321,7 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
 
     if (!contactsValid) {
       setFormErrors(prev => ({ ...prev, contacts: contactsErrorMsg }));
+      window.showToast(contactsErrorMsg, 'error');
       return;
     }
 

@@ -194,6 +194,19 @@ export default function MissingPetsView({ user, onRequireLogin }) {
         errors[err.path[0]] = err.message;
       });
       setFormErrors(errors);
+      const firstErr = result.error.errors[0].message;
+      window.showToast(`${result.error.errors[0].path[0].toUpperCase()}: ${firstErr}`, 'error');
+      return;
+    }
+
+    if (!formData.ultima_ubicacion.trim()) {
+      window.showToast("La última ubicación de la mascota es obligatoria.", "error");
+      setFormErrors(prev => ({ ...prev, ultima_ubicacion: "Ubicación requerida" }));
+      return;
+    }
+
+    if (!imageFile && !fotoPreview) {
+      window.showToast("La foto de la mascota es obligatoria para publicar.", "error");
       return;
     }
 
