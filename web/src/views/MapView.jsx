@@ -236,13 +236,16 @@ function ChangeMapView({ center, zoom }) {
   return null;
 }
 
-export default function MapView({ user, onRequireLogin }) {
+export default function MapView({ user, onRequireLogin, initialState, setInitialState }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activePopupId, setActivePopupId] = useState(null);
   
-  // Set all subcategories as enabled by default
+  // Initialize filters based on initialState if provided
   const [activeFilters, setActiveFilters] = useState(() => {
+    if (initialState?.filters && initialState.filters.length > 0) {
+      return initialState.filters;
+    }
     const filters = [];
     Object.keys(MACRO_CATEGORIES).forEach(macroKey => {
       Object.keys(MACRO_CATEGORIES[macroKey].sub).forEach(subKey => {
@@ -262,8 +265,19 @@ export default function MapView({ user, onRequireLogin }) {
   });
 
   // Map positioning state
-  const [mapCenter] = useState([10.5000, -66.9000]); // Caracas default
-  const [mapZoom] = useState(13);
+  const [mapCenter, setMapCenter] = useState(initialState?.center || [10.5000, -66.9000]); // Caracas default
+  const [mapZoom, setMapZoom] = useState(initialState?.zoom || 13);
+
+  // Clear initial state so it doesn't force re-renders endlessly if we navigate away and back without clicking a zone
+  useEffect(() => {
+    if (initialState && setInitialState) {
+      // Small timeout allows the map to center before clearing it
+      const t = setTimeout(() => {
+        setInitialState(null);
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [initialState, setInitialState]);
 
   // New marker creation state
   const [newMarkerPos, setNewMarkerPos] = useState(null);

@@ -87,6 +87,7 @@ export default function App() {
   const [viewUserId, setViewUserId] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mapInitialState, setMapInitialState] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
   const [theme, setTheme] = useState(() => localStorage.getItem('filoSOS_theme') || 'dark');
 
@@ -315,7 +316,7 @@ export default function App() {
         />
       );
       case 'dashboard': return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
-      case 'map': return <MapView user={user} onRequireLogin={handleRequireLogin} />;
+      case 'map': return <MapView user={user} onRequireLogin={handleRequireLogin} initialState={mapInitialState} setInitialState={setMapInitialState} />;
       case 'directory': return (
         <DirectoryView 
           user={user} 
@@ -370,7 +371,7 @@ export default function App() {
       case 'emergency_shortcuts': return <EmergencyShortcutsView setView={setView} />;
       case 'external_sources': return <ExternalSourcesView />;
       case 'api_search': return <ApiGlobalSearchView />;
-      default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
+      default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} setMapInitialState={setMapInitialState} />;
     }
   };
 

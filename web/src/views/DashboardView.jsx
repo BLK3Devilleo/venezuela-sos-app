@@ -1,21 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
-import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle, Phone } from 'lucide-react';
+import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle, Phone, MapPin, CheckCircle2, Navigation, ArrowRight, X } from 'lucide-react';
 
-export default function DashboardView({ user, setView, onRequireLogin }) {
+export default function DashboardView({ user, setView, onRequireLogin, setMapInitialState }) {
   const [stats, setStats] = useState({ desaparecidos: '—', mascotas: '—', recursos: '—', servicios: '—' });
-  const [fontSize, setFontSize] = useState(() => {
-    const saved = localStorage.getItem('filoSOS_fontZoom') || '16px';
-    return parseInt(saved, 10) || 16;
-  });
-
-  const handleSliderChange = (e) => {
-    const newSize = parseInt(e.target.value, 10);
-    setFontSize(newSize);
-    const sizeStr = `${newSize}px`;
-    localStorage.setItem('filoSOS_fontZoom', sizeStr);
-    document.documentElement.style.fontSize = sizeStr;
-  };
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [checkInForm, setCheckInForm] = useState({ zona: '', actividad: 'rescate', personas: 1 });
 
   useEffect(() => {
     (async () => {
@@ -33,104 +23,163 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
     })();
   }, []);
 
-  return (
-    <div style={{ paddingTop: '0.5rem', paddingBottom: '2.5rem' }}>
+  // Zonas hardcodeadas para la demo/prototipo (en el futuro se calculan del DB)
+  const ZONAS_PRIORIDAD = [
+    { id: 'z1', nombre: 'Las Tejerías', estado: 'Aragua', prioridad: 'alta', req: ['Agua', 'Rescate', 'Medicinas'], coords: [10.25, -67.16] },
+    { id: 'z2', nombre: 'El Castaño', estado: 'Aragua', prioridad: 'alta', req: ['Maquinaria', 'Alimentos'], coords: [10.28, -67.59] },
+    { id: 'z3', nombre: 'Cumanacoa', estado: 'Sucre', prioridad: 'media', req: ['Ropa', 'Limpieza'], coords: [10.24, -63.92] },
+    { id: 'z4', nombre: 'Macuto', estado: 'La Guaira', prioridad: 'baja', req: ['Voluntarios suficientes'], coords: [10.61, -66.94] }
+  ];
 
-      {/* PRIORIDAD MÁXIMA: Atajos de Emergencia al TOP */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(234,88,12,0.06) 100%)',
-        borderRadius: '1.25rem',
-        padding: '1.25rem',
-        border: '1px solid rgba(220,38,38,0.25)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        alignItems: 'center',
-        textAlign: 'center',
-        marginBottom: '1.5rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <AlertTriangle size={20} style={{ color: '#ef4444' }} />
-          <h4 className="font-display" style={{ fontWeight: '800', fontSize: '1.05rem', margin: 0, color: '#fff' }}>
-            ¿Necesitas ayuda inmediata?
-          </h4>
+  const handleZonaClick = (zona) => {
+    if (setMapInitialState) {
+      setMapInitialState({
+        center: zona.coords,
+        zoom: 14,
+        filters: zona.prioridad === 'alta' ? ['salud_atencion', 'rescate_equipo'] : [] // Ejemplo de filtros automáticos
+      });
+    }
+    setView('map');
+  };
+
+  const submitCheckIn = async () => {
+    if (!user) {
+      onRequireLogin();
+      return;
+    }
+    if (!checkInForm.zona.trim()) return alert('Por favor, indica a qué zona vas.');
+    
+    try {
+      // Registraríamos en BD el check-in (recurso voluntario en movimiento)
+      // await supabase.from('servicios').insert({...});
+      alert('¡Gracias por ayudar! Tu presencia se ha registrado en el mapa.');
+      setShowCheckInModal(false);
+    } catch (e) {
+      console.error(e);
+      alert('Error al registrar tu llegada.');
+    }
+  };
+
+  return (
+    <div style={{ paddingTop: '0.5rem', paddingBottom: '2.5rem', position: 'relative' }}>
+      
+      {/* 1. Atajo de Emergencia (Compacto) */}
+      <div 
+        onClick={() => setView('emergency_shortcuts')}
+        style={{
+          background: 'linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(234,88,12,0.06) 100%)',
+          borderRadius: '1rem',
+          padding: '0.75rem 1rem',
+          border: '1px solid rgba(220,38,38,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          marginBottom: '1.25rem'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ background: '#dc2626', borderRadius: '50%', padding: '0.4rem', color: '#fff', display: 'flex' }}>
+            <Phone size={16} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, color: '#fff', fontSize: '0.9rem', fontWeight: '800' }}>Directorio de Emergencia</h4>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Bomberos, PC, CICPC por estado</p>
+          </div>
         </div>
-        <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-          Accede al directorio telefónico de emergencias de Venezuela filtrado por tu estado.
+        <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
+      </div>
+
+      {/* 2. PANEL DE NECESIDADES EN VIVO (Volunteers First) */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: '900', margin: '0 0 0.25rem 0', color: '#fff' }}>
+          Panel de Necesidades
+        </h2>
+        <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4' }}>
+          Coordinación en tiempo real. Selecciona una zona roja para ver qué falta o haz check-in para equilibrar la ayuda.
         </p>
-        <button 
-          onClick={() => setView('emergency_shortcuts')}
-          className="btn btn-primary"
-          style={{ width: '100%', marginTop: '0.25rem', fontWeight: 'bold', background: '#dc2626', color: '#fff', border: 'none' }}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {ZONAS_PRIORIDAD.map((z, i) => (
+            <div
+              key={i}
+              onClick={() => handleZonaClick(z)}
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: `1px solid ${z.prioridad === 'alta' ? 'rgba(239, 68, 68, 0.4)' : z.prioridad === 'media' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                borderRadius: '1rem',
+                padding: '1rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                boxShadow: z.prioridad === 'alta' ? '0 4px 20px rgba(239, 68, 68, 0.08)' : 'none'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                {z.prioridad === 'alta' ? (
+                  <AlertTriangle size={20} style={{ color: '#ef4444', marginTop: '2px' }} />
+                ) : z.prioridad === 'media' ? (
+                  <Activity size={20} style={{ color: '#f59e0b', marginTop: '2px' }} />
+                ) : (
+                  <CheckCircle2 size={20} style={{ color: '#10b981', marginTop: '2px' }} />
+                )}
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {z.nombre} <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)' }}>({z.estado})</span>
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.4rem' }}>
+                    {z.req.map((r, ri) => (
+                      <span key={ri} style={{ 
+                        fontSize: '0.65rem', fontWeight: '700', textTransform: 'uppercase',
+                        backgroundColor: z.prioridad === 'alta' ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-surface-soft)',
+                        color: z.prioridad === 'alta' ? '#fca5a5' : 'var(--text-secondary)',
+                        padding: '0.15rem 0.4rem', borderRadius: '4px'
+                      }}>
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <Navigation size={18} style={{ color: 'var(--text-muted)' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Check-In */}
+        <button
+          onClick={() => setShowCheckInModal(true)}
+          style={{
+            width: '100%',
+            marginTop: '1rem',
+            padding: '1rem',
+            backgroundColor: '#10b981',
+            color: '#000',
+            border: 'none',
+            borderRadius: '1rem',
+            fontWeight: '900',
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            boxShadow: '0 8px 25px rgba(16, 185, 129, 0.25)'
+          }}
         >
-          <Phone size={14} /> Atajos de emergencia por estado
+          <MapPin size={20} />
+          🙋 ¿Vas a ayudar? Haz check-in aquí
         </button>
       </div>
 
-      {/* ACCORDIONS (Trucos y Letras Más Grandes) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        
-        {/* Truco App */}
-        <details style={{
-          background: 'var(--bg-surface-soft)',
-          border: '1px solid var(--border)',
-          borderRadius: '0.75rem',
-          padding: '0.75rem 1rem',
-          cursor: 'pointer'
-        }}>
-          <summary style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', outline: 'none', userSelect: 'none' }}>
-            <span>💡</span> Truco: Úsalo como aplicación nativa
-          </summary>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: '1.4', margin: '0.5rem 0 0 0', cursor: 'default' }}>
-            Instala **VenezuelaSOS** en tu pantalla de inicio (**Compartir ➔ Agregar a pantalla de inicio** en Safari/Chrome) para ejecutarla a pantalla completa, optimizar batería y cargar más rápido en emergencias.
-          </p>
-        </details>
+      <hr style={{ borderColor: 'var(--border)', margin: '2rem 0' }} />
 
-        {/* Letras Más Grandes */}
-        <details style={{
-          background: 'var(--bg-surface-soft)',
-          border: '1px solid var(--border)',
-          borderRadius: '0.75rem',
-          padding: '0.75rem 1rem',
-          cursor: 'pointer'
-        }}>
-          <summary style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', outline: 'none', userSelect: 'none' }}>
-            <span>🔍</span> Letras más grandes (Accesibilidad)
-          </summary>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem', cursor: 'default' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>A-</span>
-              <input 
-                type="range" 
-                min="14" 
-                max="26" 
-                value={fontSize} 
-                onChange={handleSliderChange}
-                style={{
-                  flex: 1,
-                  height: '6px',
-                  borderRadius: '3px',
-                  background: 'var(--bg-surface-soft)',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  accentColor: 'var(--primary)'
-                }}
-              />
-              <span style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>A+</span>
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-              Letra actual: <strong style={{ color: 'var(--primary)' }}>{fontSize}px</strong> 
-            </div>
-          </div>
-        </details>
-
-      </div>
-
-      {/* PANEL DE ACCIÓN DIRECTA: Botonera Grilla "¿Qué necesitas hacer?" */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem', color: '#fff' }}>
-          ¿Qué necesitas hacer hoy?
+      {/* 3. HERRAMIENTAS ADICIONALES (Botonera) */}
+      <div>
+        <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1rem', color: '#fff' }}>
+          Más herramientas
         </h3>
 
         {/* Tarjeta Principal: Red Solidaria */}
@@ -142,222 +191,149 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
             background: 'linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(13, 148, 136, 0.08) 100%)',
             border: '1px solid rgba(29, 78, 216, 0.3)',
             borderRadius: '1.25rem',
-            padding: '1.25rem',
+            padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
             gap: '0.5rem',
             cursor: 'pointer',
             textAlign: 'left',
-            transition: 'all 0.2s ease',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#3b82f6';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 25px rgba(59,130,246,0.15)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'rgba(29, 78, 216, 0.3)';
-            e.currentTarget.style.transform = 'none';
-            e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
-            <div style={{ fontSize: '2rem' }}>🌐</div>
+            <div style={{ fontSize: '1.75rem' }}>🌐</div>
             <div style={{ flex: 1 }}>
-              <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#60a5fa' }}>Red Solidaria</h4>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                Vista agregada que centraliza información de múltiples páginas y APIs de búsqueda. Explora y busca personas y recursos en toda la red venezolana.
+              <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#60a5fa' }}>Red Solidaria (Buscador Global)</h4>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Centraliza información de múltiples páginas de búsqueda.
               </p>
             </div>
           </div>
         </button>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
           {[
-            { label: 'Reportar Persona', desc: 'Desaparecidos', view: 'missing_persons', emoji: '🧍', color: '#dc2626' },
-            { label: 'Reuniendo Familias', desc: 'Niños e Infancia', view: 'family_reunification', emoji: '❤️', color: '#fb7185' },
-            { label: 'Pacientes Clínicas', desc: 'Hospitalizados', view: 'hospitalized_persons', emoji: '🏥', color: '#3b82f6' },
-            { label: 'Reportar Mascota', desc: 'Perros, gatos...', view: 'missing_pets', emoji: '🐾', color: '#d97706' },
-            { label: 'Agregar Refugio', desc: 'Acogidas y refugios', view: 'international_shelters', emoji: '🏠', color: '#0d9488' },
-            { label: 'Donar Recursos', desc: 'Suministros y ropa', view: 'resources', emoji: '📦', color: '#16a34a' },
-            { label: 'Comida Caliente', desc: 'Comedores y ollas', view: 'resources', emoji: '🍲', color: '#ea580c' },
-            { label: 'Apoyo Médico', desc: 'Asistencia y salud', view: 'services', emoji: '⚕️', color: '#2563eb' },
-            { label: 'Mercado Solidario', desc: 'Bienes gratis', view: 'marketplace', emoji: '🤝', color: '#a855f7' },
-            { label: 'Salas de Chat', desc: 'Apoyo voluntario', view: 'chat_rooms', emoji: '💬', color: '#ec4899' },
-            { label: 'Mapa en Vivo', desc: 'Alertas y refugios', view: 'map', emoji: '🗺️', color: '#14b8a6' }
+            { label: 'Mapa Completo', view: 'map', emoji: '🗺️', color: '#14b8a6' },
+            { label: 'Reportar Persona', view: 'missing_persons', emoji: '🧍', color: '#dc2626' },
+            { label: 'Reunir Familias', view: 'family_reunification', emoji: '❤️', color: '#fb7185' },
+            { label: 'Hospitalizados', view: 'hospitalized_persons', emoji: '🏥', color: '#3b82f6' },
+            { label: 'Agregar Refugio', view: 'international_shelters', emoji: '🏠', color: '#0d9488' },
+            { label: 'Mercado Solidario', view: 'marketplace', emoji: '🤝', color: '#a855f7' },
+            { label: 'Salas de Chat', view: 'chat_rooms', emoji: '💬', color: '#ec4899' },
+            { label: 'Donar Recursos', view: 'resources', emoji: '📦', color: '#16a34a' }
           ].map((act, i) => (
             <button
               key={i}
               onClick={() => setView(act.view)}
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: '0.5rem',
-                padding: '1rem',
-                borderRadius: '1rem',
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--bg-surface)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textAlign: 'left'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = act.color;
-                e.currentTarget.style.backgroundColor = `${act.color}08`;
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.backgroundColor = 'var(--bg-surface)';
-                e.currentTarget.style.transform = 'none';
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.875rem', borderRadius: '1rem',
+                border: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)',
+                cursor: 'pointer', textAlign: 'left'
               }}
             >
-              <span style={{ fontSize: '1.5rem' }}>{act.emoji}</span>
-              <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: '800', color: 'var(--text-primary)' }}>{act.label}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{act.desc}</div>
-              </div>
+              <span style={{ fontSize: '1.25rem' }}>{act.emoji}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)' }}>{act.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* SECCIÓN: ¿Cómo funciona filoSOS? */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.5rem' }}>
-          ¿Cómo funciona filoSOS? 🇻🇪
-        </h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-          Plataforma de comunicación de código libre para coordinar ayuda comunitaria sin intermediarios:
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-          {[
-            { icon: '🗺️', title: 'Revisa el Mapa en Vivo', desc: 'Visualiza en tiempo real alertas de rescate, centros de acopio y refugios cercanos.', view: 'map' },
-            { icon: '🆘', title: 'Reporta Personas o Mascotas', desc: 'Ingresa los datos para que la red comunitaria ayude a rastrear y localizar a tus familiares o mascotas.', view: 'missing_persons' },
-            { icon: '🤝', title: 'Mercado Solidario Gratuito', desc: 'Intercambia insumos y dona bienes a quienes más lo necesitan, sin dinero de por medio.', view: 'marketplace' },
-            { icon: '💬', title: 'Salas de Chat Temáticas', desc: 'Comunícate en tiempo real con brigadas de rescate, médicos y voluntarios directamente.', view: 'chat_rooms' }
-          ].map((item, i) => (
-            <div key={i} 
-              onClick={() => setView(item.view)}
-              style={{
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: '1rem',
-                padding: '1rem',
-                display: 'flex',
-                gap: '1rem',
-                alignItems: 'flex-start',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+      {/* MODAL DE CHECK-IN DE VOLUNTARIOS */}
+      {showCheckInModal && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-base)',
+            width: '100%', maxWidth: '500px',
+            borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
+            padding: '1.5rem', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+            boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowCheckInModal(false)}
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
-              <div style={{
-                fontSize: '1.5rem',
-                backgroundColor: 'var(--bg-surface-soft)',
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                {item.icon}
-              </div>
-              <div>
-                <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '0.2rem' }}>
-                  {item.title}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                  {item.desc}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              <X size={24} />
+            </button>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem', fontWeight: '900', color: '#fff' }}>Hacer Check-in</h3>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Indica hacia dónde te diriges. Esto ayuda a equilibrar la distribución de voluntarios y evitar colapsos.
+            </p>
 
-      {/* Tutoriales del Mercado y Chats */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.75rem', color: '#fff' }}>
-          Guías de Ayuda y Tutoriales
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-          {[
-            { emoji: '🤝', title: 'Mercado Solidario', desc: 'Fotografía claramente el artículo que quieres donar o que necesitas. Deja tu número de contacto visible. No se permiten trueques comerciales ni cobros.' },
-            { emoji: '💬', title: 'Uso Seguro de Chats', desc: 'Las salas son públicas y de lectura para invitados. Para enviar mensajes debes identificarte con Google. Comparte solo datos de apoyo y ubicación verificada.' },
-            { emoji: '🍲', title: 'Comedores Comunitarios', desc: 'Si cocinas u ofreces comida caliente, agrégala en Donaciones para que los damnificados de tu zona puedan acudir.' }
-          ].map((tut, i) => (
-            <div key={i} style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '1rem',
-              padding: '1rem',
-              display: 'flex',
-              gap: '1rem',
-              alignItems: 'flex-start'
-            }}>
-              <span style={{ fontSize: '1.5rem', backgroundColor: 'var(--bg-surface-soft)', width: '40px', height: '40px', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {tut.emoji}
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <h4 style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>{tut.title}</h4>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{tut.desc}</p>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>¿A qué zona vas?</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Ej: Las Tejerías, Sector Central..."
+                  value={checkInForm.zona}
+                  onChange={e => setCheckInForm({...checkInForm, zona: e.target.value})}
+                  autoFocus
+                />
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>¿Cuántas personas van en tu grupo?</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  className="input-field" 
+                  value={checkInForm.personas}
+                  onChange={e => setCheckInForm({...checkInForm, personas: parseInt(e.target.value)||1})}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>¿Qué tipo de ayuda llevan?</label>
+                <select 
+                  className="input-field"
+                  value={checkInForm.actividad}
+                  onChange={e => setCheckInForm({...checkInForm, actividad: e.target.value})}
+                >
+                  <option value="rescate">Equipo de Rescate / Despeje</option>
+                  <option value="medico">Asistencia Médica / Primeros Auxilios</option>
+                  <option value="suministros">Entrega de Suministros (Comida/Agua)</option>
+                  <option value="transporte">Vehículo / Transporte de heridos</option>
+                  <option value="psicologico">Apoyo Psicológico</option>
+                </select>
+              </div>
+
+              <button 
+                onClick={submitCheckIn}
+                style={{
+                  width: '100%', padding: '1rem', marginTop: '0.5rem',
+                  backgroundColor: '#10b981', color: '#000', border: 'none', borderRadius: '1rem',
+                  fontWeight: '900', fontSize: '1rem', cursor: 'pointer'
+                }}
+              >
+                Confirmar Ruta
+              </button>
             </div>
-          ))}
+          </div>
         </div>
-        
-        {/* Botón Ver Más Guías */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-          <button 
-            onClick={() => setView('legal')} 
-            className="btn btn-secondary" 
-            style={{ fontSize: '0.8rem', padding: '0.5rem 1.25rem', borderRadius: '1.5rem' }}
-          >
-            Ver más guías y manuales
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Footer */}
       <footer style={{
         marginTop: '2.5rem',
         textAlign: 'center',
         padding: '1.25rem 0 0.5rem 0',
-        borderTop: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.4rem'
       }}>
-        <div style={{
-          fontSize: '0.8rem',
-          fontWeight: '700',
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.25rem'
-        }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           <span>filoSOS</span>
           <span style={{ color: 'var(--text-muted)' }}>·</span>
           <span style={{ color: 'var(--primary)' }}>BY FILO</span>
         </div>
-        <p style={{
-          fontSize: '0.7rem',
-          color: 'var(--text-muted)',
-          lineHeight: '1.4',
-          maxWidth: '300px',
-          margin: 0
-        }}>
-          Desarrollo solidario de código abierto.
-        </p>
       </footer>
     </div>
   );
