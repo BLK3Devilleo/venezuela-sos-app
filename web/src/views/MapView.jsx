@@ -717,7 +717,7 @@ export default function MapView({ user, onRequireLogin }) {
                       {macro.icon}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <h4 className="font-display" style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', lineHeight: '1.2', margin: 0 }}>
+                      <h4 className="font-display" style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1.2', margin: 0 }}>
                         {macro.label}
                       </h4>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
@@ -736,7 +736,7 @@ export default function MapView({ user, onRequireLogin }) {
                         padding: '0.3rem 0.75rem',
                         borderRadius: '2rem',
                         fontSize: '0.7rem',
-                        color: activeCount > 0 ? '#fff' : 'var(--text-secondary)',
+                        color: activeCount > 0 ? macro.color : 'var(--text-secondary)',
                         cursor: 'pointer',
                         fontWeight: '700',
                         transition: 'all 0.2s'
@@ -781,7 +781,7 @@ export default function MapView({ user, onRequireLogin }) {
                           border: '1px solid',
                           borderColor: isActive ? macro.color : 'var(--border)',
                           backgroundColor: isActive ? `${macro.color}18` : 'var(--bg-surface-soft)',
-                          color: isActive ? '#fff' : 'var(--text-secondary)',
+                          color: isActive ? macro.color : 'var(--text-secondary)',
                           cursor: 'pointer',
                           textAlign: 'left',
                           fontSize: '0.75rem',
@@ -929,7 +929,7 @@ export default function MapView({ user, onRequireLogin }) {
                         border: '1px solid',
                         borderColor: isChecked ? 'var(--primary)' : 'var(--border)',
                         background: isChecked ? 'var(--primary-glow)' : 'var(--bg-surface-soft)',
-                        color: isChecked ? '#fff' : 'var(--text-secondary)',
+                        color: isChecked ? 'var(--primary)' : 'var(--text-secondary)',
                         fontSize: '0.7rem',
                         fontWeight: '700',
                         cursor: 'pointer',
