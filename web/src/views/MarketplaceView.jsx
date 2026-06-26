@@ -72,6 +72,23 @@ export default function MarketplaceView({ user }) {
 
     setSubmitting(true);
     try {
+      const imageUrls = [];
+      for (const imgObj of formImages) {
+        const fileName = `marketplace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+        const uploadRes = await fetch(`https://venezuelasos-media-api.filocentraldemando.workers.dev/upload?file=${fileName}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: imgObj.file
+        });
+
+        if (uploadRes.ok) {
+          const resData = await uploadRes.json();
+          imageUrls.push(resData.url);
+        } else {
+          throw new Error('Error al subir una de las imágenes.');
+        }
+      }
+
       const { error } = await supabase.from('marketplace').insert({
         creador_id: user?.id || null,
         titulo: formData.titulo.trim(),
@@ -81,10 +98,13 @@ export default function MarketplaceView({ user }) {
         ubicacion_text: formData.ubicacion_text.trim(),
         nombre_contacto: formData.nombre_contacto.trim(),
         contacto_whatsapp: formData.contacto_whatsapp.trim(),
-        fotos: formImages
+        fotos: imageUrls
       });
       if (error) throw error;
 
+      formImages.forEach(img => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      });
       setShowForm(false);
       setFormImages([]);
       setFormData(getInitialForm());
@@ -108,12 +128,13 @@ export default function MarketplaceView({ user }) {
 
     setCompressing(true);
     try {
-      const base64List = [];
+      const newImages = [];
       for (const file of files) {
-        const compressedBase64 = await compressImage(file);
-        base64List.push(compressedBase64);
+        const compressedFile = await compressImage(file);
+        const previewUrl = URL.createObjectURL(compressedFile);
+        newImages.push({ file: compressedFile, previewUrl });
       }
-      setFormImages(prev => [...prev, ...base64List]);
+      setFormImages(prev => [...prev, ...newImages]);
     } catch (err) {
       console.error(err);
       alert('Error al comprimir una de las imágenes.');
@@ -123,6 +144,10 @@ export default function MarketplaceView({ user }) {
   };
 
   const handleImageRemove = (indexToRemove) => {
+    const imgToRemove = formImages[indexToRemove];
+    if (imgToRemove && imgToRemove.previewUrl) {
+      URL.revokeObjectURL(imgToRemove.previewUrl);
+    }
     setFormImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
@@ -505,7 +530,14 @@ export default function MarketplaceView({ user }) {
       {/* Create Form Modal */}
       <BottomModal
         isOpen={showForm}
-        onClose={() => setShowForm(false)}
+        onClose={() => {
+          formImages.forEach(img => {
+            if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+          });
+          setFormImages([]);
+          setFormData(getInitialForm());
+          setShowForm(false);
+        }}
         title="📦 Publicar en Mercado Solidario"
       >
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -589,7 +621,7 @@ export default function MarketplaceView({ user }) {
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
               {formImages.map((img, idx) => (
                 <div key={idx} style={{ position: 'relative', width: '60px', height: '60px' }}>
-                  <img src={img} alt="Preview" style={{ width: '100%', height: '100%', borderRadius: '0.5rem', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                  <img src={img.previewUrl} alt="Preview" style={{ width: '100%', height: '100%', borderRadius: '0.5rem', objectFit: 'cover', border: '1px solid var(--border)' }} />
                   <button
                     type="button"
                     onClick={() => handleImageRemove(idx)}
