@@ -35,11 +35,12 @@ export default function AdminPanelView({ user }) {
 
   const fetchGroupedPhones = async () => {
     // Obtener publicaciones de todas las tablas para agruparlas por teléfono
-    const [desRes, masRes, recRes, serRes] = await Promise.all([
+    const [desRes, masRes, recRes, serRes, infRes] = await Promise.all([
       supabase.from('desaparecidos').select('id, nombre_y_edad, contacto, created_at'),
       supabase.from('mascotas').select('id, especie_y_raza, contacto, estado, created_at'),
       supabase.from('recursos').select('id, nombre, contacto_whatsapp, created_at'),
-      supabase.from('servicios').select('id, subtipo, contacto_whatsapp, created_at')
+      supabase.from('servicios').select('id, subtipo, contacto_whatsapp, created_at'),
+      supabase.from('desaparecidos_infancia').select('id, nombre_menor, validador_info, created_at')
     ]);
 
     const allPosts = [];
@@ -47,6 +48,16 @@ export default function AdminPanelView({ user }) {
     (masRes.data || []).forEach(m => allPosts.push({ ...m, type: 'Mascota', title: `${m.especie_y_raza} (${m.estado})`, phone: m.contacto }));
     (recRes.data || []).forEach(r => allPosts.push({ ...r, type: 'Recurso', title: r.nombre, phone: r.contacto_whatsapp }));
     (serRes.data || []).forEach(s => allPosts.push({ ...s, type: 'Servicio', title: s.subtipo, phone: s.contacto_whatsapp }));
+    (infRes.data || []).forEach(inf => {
+      let phone = '';
+      if (inf.validador_info) {
+        const matches = inf.validador_info.match(/\d{7,15}/);
+        if (matches) phone = matches[0];
+      }
+      if (phone) {
+        allPosts.push({ ...inf, type: 'Reencuentro Infantil', title: inf.nombre_menor, phone });
+      }
+    });
 
     // Agrupar por teléfono
     const groups = {};
@@ -73,14 +84,15 @@ export default function AdminPanelView({ user }) {
 
   const fetchRecentReports = async () => {
     try {
-      const [desRes, masRes, recRes, serRes, emeRes, mrkRes, hosRes] = await Promise.all([
+      const [desRes, masRes, recRes, serRes, emeRes, mrkRes, hosRes, infRes] = await Promise.all([
         supabase.from('desaparecidos').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('mascotas').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('recursos').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('servicios').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('emergencias').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('marketplace').select('*').order('created_at', { ascending: false }).limit(20),
-        supabase.from('hospitalizados').select('*').order('created_at', { ascending: false }).limit(20)
+        supabase.from('hospitalizados').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('desaparecidos_infancia').select('*').order('created_at', { ascending: false }).limit(20)
       ]);
 
       const reports = [
@@ -90,7 +102,8 @@ export default function AdminPanelView({ user }) {
         ...(serRes.data || []).map(s => ({ ...s, reportType: 'Servicio', title: `${s.tipo} - ${s.subtipo}`, contact: s.contacto_whatsapp, location: s.zona || 'No especificada' })),
         ...(emeRes.data || []).map(e => ({ ...e, reportType: 'Emergencia', title: e.descripcion, contact: 'N/A', location: e.ubicacion_text || 'No especificada' })),
         ...(mrkRes.data || []).map(k => ({ ...k, reportType: 'Mercado', title: `${k.titulo} (${k.tipo})`, contact: k.contacto_whatsapp, location: k.ubicacion_text || 'No especificada' })),
-        ...(hosRes.data || []).map(h => ({ ...h, reportType: 'Hospitalizado', title: h.nombre_completo, contact: h.contacto_reportante, location: h.hospital_clinica || 'No especificada' }))
+        ...(hosRes.data || []).map(h => ({ ...h, reportType: 'Hospitalizado', title: h.nombre_completo, contact: h.contacto_reportante, location: h.hospital_clinica || 'No especificada' })),
+        ...(infRes.data || []).map(i => ({ ...i, reportType: 'Infancia', title: i.nombre_menor, contact: i.nombre_adulto + " (" + i.documento_adulto + ")", location: i.validador_info || 'No especificada' }))
       ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       setRecentReports(reports);
@@ -124,6 +137,7 @@ export default function AdminPanelView({ user }) {
         case 'Emergencia': table = 'emergencias'; break;
         case 'Mercado': table = 'marketplace'; break;
         case 'Hospitalizado': table = 'hospitalizados'; break;
+        case 'Infancia': table = 'desaparecidos_infancia'; break;
         default: return;
       }
       const { error } = await supabase.from(table).delete().eq('id', reportId);

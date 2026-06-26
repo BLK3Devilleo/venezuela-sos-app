@@ -14,6 +14,7 @@ import MarketplaceView from './views/MarketplaceView';
 import ProfileView from './views/ProfileView';
 import LegalView from './views/LegalView';
 import AdminPanelView from './views/AdminPanelView';
+import FamilyReunificationView from './views/FamilyReunificationView';
 import CookieBanner from './components/CookieBanner';
 import EmergencyShortcutsView from './views/EmergencyShortcutsView';
 import HospitalizedPersonsView from './views/HospitalizedPersonsView';
@@ -323,6 +324,7 @@ export default function App() {
         />
       );
       case 'missing_persons': return <MissingPersonsView user={user} onRequireLogin={handleRequireLogin} />;
+      case 'family_reunification': return <FamilyReunificationView user={user} onRequireLogin={handleRequireLogin} />;
       case 'hospitalized_persons': return <HospitalizedPersonsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'international_shelters': return <InternationalSheltersView user={user} onRequireLogin={handleRequireLogin} onBack={() => setView('dashboard')} />;
       case 'missing_pets': return <MissingPetsView user={user} onRequireLogin={handleRequireLogin} />;
@@ -580,11 +582,11 @@ export default function App() {
         {[
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
+          { id: 'family_reunification', label: 'Familias', icon: Heart, isSpecial: true },
           { id: 'missing_persons', label: 'Personas', icon: Users },
-          { id: 'marketplace', label: 'Mercado', icon: ShoppingBag },
           { id: 'menu', label: 'Menú', icon: Menu }
-        ].map(({ id, label, icon: Icon }) => {
-          const isMenuTabActive = ['missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal'].includes(view);
+        ].map(({ id, label, icon: Icon, isSpecial }) => {
+          const isMenuTabActive = ['marketplace', 'missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal'].includes(view);
           const isActive = id === 'menu' ? isMenuTabActive : (view === id);
           return (
             <button
@@ -608,7 +610,7 @@ export default function App() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: isActive ? 'var(--primary)' : 'var(--text-muted)',
+                color: isActive ? (isSpecial ? '#fb7185' : 'var(--primary)') : (isSpecial ? 'rgba(251, 113, 133, 0.75)' : 'var(--text-muted)'),
                 transition: 'all 0.15s ease',
                 position: 'relative',
                 padding: '0.5rem 0'
@@ -622,7 +624,7 @@ export default function App() {
                   left: '20%',
                   right: '20%',
                   height: '2px',
-                  backgroundColor: 'var(--primary)',
+                  backgroundColor: isSpecial ? '#fb7185' : 'var(--primary)',
                   borderRadius: '0 0 2px 2px'
                 }} />
               )}
@@ -682,6 +684,7 @@ export default function App() {
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               {[
+                { id: 'family_reunification', label: 'Reuniendo Familias', desc: 'Niños y reencuentro seguro', icon: Heart, color: '#fb7185' },
                 { id: 'missing_persons', label: 'Personas Buscadas', desc: 'Red de localización familiar', icon: Users, color: '#dc2626' },
                 { id: 'hospitalized_persons', label: 'Hospitalizados', desc: 'Estatus en centros médicos', icon: ShieldAlert, color: '#3b82f6' },
                 { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Localización de mascotas', icon: Heart, color: '#d97706' },

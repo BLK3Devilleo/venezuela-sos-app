@@ -206,6 +206,36 @@ CREATE POLICY "Permitir lectura publica de marketplace" ON public.marketplace FO
 CREATE POLICY "Permitir insercion de marketplace" ON public.marketplace FOR INSERT WITH CHECK (true);
 CREATE POLICY "Permitir edicion de marketplace" ON public.marketplace FOR UPDATE USING (true);
 CREATE POLICY "Permitir eliminacion de marketplace" ON public.marketplace FOR DELETE USING (true);
+-- Tabla: desaparecidos_infancia (Niños y reencuentro familiar)
+CREATE TABLE IF NOT EXISTS public.desaparecidos_infancia (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creador_id TEXT REFERENCES public.usuarios(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    nombre_menor TEXT NOT NULL,
+    edad TEXT NOT NULL,
+    senas_particulares TEXT,
+    estado_reencuentro TEXT NOT NULL CHECK (estado_reencuentro IN ('busqueda', 'supervision', 'reencontrado')) DEFAULT 'busqueda',
+    validador_info TEXT, -- Nombre y contacto del voluntario/autoridad que tiene al menor
+    nombre_adulto TEXT NOT NULL, -- Registro de quien reporta
+    documento_adulto TEXT NOT NULL, -- Registro de documento del adulto
+    fotos TEXT[] DEFAULT '{}'::text[],
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
+ALTER TABLE public.desaparecidos_infancia ENABLE ROW LEVEL SECURITY;
 
+CREATE POLICY "Permitir lectura publica de desaparecidos_infancia" 
+    ON public.desaparecidos_infancia FOR SELECT USING (true);
 
+CREATE POLICY "Permitir insercion de desaparecidos_infancia" 
+    ON public.desaparecidos_infancia FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Permitir edicion de desaparecidos_infancia propia" 
+    ON public.desaparecidos_infancia FOR UPDATE 
+    USING (creador_id = auth.uid()::text OR user_id = auth.uid() OR (SELECT rol FROM public.usuarios WHERE id = auth.uid()::text) = 'admin');
+
+CREATE POLICY "Permitir eliminacion de desaparecidos_infancia a admins y staff" 
+    ON public.desaparecidos_infancia FOR DELETE 
+    USING ((SELECT rol FROM public.usuarios WHERE id = auth.uid()::text) IN ('admin', 'staff'));
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.desaparecidos_infancia;
