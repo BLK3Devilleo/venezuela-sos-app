@@ -305,7 +305,7 @@ export default function ResourcesView({ user }) {
               </div>
 
               <a 
-                href={`https://wa.me/${res.contacto_whatsapp.replace(/\+/g, '')}?text=Hola%20vi%20tu%20anuncio%20de%20recurso%20${res.nombre}%20en%20VenezuelaSOS...`}
+                href={`https://wa.me/${res.contacto_whatsapp.replace(/\+/g, '')}?text=Hola%20vi%20tu%20anuncio%20de%20recurso%20${res.nombre}%20en%20filoSOS...`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn btn-primary"

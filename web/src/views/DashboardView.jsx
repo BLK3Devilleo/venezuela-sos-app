@@ -38,7 +38,7 @@ export default function DashboardView({ user, setView }) {
         padding: '0.5rem 0'
       }}>
         <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.5rem' }}>
-          ¿Cómo funciona VenezuelaSOS? 🇻🇪
+          ¿Cómo funciona filoSOS? 🇻🇪
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.25rem' }}>
           Aquí te explicamos de forma rápida cómo utilizar esta plataforma para apoyarnos mutuamente, porque juntos somos más fuertes:
@@ -154,7 +154,7 @@ export default function DashboardView({ user, setView }) {
           alignItems: 'center',
           gap: '0.25rem'
         }}>
-          <span>VenezuelaSOS</span>
+          <span>filoSOS</span>
           <span style={{ color: 'var(--text-muted)' }}>·</span>
           <span style={{ color: 'var(--primary)' }}>BY FILO</span>
         </div>

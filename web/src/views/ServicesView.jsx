@@ -286,7 +286,7 @@ export default function ServicesView({ user, onViewProfile }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
               <a 
-                href={`https://wa.me/${selected.contacto_whatsapp.replace(/[^0-9]/g, '')}?text=Hola,%20vi%20tu%20anuncio%20de%20${selected.subtipo}%20en%20VenezuelaSOS`}
+                href={`https://wa.me/${selected.contacto_whatsapp.replace(/[^0-9]/g, '')}?text=Hola,%20vi%20tu%20anuncio%20de%20${selected.subtipo}%20en%20filoSOS`}
                 target="_blank" rel="noopener noreferrer"
                 className="btn btn-primary" style={{ backgroundColor: '#25D366', color: '#fff', padding: '0.875rem' }}
               >

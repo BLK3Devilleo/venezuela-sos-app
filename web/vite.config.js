@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg'],
       manifest: {
-        name: 'Venezuela SOS',
-        short_name: 'VenezuelaSOS',
+        name: 'filoSOS',
+        short_name: 'filoSOS',
         description: 'Aplicación de ayuda y reporte de emergencias en Venezuela',
         theme_color: '#002F6C',
         background_color: '#0f172a',

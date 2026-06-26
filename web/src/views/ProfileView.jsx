@@ -487,7 +487,7 @@ export default function ProfileView({ user, onUserUpdate, viewUserId, setView })
             {profile.contacto ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', width: '100%', marginTop: '0.5rem' }}>
                 <a
-                  href={`https://wa.me/${profile.contacto.replace(/[^0-9]/g, '')}?text=Hola%20${profile.nombre},%20te%20escribo%20desde%20VenezuelaSOS.`}
+                  href={`https://wa.me/${profile.contacto.replace(/[^0-9]/g, '')}?text=Hola%20${profile.nombre},%20te%20escribo%20desde%20filoSOS.`}
                   target="_blank" rel="noopener noreferrer"
                   className="btn btn-primary"
                   style={{ backgroundColor: '#25D366', color: '#fff', fontSize: '0.85rem', padding: '0.7rem' }}

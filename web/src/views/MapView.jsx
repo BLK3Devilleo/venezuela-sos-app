@@ -597,7 +597,7 @@ export default function MapView({ user }) {
                         </div>
                       )}
                       <a
-                        href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, vi tu publicación en el mapa de VenezuelaSOS.')}`}
+                        href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hola, vi tu publicación en el mapa de filoSOS.')}`}
                         target="_blank" rel="noopener noreferrer"
                         style={{ 
                           display: 'flex', 
@@ -1006,7 +1006,7 @@ export default function MapView({ user }) {
                         
                         {/* Compact Whatsapp link */}
                         <a
-                          href={`https://wa.me/${item.contacto_whatsapp.replace(/[^0-9]/g, '')}?text=Hola,%20vi%20tu%20anuncio%20en%20el%20mapa%20de%20VenezuelaSOS.`}
+                          href={`https://wa.me/${item.contacto_whatsapp.replace(/[^0-9]/g, '')}?text=Hola,%20vi%20tu%20anuncio%20en%20el%20mapa%20de%20filoSOS.`}
                           target="_blank" rel="noopener noreferrer"
                           style={{
                             fontSize: '0.7rem', fontWeight: '800', color: '#25D366',

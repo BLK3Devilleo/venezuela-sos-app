@@ -17,7 +17,7 @@ export default {
     // 1. SERVIR IMAGEN (GET https://tu-worker.workers.dev/nombre-archivo.jpg)
     if (request.method === "GET") {
       if (!key || key === "") {
-        return new Response("Bienvenido al pipeline de imágenes de VenezuelaSOS", {
+        return new Response("Bienvenido al pipeline de imágenes de filoSOS", {
           status: 200,
           headers: { "Content-Type": "text/plain", ...corsHeaders }
         });
