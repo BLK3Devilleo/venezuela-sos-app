@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Shield, Phone, Users, Trash2, UserCheck, AlertTriangle, MessageSquare, MapPin, Heart, Activity } from 'lucide-react';
+import { Shield, Phone, Users, Trash2, UserCheck, AlertTriangle, MessageSquare, MapPin, Heart, Activity, Globe, CheckCircle, XCircle } from 'lucide-react';
+import { EXTERNAL_SOURCES } from '../utils/useExternalSources';
 
 export default function AdminPanelView({ user }) {
   const [loading, setLoading] = useState(false);
@@ -190,6 +191,13 @@ export default function AdminPanelView({ user }) {
         >
           <AlertTriangle size={15} style={{ marginRight: '0.3rem', display: 'inline' }} /> Moderación Rápida
         </button>
+        <button 
+          onClick={() => setActiveTab('apis')}
+          className={`filter-chip ${activeTab === 'apis' ? 'active' : ''}`}
+          style={{ padding: '0.5rem 1rem' }}
+        >
+          <Globe size={15} style={{ marginRight: '0.3rem', display: 'inline' }} /> Conexiones API
+        </button>
       </div>
 
       {loading ? (
@@ -368,6 +376,112 @@ export default function AdminPanelView({ user }) {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {/* TAB 4: Conexiones API */}
+          {activeTab === 'apis' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ backgroundColor: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', padding: '1rem', borderRadius: '0.75rem', marginBottom: '0.5rem' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  <strong>🌐 Red Solidaria:</strong> Gestiona las conexiones con plataformas aliadas. Las plataformas conectadas muestran datos en tiempo real en la vista "Red Solidaria".
+                </p>
+              </div>
+
+              <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>Plataformas Conectadas</h3>
+              {Object.values(EXTERNAL_SOURCES).map(src => (
+                <div 
+                  key={src.key}
+                  style={{ 
+                    backgroundColor: 'var(--bg-surface)', 
+                    border: '1px solid var(--border)', 
+                    borderRadius: '1rem', 
+                    padding: '1rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '0.75rem', backgroundColor: `${src.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                      {src.emoji}
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: src.color }}>{src.name}</h4>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {src.url}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981', fontSize: '0.8rem', fontWeight: '700', backgroundColor: 'rgba(16,185,129,0.1)', padding: '0.4rem 0.75rem', borderRadius: '2rem' }}>
+                    <CheckCircle size={14} /> Conectado
+                  </div>
+                </div>
+              ))}
+
+              <h3 style={{ margin: '1rem 0 0 0', fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>Plataformas Pendientes / Desconectadas</h3>
+              
+              <div style={{ 
+                backgroundColor: 'var(--bg-surface)', 
+                border: '1px dashed var(--border)', 
+                borderRadius: '1rem', 
+                padding: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                opacity: 0.8
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '0.75rem', backgroundColor: 'rgba(107,114,128,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                    🔍
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)' }}>Venezuela Te Busca</h4>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      venezuelatebusca.com
+                    </p>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.7rem', color: '#ea580c' }}>
+                      ⚠️ Requiere API Key (contactar a Julia @juliaamariano)
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.8rem', fontWeight: '700', backgroundColor: 'rgba(107,114,128,0.1)', padding: '0.4rem 0.75rem', borderRadius: '2rem' }}>
+                  <XCircle size={14} /> Desconectado
+                </div>
+              </div>
+
+              <div style={{ 
+                backgroundColor: 'var(--bg-surface)', 
+                border: '1px dashed var(--border)', 
+                borderRadius: '1rem', 
+                padding: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                opacity: 0.8
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '0.75rem', backgroundColor: 'rgba(107,114,128,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                    🛡️
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)' }}>The Empire Tech</h4>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      desaparecidosterremotovenezuela.com
+                    </p>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.7rem', color: '#dc2626' }}>
+                      🚫 Bloqueado por Cloudflare / reCAPTCHA
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.8rem', fontWeight: '700', backgroundColor: 'rgba(107,114,128,0.1)', padding: '0.4rem 0.75rem', borderRadius: '2rem' }}>
+                  <XCircle size={14} /> Desconectado
+                </div>
+              </div>
+
             </div>
           )}
         </>
