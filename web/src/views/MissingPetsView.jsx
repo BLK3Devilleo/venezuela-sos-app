@@ -150,7 +150,8 @@ export default function MissingPetsView({ user }) {
           estado: draft.estado,
           ultima_ubicacion: draft.ultima_ubicacion,
           contacto: draft.contacto,
-          foto_principal: imageUrl
+          foto_principal: imageUrl,
+          user_id: draft.user_id
         });
 
         if (error) {
@@ -224,7 +225,8 @@ export default function MissingPetsView({ user }) {
           estado: formData.estado,
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
           contacto: formData.contacto.trim(),
-          foto_principal: imageUrl
+          foto_principal: imageUrl,
+          user_id: user?.id
         });
 
         if (error) throw error;
@@ -236,6 +238,7 @@ export default function MissingPetsView({ user }) {
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
           contacto: formData.contacto.trim(),
           fotoBlob: compressedBlob,
+          user_id: user?.id,
           created_at: new Date().toISOString()
         });
         alert('Sin conexión. Se guardó localmente y se sincronizará automáticamente al reconectar.');
@@ -258,6 +261,7 @@ export default function MissingPetsView({ user }) {
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
           contacto: formData.contacto.trim(),
           fotoBlob: compressedBlob,
+          user_id: user?.id,
           created_at: new Date().toISOString()
         });
         alert('Error de conexión. Se guardó localmente de forma segura para reintento automático.');
@@ -296,6 +300,10 @@ export default function MissingPetsView({ user }) {
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
+    if (!user || (selected?.user_id !== user.id && user.rol !== 'admin' && user.rol !== 'staff')) {
+      alert('No tienes permisos para realizar esta acción.');
+      return;
+    }
     try {
       const { error } = await supabase.from('mascotas').update({ estado: newStatus }).eq('id', id);
       if (error) throw error;
@@ -554,7 +562,7 @@ export default function MissingPetsView({ user }) {
                     <Phone size={18} /> Llamar
                   </a>
                   
-                  {user && selected.estado === 'perdida' && (
+                  {user && (selected.user_id === user.id || user.rol === 'admin' || user.rol === 'staff') && selected.estado === 'perdida' && (
                     <button 
                       onClick={() => handleUpdateStatus(selected.id, 'encontrada')}
                       style={{ gridColumn: '1 / -1', padding: '0.75rem', backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.3)', borderRadius: '0.5rem', fontWeight: '700', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
@@ -565,7 +573,7 @@ export default function MissingPetsView({ user }) {
                 </div>
               ) : null}
 
-              {(user?.rol === 'admin' || selected.isDraft) && (
+              {(user?.rol === 'admin' || user?.rol === 'staff' || selected.user_id === user?.id || selected.isDraft) && (
                 <button 
                   onClick={() => handleDelete(selected.id, selected.isDraft)}
                   className="btn btn-secondary"

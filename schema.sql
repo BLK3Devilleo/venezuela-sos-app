@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Tabla: usuarios
 CREATE TABLE IF NOT EXISTS public.usuarios (
     id TEXT PRIMARY KEY, -- ID proveniente de Google OAuth (o auth.uid() en Supabase)
-    rol TEXT NOT NULL CHECK (rol IN ('voluntario', 'afectado', 'admin')) DEFAULT 'afectado',
+    rol TEXT NOT NULL CHECK (rol IN ('voluntario', 'afectado', 'admin', 'staff')) DEFAULT 'afectado',
     nombre TEXT NOT NULL,
     contacto TEXT, -- Número de teléfono principal
     foto_perfil TEXT, -- Imagen en formato Base64 comprimida

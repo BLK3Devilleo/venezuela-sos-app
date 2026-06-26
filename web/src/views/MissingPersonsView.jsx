@@ -141,7 +141,8 @@ export default function MissingPersonsView({ user }) {
           ultima_ubicacion: draft.ultima_ubicacion,
           contacto: draft.contacto,
           redes_sociales: { instagram: draft.instagram, facebook: draft.facebook },
-          fotos: imageUrls
+          fotos: imageUrls,
+          user_id: draft.user_id
         });
 
         if (error) {
@@ -216,7 +217,8 @@ export default function MissingPersonsView({ user }) {
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
           contacto: formData.contacto.trim(),
           redes_sociales: { instagram: formData.instagram.trim(), facebook: formData.facebook.trim() },
-          fotos: imageUrls
+          fotos: imageUrls,
+          user_id: user?.id
         });
 
         if (error) throw error;
@@ -231,6 +233,7 @@ export default function MissingPersonsView({ user }) {
           instagram: formData.instagram.trim(),
           facebook: formData.facebook.trim(),
           fotoBlob: compressedBlob,
+          user_id: user?.id,
           created_at: new Date().toISOString()
         });
         alert('Sin conexión. Se guardó localmente y se sincronizará automáticamente al reconectar.');
@@ -248,6 +251,7 @@ export default function MissingPersonsView({ user }) {
         let compressedBlob = imageFile ? await compressImage(imageFile) : null;
         await dbLocal.personasDrafts.add({
           nombre: formData.nombre.trim(),
+          text_edad: formData.edad, // Wait, it's just 'edad' in schema, let's keep it 'edad'
           edad: formData.edad,
           descripcion: formData.descripcion.trim(),
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
@@ -255,6 +259,7 @@ export default function MissingPersonsView({ user }) {
           instagram: formData.instagram.trim(),
           facebook: formData.facebook.trim(),
           fotoBlob: compressedBlob,
+          user_id: user?.id,
           created_at: new Date().toISOString()
         });
         alert('Error de conexión. Se guardó localmente de forma segura.');
@@ -298,6 +303,10 @@ export default function MissingPersonsView({ user }) {
   };
 
   const handleUpdateStatus = async (id) => {
+    if (!user || (selected?.user_id !== user.id && user.rol !== 'admin')) {
+      alert('No tienes permisos para realizar esta acción.');
+      return;
+    }
     await supabase.from('desaparecidos').update({ descripcion: 'ESTADO: Localizado a salvo.' }).eq('id', id);
     setSelected(null);
     fetchPeople();
@@ -567,7 +576,7 @@ export default function MissingPersonsView({ user }) {
                   </>
                 )}
                 
-                {user && !selected.isDraft && (
+                {user && !selected.isDraft && (selected.user_id === user.id || user.rol === 'admin') && (
                   <button 
                     onClick={() => handleUpdateStatus(selected.id)}
                     style={{ gridColumn: '1 / -1', padding: '0.75rem', backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.3)', borderRadius: '0.5rem', fontWeight: '700', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
@@ -578,7 +587,7 @@ export default function MissingPersonsView({ user }) {
               </div>
             )}
 
-            {(user?.rol === 'admin' || selected.isDraft) && (
+            {(user?.rol === 'admin' || user?.rol === 'staff' || selected.user_id === user?.id || selected.isDraft) && (
               <button 
                 onClick={() => handleDelete(selected.id, selected.isDraft)}
                 className="btn btn-secondary"

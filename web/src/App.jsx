@@ -13,8 +13,9 @@ import ChatRoomsView from './views/ChatRoomsView';
 import MarketplaceView from './views/MarketplaceView';
 import ProfileView from './views/ProfileView';
 import LegalView from './views/LegalView';
+import AdminPanelView from './views/AdminPanelView';
 import CookieBanner from './components/CookieBanner';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare } from 'lucide-react';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert } from 'lucide-react';
 
 const TAB_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: Home },
@@ -177,6 +178,7 @@ export default function App() {
           setView={setView} 
         />
       );
+      case 'admin_panel': return <AdminPanelView user={user} />;
       case 'legal': return <LegalView setView={setView} />;
       default: return <DashboardView user={user} setView={setView} />;
     }
@@ -341,7 +343,14 @@ export default function App() {
         zIndex: 200,
         backdropFilter: 'blur(16px)'
       }}>
-        {TAB_ITEMS.map(({ id, label, icon: Icon }) => {
+        {[
+          { id: 'dashboard', label: 'Inicio', icon: Home },
+          { id: 'map', label: 'Mapa', icon: Map },
+          { id: 'missing_persons', label: 'Buscar', icon: Users },
+          { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
+          { id: 'services', label: 'Servicios', icon: Activity },
+          ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])
+        ].map(({ id, label, icon: Icon }) => {
           const isActive = view === id;
           return (
             <button

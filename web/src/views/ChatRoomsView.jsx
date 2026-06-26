@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
-import { MessageSquare, ArrowLeft, Send, Hash, ShieldAlert, Heart, Truck, Users } from 'lucide-react';
+import { MessageSquare, ArrowLeft, Send, Hash, ShieldAlert, Heart, Truck, Users, Trash2 } from 'lucide-react';
 
 const ROOMS = [
   { id: 'emergencias', name: 'Emergencias 171', icon: ShieldAlert, color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
@@ -31,6 +31,13 @@ export default function ChatRoomsView({ user, onViewProfile }) {
         filter: `room_id=eq.${activeRoom.id}`
       }, (payload) => {
         fetchUserForNewMessage(payload.new);
+      })
+      .on('postgres_changes', { 
+        event: 'DELETE', 
+        schema: 'public', 
+        table: 'chat_messages'
+      }, (payload) => {
+        setMessages(prev => prev.filter(m => m.id !== payload.old.id));
       })
       .subscribe();
 
@@ -102,6 +109,17 @@ export default function ChatRoomsView({ user, onViewProfile }) {
     }
   };
 
+  const handleDeleteMessage = async (msgId) => {
+    if (!window.confirm('¿Seguro que deseas borrar este mensaje?')) return;
+    try {
+      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error deleting message:', err);
+      alert('Error al borrar el mensaje');
+    }
+  };
+
   if (activeRoom) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', backgroundColor: 'var(--bg-surface)' }}>
@@ -165,6 +183,26 @@ export default function ChatRoomsView({ user, onViewProfile }) {
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
+
+                  {(isMe || user.rol === 'admin' || user.rol === 'staff') && (
+                    <button 
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        alignSelf: 'center',
+                        opacity: 0.3,
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.opacity = 1}
+                      onMouseOut={(e) => e.currentTarget.style.opacity = 0.3}
+                    >
+                      <Trash2 size={14} style={{ color: '#ef4444' }} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
