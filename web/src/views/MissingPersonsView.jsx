@@ -996,100 +996,138 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           })}
         </div>
       ) : (
-        /* Gallery View */
-        <div className="gallery-grid" style={{
+        /* Gallery View - Premium Vertical Poster Card Grid */
+        <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '8px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: '1rem',
           marginTop: '0.5rem'
         }}>
           {shuffledPeople.map(p => {
             const estado = getPersonEstado(p);
             const styles = getStatusStyles(estado);
+            const isRegisteredUser = !!p.creador_id || !!p.user_id;
             return (
               <div 
                 key={p.isDraft ? `draft-gallery-${p.id}` : p.id} 
-                className="gallery-item"
+                className="card"
                 onClick={() => setSelected(p)}
                 style={{
-                  position: 'relative',
-                  aspectRatio: '1',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: `2px solid ${p.isDraft ? '#eab308' : 'transparent'}`,
-                  backgroundColor: 'var(--bg-surface)'
-                }}
-              >
-                <img 
-                  src={getImageUrl(p) || AVATAR_PERSON} 
-                  alt={p.nombre_y_edad} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '6px',
-                  right: '6px',
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: styles.color,
-                  boxShadow: '0 0 6px rgba(0,0,0,0.5)'
-                }} />
-                
-                {p.isDraft && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '6px',
-                    left: '6px',
-                    backgroundColor: '#eab308',
-                    color: '#854d0e',
-                    fontSize: '0.55rem',
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                    fontWeight: 'bold'
-                  }}>
-                    ⏳ OFFLINE
-                  </div>
-                )}
-
-                {/* Gradient Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  background: 'linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.5) 60%, transparent 100%)',
-                  padding: '8px 6px 6px 6px',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'flex-end',
-                  pointerEvents: 'none'
-                }}>
-                  <span className="font-display" style={{
+                  borderRadius: '1rem',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                  backgroundColor: 'var(--bg-surface)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)',
+                  transition: 'transform 0.2s ease, border-color 0.2s ease',
+                  padding: 0
+                }}
+              >
+                {/* Photo container */}
+                <div style={{ position: 'relative', width: '100%', aspectRatio: '1.05', overflow: 'hidden' }}>
+                  <img 
+                    src={getImageUrl(p) || AVATAR_PERSON} 
+                    alt={p.nombre_y_edad} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                  {p.isDraft && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '6px',
+                      left: '6px',
+                      backgroundColor: '#eab308',
+                      color: '#854d0e',
+                      fontSize: '0.55rem',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold'
+                    }}>
+                      ⏳ OFFLINE
+                    </div>
+                  )}
+                  {isRegisteredUser && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '6px',
+                      right: '6px',
+                      backgroundColor: 'rgba(13,148,136,0.9)',
+                      color: '#fff',
+                      fontSize: '0.55rem',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      👤 REGISTRADO
+                    </div>
+                  )}
+                </div>
+                
+                {/* Body Details */}
+                <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                  {/* Status badge */}
+                  <div>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      color: styles.color,
+                      backgroundColor: styles.bg,
+                      border: `1px solid ${styles.border}`,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block'
+                    }}>
+                      {estado === 'buscan_a' ? '🔍 Por localizar' : styles.label}
+                    </span>
+                  </div>
+                  
+                  {/* Name */}
+                  <h3 className="font-display" style={{
+                    fontSize: '0.95rem',
+                    fontWeight: '800',
                     color: 'var(--text-primary)',
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: 'block'
+                    margin: 0,
+                    lineHeight: '1.25',
+                    wordBreak: 'break-word'
                   }}>
                     {p.nombre_y_edad}
-                  </span>
-                  <span style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.6rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '2px',
-                    marginTop: '2px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                  </h3>
+                  
+                  {/* Age & Gender if available */}
+                  {(p.edad_aproximada || p.genero) && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>👤 {p.edad_aproximada ? `${p.edad_aproximada} años` : ''} {p.genero ? `· ${p.genero}` : ''}</span>
+                    </div>
+                  )}
+                  
+                  {/* Location */}
+                  <div style={{ 
+                    fontSize: '0.7rem', 
+                    color: 'var(--text-secondary)', 
+                    display: 'flex', 
+                    alignItems: 'flex-start', 
+                    gap: '4px',
+                    lineHeight: '1.3'
                   }}>
-                    <MapPin size={8} style={{ flexShrink: 0 }} /> {p.ultima_ubicacion || 'No especificada'}
-                  </span>
+                    <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--primary)' }} />
+                    <span style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: '2',
+                      WebkitBoxOrient: 'vertical'
+                    }}>
+                      {p.ultima_ubicacion || 'No especificada'}
+                    </span>
+                  </div>
+                  
+                  {/* Date */}
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '0.25rem', borderTop: '1px solid var(--border)' }}>
+                    📅 {new Date(p.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               </div>
             );
@@ -1352,11 +1390,22 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               
-              <div style={{ position: 'relative', width: '100%', height: '280px', borderRadius: '1rem', overflow: 'hidden' }}>
+              <div style={{ 
+                position: 'relative', 
+                width: '100%', 
+                maxHeight: '400px', 
+                borderRadius: '1rem', 
+                overflow: 'hidden',
+                backgroundColor: 'var(--bg-surface-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid var(--border)'
+              }}>
                 <img 
                   src={getImageUrl(selected) || AVATAR_PERSON} 
                   alt={selected.nombre_y_edad} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} 
                 />
                 {selected.isDraft && (
                   <div style={{
