@@ -1,696 +1,599 @@
-/**
- * ExternalSourcesView.jsx
- * 
- * Vista "Red Solidaria" — muestra personas buscadas de plataformas aliadas
- * en tiempo real, con créditos completos, separadas por fuente.
- */
-
-import React, { useState, useMemo } from 'react';
-import { useExternalSources, EXTERNAL_SOURCES } from '../utils/useExternalSources';
-import {
-  Globe, ExternalLink, RefreshCw, Search, Filter,
-  AlertTriangle, User, MapPin, Heart, CheckCircle,
-  XCircle, Clock, ChevronDown, Info, Wifi, WifiOff
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, Users, Heart, ClipboardList, Map, AlertTriangle, 
+  Search, Plus, MapPin, CheckCircle, ExternalLink, Calendar, Clock, Phone, FileText 
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 
-// ─── Avatar fallback ─────────────────────────────────────────────────────────
-function PersonAvatar({ src, name, size = 80, status }) {
-  const [failed, setFailed] = useState(false);
+// Leaflet default marker config fixes
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
-  const statusColor = {
-    missing: '#dc2626',
-    found: '#16a34a',
-    deceased: '#6b7280',
-    hospitalized: '#2563eb',
-  }[status] || '#6b7280';
-
-  if (src && !failed) {
-    return (
-      <img
-        src={src}
-        alt={name}
-        onError={() => setFailed(true)}
-        style={{
-          width: size, height: size,
-          borderRadius: '0.875rem',
-          objectFit: 'cover',
-          border: `2px solid ${statusColor}40`,
-          flexShrink: 0,
-          backgroundColor: 'var(--bg-surface-soft)',
-        }}
-      />
-    );
-  }
-
-  return (
-    <div style={{
-      width: size, height: size,
-      borderRadius: '0.875rem',
-      backgroundColor: `${statusColor}15`,
-      border: `2px solid ${statusColor}30`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    }}>
-      <User size={size * 0.45} style={{ color: statusColor, opacity: 0.6 }} />
-    </div>
-  );
-}
-
-// ─── Badge de estado ─────────────────────────────────────────────────────────
-function StatusBadge({ status }) {
-  const config = {
-    missing: { label: 'Buscado/a', color: '#dc2626', bg: 'rgba(220,38,38,0.12)', icon: AlertTriangle },
-    found: { label: 'Localizado/a', color: '#16a34a', bg: 'rgba(22,163,74,0.12)', icon: CheckCircle },
-    deceased: { label: 'Fallecido/a', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: XCircle },
-    hospitalized: { label: 'Hospitalizado/a', color: '#2563eb', bg: 'rgba(37,99,235,0.12)', icon: Heart },
-  }[status] || { label: status, color: '#6b7280', bg: 'rgba(107,114,128,0.12)', icon: Info };
-
-  const Icon = config.icon;
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-      fontSize: '0.7rem', fontWeight: '700',
-      color: config.color, backgroundColor: config.bg,
-      padding: '0.2rem 0.55rem', borderRadius: '2rem',
-      border: `1px solid ${config.color}30`,
-      whiteSpace: 'nowrap',
-    }}>
-      <Icon size={11} />
-      {config.label}
-    </span>
-  );
-}
-
-// ─── Badge de fuente ─────────────────────────────────────────────────────────
-function SourceBadge({ sourceKey }) {
-  const src = EXTERNAL_SOURCES[sourceKey];
-  if (!src) return null;
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-      fontSize: '0.65rem', fontWeight: '700',
-      color: src.color,
-      backgroundColor: `${src.color}15`,
-      padding: '0.2rem 0.5rem', borderRadius: '2rem',
-      border: `1px solid ${src.color}25`,
-      whiteSpace: 'nowrap',
-    }}>
-      {src.emoji} {src.shortName}
-    </span>
-  );
-}
-
-// ─── Tarjeta de persona ───────────────────────────────────────────────────────
-function PersonCard({ person }) {
-  const src = EXTERNAL_SOURCES[person.sourceKey];
-
-  return (
-    <div style={{
-      backgroundColor: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '1rem',
-      padding: '1rem',
-      display: 'flex',
-      gap: '0.875rem',
-      transition: 'all 0.2s ease',
-      cursor: 'default',
-    }}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = src?.color || 'var(--primary)';
-        e.currentTarget.style.transform = 'translateY(-1px)';
-        e.currentTarget.style.boxShadow = `0 8px 24px ${src?.color || '#0d9488'}20`;
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--border)';
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      {/* Foto */}
-      <PersonAvatar
-        src={person.photoUrl}
-        name={person.name}
-        size={76}
-        status={person.status}
-      />
-
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-        {/* Nombre */}
-        <p style={{
-          fontWeight: '800', fontSize: '0.9rem',
-          color: 'var(--text-primary)',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          margin: 0,
-        }}>
-          {person.name}
-        </p>
-
-        {/* Edad y zona */}
-        {(person.age || person.zone) && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
-            <MapPin size={11} style={{ marginTop: '2px', flexShrink: 0, color: 'var(--text-muted)' }} />
-            <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-              {[person.age ? `${person.age} años` : null, person.zone].filter(Boolean).join(' · ')}
-            </span>
-          </p>
-        )}
-
-        {/* Descripción */}
-        {person.description && (
-          <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
-            {person.description}
-          </p>
-        )}
-
-        {/* Badges */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.2rem' }}>
-          <StatusBadge status={person.status} />
-          <SourceBadge sourceKey={person.sourceKey} />
-        </div>
-
-        {/* Enlace */}
-        <a
-          href={person.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-            fontSize: '0.68rem', fontWeight: '700',
-            color: src?.color || 'var(--primary)',
-            textDecoration: 'none',
-            marginTop: '0.2rem',
-            opacity: 0.85,
-          }}
-          onClick={e => e.stopPropagation()}
-        >
-          <ExternalLink size={10} />
-          Ver en fuente original
-        </a>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tarjeta de fuente (encabezado de sección) ────────────────────────────────
-function SourceHeader({ sourceKey, count, isLoading, error, stats }) {
-  const src = EXTERNAL_SOURCES[sourceKey];
-  if (!src) return null;
-
-  const statData = stats?.[sourceKey];
-
-  return (
-    <div style={{
-      background: `linear-gradient(135deg, ${src.color}18, ${src.color}08)`,
-      border: `1px solid ${src.color}30`,
-      borderRadius: '1rem',
-      padding: '1rem 1.25rem',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '1rem',
-      flexWrap: 'wrap',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{
-          width: 40, height: 40,
-          borderRadius: '0.75rem',
-          backgroundColor: `${src.color}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.2rem',
-        }}>
-          {src.emoji}
-        </div>
-        <div>
-          <div style={{ fontWeight: '800', fontSize: '0.95rem', color: src.color }}>
-            {src.name}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-            {src.description}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        {statData && (
-          <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem' }}>
-            <span style={{ color: '#dc2626', fontWeight: '700' }}>
-              🔴 {statData.missing?.toLocaleString() || '?'} buscados
-            </span>
-            <span style={{ color: '#16a34a', fontWeight: '700' }}>
-              🟢 {statData.found?.toLocaleString() || '?'} localizados
-            </span>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {isLoading ? (
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <RefreshCw size={11} className="spin" /> Cargando...
-            </span>
-          ) : error ? (
-            <span style={{ fontSize: '0.72rem', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <WifiOff size={11} /> Sin conexión
-            </span>
-          ) : (
-            <span style={{ fontSize: '0.72rem', color: src.color, fontWeight: '700', backgroundColor: `${src.color}15`, padding: '0.2rem 0.6rem', borderRadius: '2rem' }}>
-              {count} mostrados
-            </span>
-          )}
-          <a
-            href={src.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: src.color, opacity: 0.75 }}
-            title={`Visitar ${src.name}`}
-          >
-            <ExternalLink size={14} />
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Skeleton card ────────────────────────────────────────────────────────────
-function SkeletonCard() {
-  return (
-    <div style={{
-      backgroundColor: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: '1rem',
-      padding: '1rem',
-      display: 'flex', gap: '0.875rem',
-      animation: 'pulse 1.5s infinite',
-    }}>
-      <div style={{ width: 76, height: 76, borderRadius: '0.875rem', backgroundColor: 'var(--bg-surface-soft)' }} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <div style={{ height: 14, backgroundColor: 'var(--bg-surface-soft)', borderRadius: '0.5rem', width: '70%' }} />
-        <div style={{ height: 11, backgroundColor: 'var(--bg-surface-soft)', borderRadius: '0.5rem', width: '90%' }} />
-        <div style={{ height: 11, backgroundColor: 'var(--bg-surface-soft)', borderRadius: '0.5rem', width: '50%' }} />
-        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
-          <div style={{ height: 20, width: 80, backgroundColor: 'var(--bg-surface-soft)', borderRadius: '2rem' }} />
-          <div style={{ height: 20, width: 70, backgroundColor: 'var(--bg-surface-soft)', borderRadius: '2rem' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Vista principal ──────────────────────────────────────────────────────────
-export default function ExternalSourcesView() {
-  const [activeSource, setActiveSource] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [page] = useState(1);
-  const [showDisclaimer, setShowDisclaimer] = useState(true);
-
-  // Debounce búsqueda
-  const searchTimeout = React.useRef(null);
-  const handleSearchChange = (val) => {
-    setSearch(val);
-    clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => setDebouncedSearch(val), 450);
-  };
-
-  const activeSources = activeSource === 'all'
-    ? Object.keys(EXTERNAL_SOURCES)
-    : [activeSource];
-
-  const {
-    data, loading, errors, stats, isLoading, refresh,
-  } = useExternalSources({
-    sources: activeSources,
-    page,
-    limit: 50,
-    search: debouncedSearch,
-    status: statusFilter,
+// Custom markers for help points
+const createHelpIcon = (color) => {
+  return L.divIcon({
+    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.3)"></div>`,
+    className: 'custom-help-marker',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
   });
+};
 
-  const STATUS_OPTIONS = [
-    { value: 'all', label: 'Todos', icon: '🌐' },
-    { value: 'missing', label: 'Buscados', icon: '🔴' },
-    { value: 'found', label: 'Localizados', icon: '🟢' },
-    { value: 'deceased', label: 'Fallecidos', icon: '⚫' },
+const HELP_COLORS = {
+  Comida: '#ea580c',
+  Medicinas: '#dc2626',
+  Transporte: '#2563eb',
+  Refugio: '#0d9488',
+  Suministros: '#16a34a',
+  Otro: '#7c3aed'
+};
+
+export default function ExternalSourcesView() {
+  const [activeTab, setActiveTab] = useState('hospitalized');
+
+  // --- SECCIÓN 1: PERSONAS HOSPITALIZADAS ---
+  const [hospQuery, setHospQuery] = useState('');
+  const [hospCedula, setHospCedula] = useState('');
+  const [hospClinic, setHospClinic] = useState('all');
+  const [hospitalizedData, setHospitalizedData] = useState([]);
+  const [hospLoading, setHospLoading] = useState(false);
+
+  // Mock initial hospitalized database from external API simulation
+  const mockHospitalized = [
+    { id: 'h1', name: 'Santiago José Guerrero', id_number: '12.482.019', hospital: 'Hospital Domingo Luciani', status: 'Estable - En observación', last_update: 'Hace 40 minutos' },
+    { id: 'h2', name: 'Amanda Sofía Pérez', id_number: '28.192.551', hospital: 'Clínica El Avila', status: 'Estable - Dada de alta', last_update: 'Hace 2 horas' },
+    { id: 'h3', name: 'Luis Alfredo Ramos', id_number: '9.481.302', hospital: 'Hospital Pérez Carreño', status: 'Cuidado Intensivo', last_update: 'Hace 10 minutos' },
+    { id: 'h4', name: 'Gabriela Elena Castro', id_number: '21.038.992', hospital: 'Centro Médico Docente La Trinidad', status: 'Estable - En planta', last_update: 'Hace 1 hora' },
+    { id: 'h5', name: 'Francisco Antonio Rivas', id_number: '15.940.320', hospital: 'Hospital Domingo Luciani', status: 'Crítico - Quirófano', last_update: 'Hace 5 minutos' }
   ];
 
-  const totalCount = activeSources.reduce((acc, k) => acc + (data[k]?.length || 0), 0);
+  useEffect(() => {
+    setHospLoading(true);
+    // Simular fetch de endpoint externo
+    const timer = setTimeout(() => {
+      setHospitalizedData(mockHospitalized);
+      setHospLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredHospitalized = hospitalizedData.filter(h => {
+    const matchesName = h.name.toLowerCase().includes(hospQuery.toLowerCase());
+    const matchesCedula = h.id_number.includes(hospCedula);
+    const matchesHospital = hospClinic === 'all' || h.hospital === hospClinic;
+    return matchesName && matchesCedula && matchesHospital;
+  });
+
+  // --- SECCIÓN 2: VOLUNTARIADO ---
+  const [volLocation, setVolLocation] = useState('');
+  const [volHelpType, setVolHelpType] = useState('Comida');
+  const [volDate, setVolDate] = useState('');
+  const [volTime, setVolTime] = useState('');
+  const [volContact, setVolContact] = useState('');
+  const [volNotes, setVolNotes] = useState('');
+  
+  const [mapHelpType, setMapHelpType] = useState('all');
+  const [mapStatus, setMapStatus] = useState('all');
+  
+  // Mock de ayudas activas en el mapa
+  const [activeHelps, setActiveHelps] = useState([
+    { id: 'ap1', location: 'Plaza Bolívar de Macuto', help_type: 'Comida', status: 'En curso', volunteer_count: 5, lat: 10.6133, lng: -66.8833 },
+    { id: 'ap2', location: 'Hospital Dr. José María Vargas', help_type: 'Medicinas', status: 'Planificada', volunteer_count: 2, lat: 10.6092, lng: -66.9322 },
+    { id: 'ap3', location: 'Refugio Escuela República de El Salvador', help_type: 'Refugio', status: 'En curso', volunteer_count: 8, lat: 10.6055, lng: -66.9125 },
+    { id: 'ap4', location: 'Distribuidor Altamira, Caracas', help_type: 'Transporte', status: 'Finalizada', volunteer_count: 4, lat: 10.4963, lng: -66.8492 }
+  ]);
+
+  const handleRegisterVolunteer = async (e) => {
+    e.preventDefault();
+    if (!volLocation.trim()) return alert('La ubicación es obligatoria');
+    
+    const newHelp = {
+      id: `ap_${Date.now()}`,
+      location: volLocation.trim(),
+      help_type: volHelpType,
+      status: 'Planificada',
+      volunteer_count: 1,
+      lat: 10.5000 + (Math.random() - 0.5) * 0.1, // Coordenadas ficticias cerca de Caracas
+      lng: -66.9000 + (Math.random() - 0.5) * 0.1
+    };
+
+    setActiveHelps(prev => [newHelp, ...prev]);
+    alert('Ayuda registrada con éxito. Se enviará a la API federada.');
+    
+    // Limpiar campos
+    setVolLocation('');
+    setVolDate('');
+    setVolTime('');
+    setVolContact('');
+    setVolNotes('');
+  };
+
+  const filteredMapHelps = activeHelps.filter(h => {
+    const matchesType = mapHelpType === 'all' || h.help_type === mapHelpType;
+    const matchesStatus = mapStatus === 'all' || h.status === mapStatus;
+    return matchesType && matchesStatus;
+  });
+
+  // --- SECCIÓN 3: RECURSOS Y SUMINISTROS ---
+  const [acopios, setAcopios] = useState([
+    { id: 'ac1', name: 'Caritas La Guaira', category: 'Comida', location: 'Av. Soublette, Edif. Diocesano', schedule: '8:00 AM a 4:00 PM', contact: '0412-3382944', description: 'Recepción de alimentos no perecederos y agua potable.' },
+    { id: 'ac2', name: 'Cruz Roja Seccional Caracas', category: 'Medicina', location: 'San Bernardino, Av. Andrés Bello', schedule: '24 Horas', contact: '0212-5743511', description: 'Recepción exclusiva de insumos de primeros auxilios y kits de trauma.' },
+    { id: 'ac3', name: 'Refugio Parroquia San Sebastián', category: 'Refugio', location: 'Maiquetía, Detrás de la Iglesia', schedule: 'Todo el día', contact: '0414-2938102', description: 'Hospedaje temporal con capacidad para 40 personas.' }
+  ]);
+
+  const [acName, setAcName] = useState('');
+  const [acCategory, setAcCategory] = useState('Comida');
+  const [acLocation, setAcLocation] = useState('');
+  const [acSchedule, setAcSchedule] = useState('');
+  const [acContact, setAcContact] = useState('');
+  const [acDesc, setAcDesc] = useState('');
+
+  const handleRegisterAcopio = (e) => {
+    e.preventDefault();
+    if (!acName.trim() || !acLocation.trim() || !acContact.trim()) return alert('Por favor, rellene los campos obligatorios.');
+
+    const newAc = {
+      id: `ac_${Date.now()}`,
+      name: acName.trim(),
+      category: acCategory,
+      location: acLocation.trim(),
+      schedule: acSchedule.trim() || 'No especificado',
+      contact: acContact.trim(),
+      description: acDesc.trim()
+    };
+
+    setAcopios(prev => [newAc, ...prev]);
+    alert('Centro de acopio registrado con éxito.');
+    
+    // Resetear formulario
+    setAcName('');
+    setAcLocation('');
+    setAcSchedule('');
+    setAcContact('');
+    setAcDesc('');
+  };
+
+  // --- SECCIÓN 4: TABLÓN / DIRECTORIO ---
+  const [boardCat, setBoardCat] = useState('all');
+  const [boardLoc, setBoardLoc] = useState('');
+  
+  const mockBoardData = [
+    { id: 'b1', title: 'Traslado médico solicitado', category: 'Personas', location: 'Macuto', contact: '0412-9201923', short_desc: 'Se requiere ambulancia o vehículo de apoyo para trasladar paciente estable.', column: 'urgent' },
+    { id: 'b2', title: 'Llegada de camión de agua potable', category: 'Recursos', location: 'Caraballeda', contact: '0424-3829102', short_desc: 'Punto de recolección de agua habilitado frente al polideportivo.', column: 'general_info' },
+    { id: 'b3', title: 'Coordinación de brigadas de búsqueda', category: 'Coordinación', location: 'San Bernardino', contact: '0212-6067111', short_desc: 'Reunión general a las 8:00 AM para delimitar cuadrantes.', column: 'coordination' }
+  ];
+
+  const filteredBoard = mockBoardData.filter(item => {
+    const matchesCat = boardCat === 'all' || item.category === boardCat;
+    const matchesLoc = item.location.toLowerCase().includes(boardLoc.toLowerCase());
+    return matchesCat && matchesLoc;
+  });
+
+  // --- SECCIÓN 5: REUNIENDO FAMILIAS ---
+  const [disclaimerExpanded, setDisclaimerExpanded] = useState(true);
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: '2rem' }}>
-
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: 44, height: 44,
-              borderRadius: '1rem',
-              background: 'linear-gradient(135deg, #1d4ed8, #0d9488)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Globe size={22} style={{ color: '#fff' }} />
-            </div>
-            <div>
-              <h1 style={{ fontWeight: '900', fontSize: '1.4rem', margin: 0, fontFamily: 'var(--font-display)' }}>
-                Red Solidaria
-              </h1>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-                Información de plataformas aliadas · En tiempo real
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={refresh}
-            disabled={isLoading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.4rem',
-              backgroundColor: 'var(--bg-surface-soft)',
-              border: '1px solid var(--border)',
-              borderRadius: '0.75rem',
-              padding: '0.5rem 0.9rem',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.78rem', fontWeight: '700',
-              color: 'var(--text-secondary)',
-              opacity: isLoading ? 0.6 : 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            <RefreshCw size={14} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
-            {isLoading ? 'Cargando...' : 'Actualizar'}
-          </button>
-        </div>
+    <div className="fade-in" style={{ paddingBottom: '3rem', paddingTop: '0.5rem' }}>
+      
+      {/* Title */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          🌐 Red Solidaria Federada
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+          Módulos unificados que indexan APIs y reportes en tiempo real para coordinar la ayuda.
+        </p>
       </div>
 
-      {/* ── Disclaimer humanitario ──────────────────────────────────── */}
-      {showDisclaimer && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(13,148,136,0.12), rgba(29,78,216,0.08))',
-          border: '1px solid rgba(13,148,136,0.25)',
-          borderRadius: '1rem',
-          padding: '1rem 1.25rem',
-          marginBottom: '1.25rem',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '0.75rem',
-        }}>
-          <Heart size={18} style={{ color: '#0d9488', flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: '800', fontSize: '0.85rem', color: 'var(--text-primary)', margin: '0 0 0.3rem' }}>
-              🤝 Información de plataformas aliadas
-            </p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>
-              Esta sección refleja datos en tiempo real de otras plataformas humanitarias.
-              Toda la información pertenece a sus respectivos autores y se reproduce
-              exclusivamente con fines humanitarios. Para actualizar o retirar un registro, visita la plataforma original.
-            </p>
-          </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', marginBottom: '1.5rem', paddingBottom: '0.25rem' }} className="hide-scrollbar">
+        {[
+          { id: 'hospitalized', label: '🏥 Hospitalizados', tabName: 'hospitalized' },
+          { id: 'volunteers', label: '🤝 Voluntariado', tabName: 'volunteers' },
+          { id: 'acopios', label: '📦 Suministros/Acopios', tabName: 'acopios' },
+          { id: 'board', label: '📋 Tablón de Avisos', tabName: 'board' },
+          { id: 'families', label: '👨‍👩‍👧‍👦 Minor Disclaimer', tabName: 'families' }
+        ].map(tab => (
           <button
-            onClick={() => setShowDisclaimer(false)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.1rem', flexShrink: 0 }}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.tabName)}
+            style={{
+              padding: '0.5rem 1rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer',
+              whiteSpace: 'nowrap', border: '1px solid',
+              backgroundColor: activeTab === tab.tabName ? 'var(--primary)' : 'var(--bg-surface-soft)',
+              borderColor: activeTab === tab.tabName ? 'var(--primary)' : 'var(--border)',
+              color: activeTab === tab.tabName ? '#fff' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
           >
-            ✕
+            {tab.label}
           </button>
+        ))}
+      </div>
+
+      {/* TAB 1: HOSPITALIZADOS */}
+      {activeTab === 'hospitalized' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card" style={{ padding: '1.25rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+              Filtro de Personas Hospitalizadas
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Nombre</label>
+                  <input className="input-field" placeholder="Buscar por nombre..." value={hospQuery} onChange={e => setHospQuery(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Cédula</label>
+                  <input className="input-field" placeholder="Buscar por cédula..." value={hospCedula} onChange={e => setHospCedula(e.target.value)} />
+                </div>
+              </div>
+              
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Hospital / Clínica</label>
+                <select className="input-field select-field" value={hospClinic} onChange={e => setHospClinic(e.target.value)}>
+                  <option value="all">Todos los Centros Médicos</option>
+                  <option value="Hospital Domingo Luciani">Hospital Domingo Luciani</option>
+                  <option value="Hospital Pérez Carreño">Hospital Pérez Carreño</option>
+                  <option value="Clínica El Avila">Clínica El Avila</option>
+                  <option value="Centro Médico Docente La Trinidad">Centro Médico Docente La Trinidad</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {hospLoading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>Consultando base de datos hospitalaria federada...</div>
+          ) : (
+            <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+              {filteredHospitalized.map(h => (
+                <div key={h.id} className="card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--primary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.6rem', fontWeight: '800', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', padding: '2px 6px', borderRadius: '4px', alignSelf: 'flex-start', textTransform: 'uppercase' }}>
+                    🏥 Registro Remoto Oficial
+                  </span>
+                  
+                  <h4 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+                    {h.name}
+                  </h4>
+                  
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: '0.25rem 0' }}>
+                    <div>Cédula: <strong>{h.id_number}</strong></div>
+                    <div>Centro de salud: <strong>{h.hospital}</strong></div>
+                    <div>Estado: <strong style={{ color: '#10b981' }}>{h.status}</strong></div>
+                  </div>
+                  
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    <span>Actualización: {h.last_update}</span>
+                    <a href="#" onClick={e => e.preventDefault()} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 'bold' }}>Ver Detalles ➔</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Créditos / Fuentes ─────────────────────────────────────── */}
-      <div style={{ marginBottom: '1.25rem' }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem' }}>
-          Plataformas colaboradoras
-        </p>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {Object.values(EXTERNAL_SOURCES).map(src => (
-            <a
-              key={src.key}
-              href={src.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                fontSize: '0.75rem', fontWeight: '700',
-                color: src.color,
-                backgroundColor: `${src.color}12`,
-                border: `1px solid ${src.color}25`,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '2rem',
-                textDecoration: 'none',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${src.color}25`; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${src.color}12`; }}
-            >
-              {src.emoji} {src.name} <ExternalLink size={11} />
-            </a>
-          ))}
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-            fontSize: '0.7rem', color: 'var(--text-muted)',
-            backgroundColor: 'var(--bg-surface-soft)',
-            border: '1px dashed var(--border)',
-            padding: '0.35rem 0.75rem',
-            borderRadius: '2rem',
-          }}>
-            + más próximamente
-          </span>
-        </div>
-      </div>
+      {/* TAB 2: VOLUNTARIOS / AYUDAS ACTIVAS */}
+      {activeTab === 'volunteers' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Formulario */}
+          <div className="card" style={{ padding: '1.25rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+              ¿Vas a prestar ayuda? Registrar ubicación de salida
+            </h3>
+            
+            <form onSubmit={handleRegisterVolunteer} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Zona o Ubicación *</label>
+                  <input className="input-field" placeholder="Ej. Plaza Altamira, Caracas" value={volLocation} onChange={e => setVolLocation(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Tipo de Ayuda *</label>
+                  <select className="input-field select-field" value={volHelpType} onChange={e => setVolHelpType(e.target.value)}>
+                    <option value="Comida">Comida</option>
+                    <option value="Medicinas">Medicinas</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Refugio">Refugio</option>
+                    <option value="Suministros">Suministros</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
 
-      {/* ── Filtros ────────────────────────────────────────────────── */}
-      <div style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '1rem',
-        padding: '1rem',
-        marginBottom: '1.25rem',
-        display: 'flex', flexDirection: 'column', gap: '0.875rem',
-      }}>
-        {/* Búsqueda */}
-        <div style={{ position: 'relative' }}>
-          <Search size={16} style={{
-            position: 'absolute', left: '0.85rem', top: '50%',
-            transform: 'translateY(-50%)', color: 'var(--text-muted)',
-            pointerEvents: 'none',
-          }} />
-          <input
-            type="text"
-            value={search}
-            onChange={e => handleSearchChange(e.target.value)}
-            placeholder="Buscar por nombre, zona o municipio..."
-            style={{
-              width: '100%', padding: '0.7rem 0.875rem 0.7rem 2.5rem',
-              backgroundColor: 'var(--bg-surface-soft)',
-              border: '1px solid var(--border)',
-              borderRadius: '0.75rem',
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              outline: 'none',
-            }}
-            onFocus={e => { e.target.style.borderColor = 'var(--primary)'; }}
-            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
-          />
-        </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Fecha *</label>
+                  <input className="input-field" type="date" value={volDate} onChange={e => setVolDate(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Hora Aproximada</label>
+                  <input className="input-field" type="time" value={volTime} onChange={e => setVolTime(e.target.value)} />
+                </div>
+              </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Filtro por fuente */}
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setActiveSource('all')}
-              style={{
-                padding: '0.4rem 0.9rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '700',
-                border: activeSource === 'all' ? '1px solid var(--primary)' : '1px solid var(--border)',
-                backgroundColor: activeSource === 'all' ? 'var(--primary)' : 'var(--bg-surface-soft)',
-                color: activeSource === 'all' ? '#fff' : 'var(--text-secondary)',
-                cursor: 'pointer', transition: 'all 0.15s',
-              }}
-            >
-              🌐 Todas las fuentes
-            </button>
-            {Object.values(EXTERNAL_SOURCES).map(src => (
-              <button
-                key={src.key}
-                onClick={() => setActiveSource(src.key)}
-                style={{
-                  padding: '0.4rem 0.9rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: '700',
-                  border: activeSource === src.key ? `1px solid ${src.color}` : '1px solid var(--border)',
-                  backgroundColor: activeSource === src.key ? `${src.color}20` : 'var(--bg-surface-soft)',
-                  color: activeSource === src.key ? src.color : 'var(--text-secondary)',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                {src.emoji} {src.shortName}
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Contacto (WhatsApp / Celular)</label>
+                <input className="input-field" placeholder="Ej. 04241234567" value={volContact} onChange={e => setVolContact(e.target.value)} />
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Notas o Materiales que llevas</label>
+                <textarea className="input-field" style={{ height: '60px', resize: 'none' }} placeholder="Describa brevemente..." value={volNotes} onChange={e => setVolNotes(e.target.value)} />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem' }}>
+                Registrar y Coordinar Ayuda
               </button>
-            ))}
+            </form>
           </div>
 
-          {/* Filtro por estado */}
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginLeft: 'auto' }}>
-            {STATUS_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setStatusFilter(opt.value)}
-                style={{
-                  padding: '0.4rem 0.8rem', borderRadius: '2rem', fontSize: '0.72rem', fontWeight: '700',
-                  border: statusFilter === opt.value ? '1px solid var(--primary)' : '1px solid var(--border)',
-                  backgroundColor: statusFilter === opt.value ? 'rgba(13,148,136,0.15)' : 'var(--bg-surface-soft)',
-                  color: statusFilter === opt.value ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                {opt.icon} {opt.label}
+          {/* Mapa y Filtros */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="card" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>Mapa de Ayuda Voluntaria en Vivo</div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select className="input-field select-field" style={{ padding: '0.35rem 2rem 0.35rem 0.75rem', fontSize: '0.75rem', width: 'auto' }} value={mapHelpType} onChange={e => setMapHelpType(e.target.value)}>
+                  <option value="all">Todos los tipos</option>
+                  <option value="Comida">Comida</option>
+                  <option value="Medicinas">Medicinas</option>
+                  <option value="Refugio">Refugio</option>
+                </select>
+                <select className="input-field select-field" style={{ padding: '0.35rem 2rem 0.35rem 0.75rem', fontSize: '0.75rem', width: 'auto' }} value={mapStatus} onChange={e => setMapStatus(e.target.value)}>
+                  <option value="all">Todos los estados</option>
+                  <option value="Planificada">Planificada</option>
+                  <option value="En curso">En curso</option>
+                  <option value="Finalizada">Finalizada</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Map frame */}
+            <div style={{ height: '350px', borderRadius: '1.25rem', overflow: 'hidden', border: '1px solid var(--border)', zIndex: 1 }}>
+              <MapContainer center={[10.6092, -66.9125]} zoom={12} style={{ width: '100%', height: '100%' }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                {filteredMapHelps.map(h => (
+                  <Marker 
+                    key={h.id} 
+                    position={[h.lat, h.lng]} 
+                    icon={createHelpIcon(HELP_COLORS[h.help_type] || '#7c3aed')}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '4px' }}>{h.location}</div>
+                        <div>Ayuda: <strong style={{ color: HELP_COLORS[h.help_type] }}>{h.help_type}</strong></div>
+                        <div>Voluntarios activos: <strong>{h.volunteer_count}</strong></div>
+                        <div style={{ marginTop: '4px' }}>Estado: <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 4px', borderRadius: '3px', backgroundColor: 'var(--bg-surface-soft)' }}>{h.status}</span></div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: RECURSOS Y SUMINISTROS (CENTROS DE ACOPIO) */}
+      {activeTab === 'acopios' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card" style={{ padding: '1.25rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+              Registrar Nuevo Centro de Acopio o Suministro
+            </h3>
+            
+            <form onSubmit={handleRegisterAcopio} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Nombre del Centro *</label>
+                  <input className="input-field" placeholder="Ej. Iglesia Maiquetía" value={acName} onChange={e => setAcName(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Categoría *</label>
+                  <select className="input-field select-field" value={acCategory} onChange={e => setAcCategory(e.target.value)}>
+                    <option value="Comida">Comida</option>
+                    <option value="Medicina">Medicina</option>
+                    <option value="Refugio">Refugio</option>
+                    <option value="Suministros varios">Suministros varios</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Ubicación *</label>
+                  <input className="input-field" placeholder="Dirección detallada" value={acLocation} onChange={e => setAcLocation(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label className="input-label">Contacto (Teléfono/WhatsApp) *</label>
+                  <input className="input-field" placeholder="Ej. 04121234567" value={acContact} onChange={e => setAcContact(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Horarios de Atención *</label>
+                <input className="input-field" placeholder="Ej. Lunes a Viernes 8 AM a 5 PM" value={acSchedule} onChange={e => setAcSchedule(e.target.value)} required />
+              </div>
+
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label">Descripción Breve</label>
+                <textarea className="input-field" style={{ height: '60px', resize: 'none' }} placeholder="Detalles de insumos requeridos..." value={acDesc} onChange={e => setAcDesc(e.target.value)} />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem' }}>
+                Registrar Centro de Acopio
               </button>
+            </form>
+          </div>
+
+          {/* Listado en galería */}
+          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+            {acopios.map(ac => (
+              <div key={ac.id} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '800', backgroundColor: 'var(--bg-surface-soft)', padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase', color: 'var(--primary)' }}>
+                    📦 {ac.category}
+                  </span>
+                </div>
+
+                <h4 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', margin: '0.25rem 0 0 0', color: 'var(--text-primary)' }}>
+                  {ac.name}
+                </h4>
+
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                  {ac.description || 'Sin descripción adicional.'}
+                </p>
+
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  <div>📍 <strong>Dirección:</strong> {ac.location}</div>
+                  <div>🕒 <strong>Horarios:</strong> {ac.schedule}</div>
+                  <div>📞 <strong>Contacto:</strong> {ac.contact}</div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
+      )}
 
-        {/* Contador total */}
-        {!isLoading && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
-            Mostrando <strong style={{ color: 'var(--text-primary)' }}>{totalCount.toLocaleString()}</strong> registros
-            {debouncedSearch && ` para "${debouncedSearch}"`}
-            {statusFilter !== 'all' && ` · filtro: ${STATUS_OPTIONS.find(o => o.value === statusFilter)?.label}`}
-          </p>
-        )}
-      </div>
+      {/* TAB 4: TABLÓN / DIRECTORIO */}
+      {activeTab === 'board' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          
+          {/* Filtros */}
+          <div className="card" style={{ padding: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div className="input-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
+              <label className="input-label">Categoría</label>
+              <select className="input-field select-field" value={boardCat} onChange={e => setBoardCat(e.target.value)} style={{ padding: '0.45rem 2rem 0.45rem 0.75rem', fontSize: '0.8rem' }}>
+                <option value="all">Todas las Categorías</option>
+                <option value="Personas">Personas</option>
+                <option value="Recursos">Recursos</option>
+                <option value="Refugios">Refugios</option>
+                <option value="Coordinación">Coordinación</option>
+                <option value="Noticias">Noticias</option>
+              </select>
+            </div>
+            <div className="input-group" style={{ marginBottom: 0, flex: 1.5, minWidth: '180px' }}>
+              <label className="input-label">Ubicación</label>
+              <input className="input-field" placeholder="Ej. Macuto..." value={boardLoc} onChange={e => setBoardLoc(e.target.value)} style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }} />
+            </div>
+          </div>
 
-      {/* ── Contenido por fuente ───────────────────────────────────── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-        {activeSources.map(sourceKey => {
-          const src = EXTERNAL_SOURCES[sourceKey];
-          const sourceData = data[sourceKey] || [];
-          const isSourceLoading = loading[sourceKey];
-          const sourceError = errors[sourceKey];
-
-          return (
-            <section key={sourceKey}>
-              {/* Header de fuente */}
-              <SourceHeader
-                sourceKey={sourceKey}
-                count={sourceData.length}
-                isLoading={isSourceLoading}
-                error={sourceError}
-                stats={stats}
-              />
-
-              {/* Error state */}
-              {sourceError && !isSourceLoading && (
-                <div style={{
-                  marginTop: '0.75rem',
-                  padding: '1rem 1.25rem',
-                  backgroundColor: 'rgba(220,38,38,0.08)',
-                  border: '1px solid rgba(220,38,38,0.2)',
-                  borderRadius: '0.875rem',
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                }}>
-                  <WifiOff size={18} style={{ color: '#dc2626', flexShrink: 0 }} />
-                  <div>
-                    <p style={{ fontWeight: '700', fontSize: '0.85rem', color: '#f87171', margin: '0 0 0.2rem' }}>
-                      No se pudo conectar con {src?.name}
-                    </p>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0 }}>
-                      {sourceError} · Puedes visitar{' '}
-                      <a href={src?.url} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>
-                        {src?.url}
-                      </a>
-                      {' '}directamente.
-                    </p>
+          {/* Columnas Kanban del Tablón */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', alignItems: 'flex-start' }}>
+            
+            {/* Columna 1: Información general */}
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+              <h4 style={{ margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border)', fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                📋 Información General
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {filteredBoard.filter(item => item.column === 'general_info').map(card => (
+                  <div key={card.id} className="card" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1.5px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: '800', color: 'var(--text-primary)' }}>{card.title}</div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{card.short_desc}</p>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '0.4rem', marginTop: '0.2rem' }}>
+                      <span>📍 {card.location}</span>
+                      <span>📞 {card.contact}</span>
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
+            </div>
 
-              {/* Skeleton loaders */}
-              {isSourceLoading && (
-                <div style={{
-                  marginTop: '0.875rem',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                  gap: '0.75rem',
-                }}>
-                  {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-                </div>
-              )}
+            {/* Columna 2: Urgente */}
+            <div style={{ backgroundColor: 'rgba(220,38,38,0.04)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(220,38,38,0.15)' }}>
+              <h4 style={{ margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '2px solid #ef4444', fontSize: '0.95rem', fontWeight: '800', color: '#fca5a5' }}>
+                🚨 Solicitudes Urgentes
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {filteredBoard.filter(item => item.column === 'urgent').map(card => (
+                  <div key={card.id} className="card" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1.5px solid rgba(220,38,38,0.3)', backgroundColor: 'var(--bg-surface)' }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: '800', color: '#fca5a5' }}>{card.title}</div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{card.short_desc}</p>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '0.4rem', marginTop: '0.2rem' }}>
+                      <span>📍 {card.location}</span>
+                      <span style={{ color: '#ef4444' }}>📞 {card.contact}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-              {/* Resultados */}
-              {!isSourceLoading && !sourceError && sourceData.length > 0 && (
-                <div style={{
-                  marginTop: '0.875rem',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                  gap: '0.75rem',
-                }}>
-                  {sourceData.map(person => (
-                    <PersonCard key={person.id} person={person} />
-                  ))}
-                </div>
-              )}
+            {/* Columna 3: Coordinación */}
+            <div style={{ backgroundColor: 'rgba(168,85,247,0.04)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(168,85,247,0.15)' }}>
+              <h4 style={{ margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '2px solid #a855f7', fontSize: '0.95rem', fontWeight: '800', color: '#d8b4fe' }}>
+                ⚡ Coordinación Logística
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {filteredBoard.filter(item => item.column === 'coordination').map(card => (
+                  <div key={card.id} className="card" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1.5px solid rgba(168,85,247,0.3)' }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: '800', color: 'var(--text-primary)' }}>{card.title}</div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{card.short_desc}</p>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '0.4rem', marginTop: '0.2rem' }}>
+                      <span>📍 {card.location}</span>
+                      <span>📞 {card.contact}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-              {/* Empty state */}
-              {!isSourceLoading && !sourceError && sourceData.length === 0 && (
-                <div style={{
-                  marginTop: '0.75rem',
-                  padding: '2rem',
-                  textAlign: 'center',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '0.875rem',
-                }}>
-                  <Search size={28} style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
-                  <p style={{ fontWeight: '700', color: 'var(--text-secondary)', margin: '0 0 0.25rem', fontSize: '0.875rem' }}>
-                    Sin resultados
-                  </p>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
-                    {debouncedSearch
-                      ? `No se encontraron coincidencias para "${debouncedSearch}" en ${src?.name}`
-                      : `No hay registros disponibles en ${src?.name} con el filtro actual`
-                    }
-                  </p>
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </div>
-
-      {/* ── Footer legal ───────────────────────────────────────────── */}
-      <div style={{
-        marginTop: '2rem',
-        padding: '1.25rem',
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '1rem',
-        textAlign: 'center',
-      }}>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0 0 0.5rem', lineHeight: '1.6' }}>
-          📋 La información mostrada en esta sección pertenece a sus respectivas plataformas y es reproducida
-          exclusivamente con fines humanitarios. Venezuela SOS no almacena estos datos en su base de datos.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          {Object.values(EXTERNAL_SOURCES).map(src => (
-            <a
-              key={src.key}
-              href={src.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: '0.7rem', color: src.color, textDecoration: 'none', fontWeight: '700' }}
-            >
-              © {src.name}
-            </a>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Spin animation ─────────────────────────────────────────── */}
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        .spin { animation: spin 1s linear infinite; }
-      `}</style>
+      {/* TAB 5: MINOR SAFETY DISCLAIMER */}
+      {activeTab === 'families' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+              Seguridad Familiar y Protección de Menores
+            </h3>
+            
+            <details 
+              open={disclaimerExpanded} 
+              onToggle={(e) => setDisclaimerExpanded(e.target.open)}
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                border: '1.5px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '0.75rem',
+                padding: '1rem',
+                cursor: 'pointer'
+              }}
+            >
+              <summary style={{ fontWeight: '800', color: '#ef4444', outline: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', userSelect: 'none' }}>
+                <AlertTriangle size={18} /> AVISO DE SEGURIDAD SOBRE MENORES
+              </summary>
+              <div style={{ cursor: 'default', color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.6', marginTop: '0.75rem' }}>
+                Entregar un niño o niña a una persona desconocida es extremadamente delicado. Recordamos lo sucedido en Vargas para evitar que se repita. Verifica siempre la identidad y la legitimidad de quien recibe o traslada a menores, y prioriza canales oficiales y personas debidamente identificadas.
+              </div>
+            </details>
+
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+              Si deseas registrar un reporte de búsqueda de menores de edad o reportar que has localizado a un niño extraviado, por favor ingresa al panel principal del reencuentro de familias:
+            </p>
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+              <button 
+                onClick={() => window.location.reload()}
+                className="btn btn-primary"
+                style={{ background: 'linear-gradient(135deg, #fb7185 0%, #dc2626 100%)', color: '#fff', border: 'none', fontWeight: 'bold' }}
+              >
+                Acceder a Módulo Reuniendo Familias ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

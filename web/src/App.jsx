@@ -21,6 +21,7 @@ import HospitalizedPersonsView from './views/HospitalizedPersonsView';
 import InternationalSheltersView from './views/InternationalSheltersView';
 import ServicesView from './views/ServicesView';
 import ExternalSourcesView from './views/ExternalSourcesView';
+import ApiGlobalSearchView from './views/ApiGlobalSearchView';
 import BottomModal from './components/BottomModal';
 import ExternalSearchView from './views/ExternalSearchView';
 import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText } from 'lucide-react';
@@ -368,6 +369,7 @@ export default function App() {
       case 'legal': return <LegalView setView={setView} />;
       case 'emergency_shortcuts': return <EmergencyShortcutsView setView={setView} />;
       case 'external_sources': return <ExternalSourcesView />;
+      case 'api_search': return <ApiGlobalSearchView />;
       default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
     }
   };
@@ -693,7 +695,7 @@ export default function App() {
                 { id: 'family_reunification', label: 'Reuniendo Familias', desc: 'Niños y reencuentro seguro', icon: Heart, color: '#fb7185' },
                 { id: 'missing_persons', label: 'Personas Buscadas', desc: 'Red de localización familiar', icon: Users, color: '#dc2626' },
                 { id: 'external_sources', label: 'Red Solidaria', desc: 'Plataformas aliadas en tiempo real', icon: Globe, color: '#1d4ed8' },
-                { id: 'external_search', label: 'Buscador Externo (APIs)', desc: 'Cruz Roja, Google y otros', icon: Globe, color: '#6366f1' },
+                { id: 'api_search', label: 'Buscador Global', desc: 'Busca en todas las APIs conectadas', icon: Search, color: '#4f46e5' },
                 { id: 'hospitalized_persons', label: 'Hospitalizados', desc: 'Estatus en centros médicos', icon: ShieldAlert, color: '#3b82f6' },
                 { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Localización de mascotas', icon: Heart, color: '#d97706' },
                 { id: 'international_shelters', label: 'Puntos de Acogida', desc: 'Refugios internacionales', icon: Home, color: '#0d9488' }

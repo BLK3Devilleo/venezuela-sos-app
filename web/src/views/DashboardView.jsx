@@ -132,6 +132,48 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
         <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem', color: '#fff' }}>
           ¿Qué necesitas hacer hoy?
         </h3>
+
+        {/* Tarjeta Principal: Red Solidaria */}
+        <button
+          onClick={() => setView('external_sources')}
+          style={{
+            width: '100%',
+            marginBottom: '0.75rem',
+            background: 'linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(13, 148, 136, 0.08) 100%)',
+            border: '1px solid rgba(29, 78, 216, 0.3)',
+            borderRadius: '1.25rem',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#3b82f6';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 25px rgba(59,130,246,0.15)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'rgba(29, 78, 216, 0.3)';
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
+            <div style={{ fontSize: '2rem' }}>🌐</div>
+            <div style={{ flex: 1 }}>
+              <h4 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#60a5fa' }}>Red Solidaria</h4>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Vista agregada que centraliza información de múltiples páginas y APIs de búsqueda. Explora y busca personas y recursos en toda la red venezolana.
+              </p>
+            </div>
+          </div>
+        </button>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
           {[
             { label: 'Reportar Persona', desc: 'Desaparecidos', view: 'missing_persons', emoji: '🧍', color: '#dc2626' },
@@ -144,7 +186,6 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
             { label: 'Apoyo Médico', desc: 'Asistencia y salud', view: 'services', emoji: '⚕️', color: '#2563eb' },
             { label: 'Mercado Solidario', desc: 'Bienes gratis', view: 'marketplace', emoji: '🤝', color: '#a855f7' },
             { label: 'Salas de Chat', desc: 'Apoyo voluntario', view: 'chat_rooms', emoji: '💬', color: '#ec4899' },
-            { label: 'Buscador Externo', desc: 'APIs Cruz Roja/Google', view: 'external_search', emoji: '🌐', color: '#6366f1' },
             { label: 'Mapa en Vivo', desc: 'Alertas y refugios', view: 'map', emoji: '🗺️', color: '#14b8a6' }
           ].map((act, i) => (
             <button
