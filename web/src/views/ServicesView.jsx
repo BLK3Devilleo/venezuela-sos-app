@@ -4,14 +4,14 @@ import { Activity, Plus, Search, MessageCircle, Heart, User, Clock, Trash2, Phon
 import BottomModal from '../components/BottomModal';
 import { z } from 'zod';
 
-const phoneRegex = /^(0414|0424|0412|0416|0426|0212)\d{7}$/;
+const phoneRegex = /^\d{7,15}$/;
 const formSchema = z.object({
   tipo_servicio: z.enum(['medico', 'apoyo']),
   subtipo: z.string().min(3, "Mínimo 3 letras").max(60, "Muy largo"),
   rol_servicio: z.enum(['ofrece', 'solicita']),
   descripcion: z.string().max(255, "Máximo 255 caracteres").optional(),
   disponibilidad: z.string().max(100, "Muy largo").optional(),
-  contacto_whatsapp: z.string().regex(phoneRegex, "Teléfono inválido. Ej: 04141234567")
+  contacto_whatsapp: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
 export default function ServicesView({ user, onViewProfile }) {

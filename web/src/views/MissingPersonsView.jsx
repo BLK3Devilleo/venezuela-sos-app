@@ -8,13 +8,13 @@ import { dbLocal } from '../utils/dbLocal';
 
 const AVATAR_PERSON = '/avatar_person.png';
 
-const phoneRegex = /^(0414|0424|0412|0416|0426|0212)\d{7}$/;
+const phoneRegex = /^\d{7,15}$/;
 const formSchema = z.object({
   nombre: z.string().min(3, "Mínimo 3 letras").max(60, "Nombre muy largo"),
   edad: z.string().max(3, "Edad inválida").optional(),
   descripcion: z.string().max(255, "Máximo 255 caracteres").optional(),
   ultima_ubicacion: z.string().max(100, "Ubicación muy larga").optional(),
-  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Ej: 04141234567"),
+  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos."),
   instagram: z.string().max(50, "Muy largo").optional(),
   facebook: z.string().max(50, "Muy largo").optional()
 });

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { ShieldAlert, Phone, User, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import Logo from '../components/Logo';
 
-const phoneRegex = /^(0414|0424|0412|0416|0426|0212)\d{7}$/;
+const phoneRegex = /^\d{7,15}$/;
 const loginSchema = z.object({
   nombre: z.string().min(3, "Ingresa tu nombre completo (mínimo 3 letras)").max(60, "Nombre demasiado largo"),
-  telefono: z.string().regex(phoneRegex, "Teléfono inválido. Ej: 04141234567")
+  telefono: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
 export default function LoginView({ onLogin, needsOnboarding = false, authUserId = null, authUserName = '' }) {

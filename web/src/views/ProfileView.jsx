@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 
-const phoneRegex = /^(0414|0424|0412|0416|0426|0212)\d{7}$/;
+const phoneRegex = /^\d{7,15}$/;
 
 const AVATAR_PRESETS = [
   { emoji: '🙋', label: 'Voluntario', color: '#0d9488' },
@@ -144,7 +144,7 @@ export default function ProfileView({ user, onUserUpdate, viewUserId, setView })
     }
 
     if (contacto && !phoneRegex.test(contacto)) {
-      setFormError('Teléfono inválido. Ej: 04141234567');
+      setFormError('Teléfono inválido. Solo números y máximo 15 dígitos.');
       return;
     }
 

@@ -8,12 +8,12 @@ import { dbLocal } from '../utils/dbLocal';
 
 const AVATAR_PET = '/avatar_pet.png';
 
-const phoneRegex = /^(0414|0424|0412|0416|0426|0212)\d{7}$/;
+const phoneRegex = /^\d{7,15}$/;
 const formSchema = z.object({
   especie_y_raza: z.string().min(3, "Mínimo 3 letras").max(60, "Nombre muy largo"),
   estado: z.enum(['perdida', 'encontrada', 'necesita_atencion']),
   ultima_ubicacion: z.string().max(100, "Ubicación muy larga").optional(),
-  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Ej: 04141234567")
+  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
 const ESTADO_CONFIG = {
