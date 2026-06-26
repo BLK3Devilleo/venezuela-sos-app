@@ -18,6 +18,49 @@ import CookieBanner from './components/CookieBanner';
 import EmergencyShortcutsView from './views/EmergencyShortcutsView';
 import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
 
+// ─── Error Boundary ────────────────────────────────────────────────
+// Prevents a crash in one view from making the entire app go black.
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('[ErrorBoundary] Caught error:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: '50vh', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          padding: '2rem', textAlign: 'center', gap: '1rem'
+        }}>
+          <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+          <h2 style={{ color: '#fff', fontWeight: '800', margin: 0 }}>Algo salió mal</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
+            Esta sección tuvo un error. Intenta recargar la página o vuelve al inicio.
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); if (this.props.onReset) this.props.onReset(); }}
+            style={{
+              background: 'var(--primary)', color: '#fff', border: 'none',
+              borderRadius: '0.75rem', padding: '0.75rem 1.5rem',
+              fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem'
+            }}
+          >
+            🏠 Volver al Inicio
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const TAB_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: Home },
   { id: 'map', label: 'Mapa', icon: Map },
@@ -450,7 +493,7 @@ export default function App() {
                   </div>
                 )}
                 <span style={{ fontSize: '0.725rem', fontWeight: '700', color: 'var(--text-primary)', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.nombre.split(' ')[0]}
+                  {(user.nombre || 'Usuario').split(' ')[0]}
                 </span>
               </div>
 
@@ -506,7 +549,9 @@ export default function App() {
         overflow: 'auto',
         position: 'relative'
       }}>
-        {renderView()}
+        <ErrorBoundary onReset={() => setView('dashboard')}>
+          {renderView()}
+        </ErrorBoundary>
       </main>
 
       {/* Bottom Tab Bar */}
