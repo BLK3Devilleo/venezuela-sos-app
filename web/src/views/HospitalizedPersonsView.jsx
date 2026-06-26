@@ -26,7 +26,8 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
     hospital_clinica: '',
     estado_salud: 'estable',
     observaciones: '',
-    contacto_reportante: user?.contacto || ''
+    contacto_reportante: user?.contacto || '',
+    nombre_contacto: user?.nombre || ''
   });
 
   useEffect(() => {
@@ -54,18 +55,21 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
     if (!formData.nombre_completo.trim()) return alert('El nombre es obligatorio');
     if (!formData.hospital_clinica.trim()) return alert('El hospital o clínica es obligatorio');
     if (!formData.contacto_reportante.trim()) return alert('El contacto del reportante es obligatorio');
+    if (!formData.nombre_contacto.trim()) return alert('El nombre del reportante es obligatorio');
 
     setSubmitting(true);
     try {
       const { error } = await supabase.from('hospitalizados').insert({
-        creador_id: user?.id,
+        creador_id: user?.id || null,
         nombre_completo: formData.nombre_completo.trim(),
         cedula: formData.cedula.trim() || null,
         edad: formData.edad ? parseInt(formData.edad, 10) : null,
         hospital_clinica: formData.hospital_clinica.trim(),
         estado_salud: formData.estado_salud,
         observaciones: formData.observaciones.trim() || null,
-        contacto_reportante: formData.contacto_reportante.trim()
+        contacto_reportante: formData.contacto_reportante.trim(),
+        nombre_contacto: formData.nombre_contacto.trim(),
+        contacto_whatsapp: formData.contacto_reportante.trim()
       });
       if (error) throw error;
 
@@ -122,10 +126,6 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
         </div>
         <button 
           onClick={() => {
-            if (!user) {
-              if (onRequireLogin) onRequireLogin();
-              return;
-            }
             setShowAddForm(true);
           }}
           className="btn btn-primary"
@@ -174,6 +174,7 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
           {filtered.map(p => {
             const config = ESTADO_SALUD_CONFIG[p.estado_salud] || ESTADO_SALUD_CONFIG.estable;
+            const isRegisteredUser = !!p.creador_id;
             return (
               <div 
                 key={p.id} 
@@ -181,10 +182,28 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
                 onClick={() => setSelected(p)}
                 style={{ 
                   padding: '1rem', cursor: 'pointer', borderLeft: `4px solid ${config.color}`,
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                  borderLeftWidth: '5px',
                   display: 'flex', flexDirection: 'column', gap: '0.5rem',
-                  backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)'
+                  backgroundColor: 'var(--bg-surface)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)',
+                  position: 'relative'
                 }}
               >
+                <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end', marginBottom: '0.1rem' }}>
+                  <span style={{
+                    fontSize: '0.55rem',
+                    fontWeight: '800',
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '3px',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Registrado' : '📢 Ciudadano'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <h3 className="font-display" style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
                     {p.nombre_completo}
@@ -280,16 +299,28 @@ export default function HospitalizedPersonsView({ user, onRequireLogin }) {
             />
           </div>
 
-          <div className="input-group">
-            <label className="input-label">WhatsApp o Teléfono del Reportante *</label>
-            <input 
-              className="input-field" 
-              type="tel"
-              placeholder="Ej. 04121234567" 
-              value={formData.contacto_reportante} 
-              onChange={e => setFormData({ ...formData, contacto_reportante: e.target.value })} 
-              required
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label className="input-label">Tu Nombre *</label>
+              <input 
+                className="input-field" 
+                placeholder="Ej. Carmen Guzmán" 
+                value={formData.nombre_contacto} 
+                onChange={e => setFormData({ ...formData, nombre_contacto: e.target.value })} 
+                required
+              />
+            </div>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label className="input-label">WhatsApp Reportante *</label>
+              <input 
+                className="input-field" 
+                type="tel"
+                placeholder="Ej. 04121234567" 
+                value={formData.contacto_reportante} 
+                onChange={e => setFormData({ ...formData, contacto_reportante: e.target.value })} 
+                required
+              />
+            </div>
           </div>
 
           <button 

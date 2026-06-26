@@ -13,7 +13,8 @@ const formSchema = z.object({
   especie_y_raza: z.string().min(3, "Mínimo 3 letras").max(60, "Nombre muy largo"),
   estado: z.enum(['perdida', 'encontrada', 'necesita_atencion', 'donacion_alimento', 'donacion_medicina', 'donacion_otros']),
   ultima_ubicacion: z.string().max(100, "Ubicación muy larga").optional(),
-  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
+  contacto: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos."),
+  nombre_contacto: z.string().min(2, "Nombre de contacto requerido")
 });
 
 const ESTADO_CONFIG = {
@@ -39,7 +40,8 @@ export default function MissingPetsView({ user, onRequireLogin }) {
   
   const [formData, setFormData] = useState({
     especie_y_raza: '', estado: 'perdida',
-    ultima_ubicacion: '', contacto: user?.contacto || ''
+    ultima_ubicacion: '', contacto: user?.contacto || '',
+    nombre_contacto: user?.nombre || ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
@@ -242,7 +244,10 @@ export default function MissingPetsView({ user, onRequireLogin }) {
           ultima_ubicacion: formData.ultima_ubicacion.trim() || 'No especificada',
           contacto: formData.contacto.trim(),
           foto_principal: imageUrl,
-          user_id: user?.id
+          user_id: user?.id || null,
+          creador_id: user?.id || null,
+          nombre_contacto: formData.nombre_contacto.trim(),
+          contacto_whatsapp: formData.contacto.trim()
         });
 
         if (error) throw error;
@@ -539,7 +544,8 @@ export default function MissingPetsView({ user, onRequireLogin }) {
       ) : (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
           {filtered.map(p => {
-            const config = ESTADO_CONFIG[p.estado];
+            const config = ESTADO_CONFIG[p.estado] || ESTADO_CONFIG.perdida;
+            const isRegisteredUser = !!p.creador_id || !!p.user_id;
             return (
               <div 
                 key={p.isDraft ? `draft-card-${p.id}` : p.id} 
@@ -547,16 +553,31 @@ export default function MissingPetsView({ user, onRequireLogin }) {
                 onClick={() => setSelected(p)}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', cursor: 'pointer',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
                   borderLeft: `4px solid ${config.color}`,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : '0 4px 12px rgba(0,0,0,0.05)',
                   transition: 'transform 0.15s ease',
                   position: 'relative'
                 }}
               >
+                <div style={{ display: 'flex', gap: '0.4rem', position: 'absolute', top: '0.25rem', right: '0.5rem' }}>
+                  <span style={{
+                    fontSize: '0.55rem',
+                    fontWeight: '800',
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '3px',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Registrado' : '📢 Ciudadano'}
+                  </span>
+                </div>
                 <img 
                   src={getImageUrl(p) || AVATAR_PET} 
                   alt="Foto" 
-                  style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', backgroundColor: 'var(--bg-surface-soft)' }} 
+                  style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)' }} 
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 className="font-display" style={{ fontSize: '1.05rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>
@@ -629,10 +650,17 @@ export default function MissingPetsView({ user, onRequireLogin }) {
             {formErrors.ultima_ubicacion && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.ultima_ubicacion}</span>}
           </div>
 
-          <div className="input-group">
-            <label className="input-label">WhatsApp de Contacto *</label>
-            <input className="input-field" type="tel" placeholder="04141234567" value={formData.contacto} onChange={e => setFormData({ ...formData, contacto: e.target.value })} />
-            {formErrors.contacto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem', display: 'block' }}>{formErrors.contacto}</span>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="input-group">
+              <label className="input-label">Nombre Contacto *</label>
+              <input className="input-field" placeholder="Tu nombre" value={formData.nombre_contacto} onChange={e => setFormData({ ...formData, nombre_contacto: e.target.value })} />
+              {formErrors.nombre_contacto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem', display: 'block' }}>{formErrors.nombre_contacto}</span>}
+            </div>
+            <div className="input-group">
+              <label className="input-label">WhatsApp de Contacto *</label>
+              <input className="input-field" type="tel" placeholder="04141234567" value={formData.contacto} onChange={e => setFormData({ ...formData, contacto: e.target.value })} />
+              {formErrors.contacto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem', display: 'block' }}>{formErrors.contacto}</span>}
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', marginTop: '0.5rem' }} disabled={loading || compressing}>

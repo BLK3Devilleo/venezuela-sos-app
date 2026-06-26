@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { Activity, Plus, Search, MessageCircle, Heart, User, Clock, Trash2, Phone, MapPin, Tool, Truck, Info } from 'lucide-react';
+import { Activity, Plus, Search, MessageCircle, Heart, User, Clock, Trash2, Phone, MapPin, Wrench, Truck, Info } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 import { z } from 'zod';
 
@@ -77,7 +77,7 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
 
     try {
       await supabase.from('servicios').insert({
-        creador_id: user.id,
+        creador_id: user?.id || null,
         tipo_servicio: formData.tipo_servicio,
         subtipo: formData.subtipo.trim(),
         rol_servicio: formData.rol_servicio,
@@ -190,6 +190,7 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
           {filteredServices.map((serv) => {
             const isOffer = serv.rol_servicio === 'ofrece';
+            const isRegisteredUser = !!serv.creador_id;
             return (
               <div 
                 key={serv.id} 
@@ -197,11 +198,26 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
                 onClick={() => setSelected(serv)}
                 style={{ 
                   display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1.25rem', cursor: 'pointer',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
                   borderTop: `4px solid ${isOffer ? 'var(--primary)' : '#ef4444'}`,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : '0 4px 12px rgba(0,0,0,0.05)',
                   transition: 'transform 0.15s ease'
                 }}
               >
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: '800',
+                    padding: '0.15rem 0.4rem',
+                    borderRadius: '3px',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Perfil Registrado' : '📢 Reporte Ciudadano'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                   <div style={{ 
                     width: '48px', height: '48px', borderRadius: '1rem', 
@@ -226,7 +242,7 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                   {serv.tiene_herramientas && (
                     <span style={{ fontSize: '0.7rem', backgroundColor: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.5rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Tool size={10} /> Herramientas
+                      <Wrench size={10} /> Herramientas
                     </span>
                   )}
                   {serv.tiene_transporte && (
@@ -398,7 +414,7 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Logística</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
                   <div style={{ color: selected.tiene_herramientas ? '#4ade80' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Tool size={14} /> {selected.tiene_herramientas ? 'Con Herramientas' : 'Sin Herramientas'}
+                    <Wrench size={14} /> {selected.tiene_herramientas ? 'Con Herramientas' : 'Sin Herramientas'}
                   </div>
                   <div style={{ color: selected.tiene_transporte ? '#4ade80' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Truck size={14} /> {selected.tiene_transporte ? 'Con Transporte' : 'Sin Transporte'}

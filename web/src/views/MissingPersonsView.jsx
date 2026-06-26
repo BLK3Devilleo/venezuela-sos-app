@@ -83,6 +83,8 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
   const [imageFile, setImageFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [formErrors, setFormErrors] = useState({});
+  const [nombreAutor, setNombreAutor] = useState('');
+  const [telefonoAutor, setTelefonoAutor] = useState('');
   const [prefilled, setPrefilled] = useState(false);
 
   // "Tengo Información" form states
@@ -325,6 +327,17 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
       return;
     }
 
+    if (!user) {
+      if (!nombreAutor.trim()) {
+        window.showToast("Tu nombre completo es obligatorio para invitados.", "error");
+        return;
+      }
+      if (!telefonoAutor.trim()) {
+        window.showToast("Tu teléfono de contacto es obligatorio para invitados.", "error");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       let compressedBlob = null;
@@ -388,8 +401,10 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           estado: formData.estado,
           canales_contacto: channels,
           fotos: imageUrls,
-          user_id: user?.id,
-          creador_id: user?.id
+          user_id: user?.id || null,
+          creador_id: user?.id || null,
+          nombre_contacto: user ? user.nombre : nombreAutor.trim(),
+          contacto_whatsapp: user ? user.contacto : telefonoAutor.trim()
         });
 
         if (error) throw error;
@@ -406,8 +421,10 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           estado: formData.estado,
           canales_contacto: channels,
           fotoBlob: compressedBlob,
-          user_id: user?.id,
-          creador_id: user?.id,
+          user_id: user?.id || null,
+          creador_id: user?.id || null,
+          nombre_contacto: user ? user.nombre : nombreAutor.trim(),
+          contacto_whatsapp: user ? user.contacto : telefonoAutor.trim(),
           created_at: new Date().toISOString()
         });
         alert('Sin conexión. Se guardó localmente y se sincronizará automáticamente al reconectar.');
@@ -920,6 +937,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           {shuffledPeople.map(p => {
             const estado = getPersonEstado(p);
             const styles = getStatusStyles(estado);
+            const isRegisteredUser = !!p.creador_id || !!p.user_id;
             return (
               <div 
                 key={p.isDraft ? `draft-card-${p.id}` : p.id} 
@@ -927,16 +945,29 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                 onClick={() => setSelected(p)}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', cursor: 'pointer',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
                   borderLeft: `5px solid ${styles.color}`,
                   backgroundColor: 'var(--bg-surface)',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : '0 4px 12px rgba(0,0,0,0.1)',
                   transition: 'transform 0.15s ease',
-                  position: 'relative',
-                  border: '1px solid var(--border)',
-                  borderLeftWidth: '5px'
+                  position: 'relative'
                 }}
               >
+                <div style={{ display: 'flex', gap: '0.4rem', position: 'absolute', top: '0.25rem', right: '0.5rem' }}>
+                  <span style={{
+                    fontSize: '0.55rem',
+                    fontWeight: '800',
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '3px',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Registrado' : '📢 Ciudadano'}
+                  </span>
+                </div>
                 <img 
                   src={getImageUrl(p) || AVATAR_PERSON} 
                   alt="Foto" 
@@ -1262,6 +1293,22 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                   {formErrors.contacts}
                 </span>
               )}
+            </div>
+          )}
+
+          {!user && (
+            <div style={{ padding: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Datos del Reportante (Invitado)</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Tu Nombre Completo *</label>
+                  <input className="input-field" placeholder="Ej. Juan Pérez" value={nombreAutor} onChange={e => setNombreAutor(e.target.value)} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Tu Teléfono *</label>
+                  <input className="input-field" type="tel" placeholder="Ej. 04121234567" value={telefonoAutor} onChange={e => setTelefonoAutor(e.target.value)} required />
+                </div>
+              </div>
             </div>
           )}
 

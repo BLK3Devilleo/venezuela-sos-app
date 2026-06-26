@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { ShoppingBag, Search, Plus, X, Trash2, MessageCircle, AlertTriangle, Filter } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Trash2, MessageCircle, AlertTriangle, User, Phone, MapPin } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
+import { compressImage } from '../utils/imageCompression';
 
 const MARKETPLACE_CATEGORIES = {
   ropa: { label: 'Ropa y Abrigo', icon: '👕', color: '#f59e0b' },
@@ -11,8 +12,6 @@ const MARKETPLACE_CATEGORIES = {
   herramientas: { label: 'Herramientas y Camping', icon: '🔧', color: '#6b7280' },
   otros: { label: 'Otros', icon: '📦', color: '#a855f7' }
 };
-
-import { compressImage } from '../utils/imageCompression';
 
 const MARKETPLACE_TYPES = {
   ofrezco: { label: 'Ofrezco / Dono', color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: '🟢' },
@@ -28,25 +27,24 @@ export default function MarketplaceView({ user }) {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  // Onboarding
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('filoSOS_marketplace_onboarding_dismissed'));
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  // Privacy: Reveal phone number
   const [revealedContacts, setRevealedContacts] = useState({});
-
-  // Multiple image upload states
   const [formImages, setFormImages] = useState([]);
   const [compressing, setCompressing] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const getInitialForm = () => ({
     titulo: '',
     descripcion: '',
     categoria: 'ropa',
     tipo: 'ofrezco',
     ubicacion_text: '',
+    nombre_contacto: user?.nombre || '',
     contacto_whatsapp: user?.contacto || ''
   });
+
+  const [formData, setFormData] = useState(getInitialForm());
 
   useEffect(() => { fetchItems(); }, []);
 
@@ -69,17 +67,19 @@ export default function MarketplaceView({ user }) {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!formData.titulo.trim()) return alert('El título es obligatorio');
+    if (!formData.nombre_contacto.trim()) return alert('El nombre de contacto es obligatorio');
     if (!formData.contacto_whatsapp.trim()) return alert('El WhatsApp de contacto es obligatorio');
 
     setSubmitting(true);
     try {
       const { error } = await supabase.from('marketplace').insert({
-        creador_id: user?.id,
+        creador_id: user?.id || null,
         titulo: formData.titulo.trim(),
         descripcion: formData.descripcion.trim(),
         categoria: formData.categoria,
         tipo: formData.tipo,
         ubicacion_text: formData.ubicacion_text.trim(),
+        nombre_contacto: formData.nombre_contacto.trim(),
         contacto_whatsapp: formData.contacto_whatsapp.trim(),
         fotos: formImages
       });
@@ -87,8 +87,9 @@ export default function MarketplaceView({ user }) {
 
       setShowForm(false);
       setFormImages([]);
-      setFormData({ titulo: '', descripcion: '', categoria: 'ropa', tipo: 'ofrezco', ubicacion_text: '', contacto_whatsapp: user?.contacto || '' });
+      setFormData(getInitialForm());
       fetchItems();
+      window.showToast('Artículo publicado exitosamente', 'success');
     } catch (e) {
       console.error(e);
       alert('Error al publicar. Intenta de nuevo.');
@@ -130,6 +131,7 @@ export default function MarketplaceView({ user }) {
     try {
       await supabase.from('marketplace').delete().eq('id', id);
       setItems(items.filter(i => i.id !== id));
+      window.showToast('Publicación eliminada', 'info');
     } catch (e) { console.error(e); }
   };
 
@@ -141,7 +143,7 @@ export default function MarketplaceView({ user }) {
   });
 
   return (
-    <div className="fade-in" style={{ paddingBottom: '2rem', paddingTop: '1rem' }}>
+    <div className="fade-in" style={{ paddingBottom: '2rem', paddingTop: '0.5rem' }}>
 
       {/* Modal Onboarding Reglas del Mercado */}
       {showOnboarding && (
@@ -187,15 +189,15 @@ export default function MarketplaceView({ user }) {
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span>🚫</span>
-                <span><strong>Cero Negocios/Trueques:</strong> Quedan estrictamente prohibidos los trueques, intercambios con saldo o cualquier tipo de comercio con ánimo de lucro.</span>
+                <span><strong>Cero Negocios/Trueques:</strong> Quedan estrictamente prohibidos los trueques, intercambios comerciales o monetarios.</span>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span>🎁</span>
-                <span><strong>Solo Donaciones:</strong> Toda publicación tipo "Ofrezco" debe ser una entrega 100% gratuita y desinteresada a los afectados por el sismo.</span>
+                <span><strong>Solo Donaciones:</strong> Toda publicación tipo "Ofrezco" debe ser una entrega 100% gratuita y desinteresada.</span>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                 <span>🔒</span>
-                <span><strong>Privacidad:</strong> Los números de contacto se ocultan tras un botón para proteger tu número de teléfono de rastreadores web.</span>
+                <span><strong>Privacidad:</strong> Los números de contacto se muestran transparentemente pero bajo un botón opcional para evitar spam web.</span>
               </div>
             </div>
 
@@ -228,13 +230,13 @@ export default function MarketplaceView({ user }) {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShoppingBag size={24} className="text-primary" /> Marketplace
+          <h1 className="font-display" style={{ fontSize: '1.65rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            🤝 Mercado Solidario
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            Dona, solicita o intercambia artículos de primera necesidad. 100% gratuito y solidario.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+            Dona o solicita insumos y herramientas. Prohibido ventas o trueques.
           </p>
         </div>
         <button
@@ -244,47 +246,6 @@ export default function MarketplaceView({ user }) {
         >
           <Plus size={16} /> Publicar
         </button>
-      </div>
-
-      {/* Onboarding Tutorial Card */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(59,130,246,0.15) 100%)',
-        border: '1px solid rgba(168,85,247,0.3)',
-        borderRadius: '1.25rem',
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
-        boxShadow: '0 4px 12px rgba(168,85,247,0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '1.35rem' }}>🤝</span>
-          <span style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>¿Cómo funciona el Mercado Solidario?</span>
-        </div>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-          ¿Tienes cosas que donar (una cobija, almohada, colchón, utensilios)? Súbelo aquí y alguien que lo necesite te contactará por WhatsApp de forma directa. Todo es 100% gratuito.
-        </p>
-      </div>
-
-      {/* Safety Disclaimer */}
-      <div style={{
-        background: 'rgba(239, 68, 68, 0.08)',
-        border: '1px solid rgba(239, 68, 68, 0.2)',
-        borderRadius: '0.75rem',
-        padding: '0.75rem 1rem',
-        marginBottom: '1.25rem',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.5rem',
-        fontSize: '0.8rem',
-        color: '#fca5a5',
-        lineHeight: '1.4'
-      }}>
-        <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-        <span>
-          <strong>Seguridad:</strong> Todos los encuentros para intercambio deben hacerse en lugares públicos, concurridos e iluminados. Nunca acuda a domicilios particulares.
-        </span>
       </div>
 
       {/* Search */}
@@ -302,7 +263,6 @@ export default function MarketplaceView({ user }) {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }} className="hide-scrollbar">
-        {/* Type filters */}
         <button
           onClick={() => setFilterType('all')}
           style={{
@@ -357,79 +317,116 @@ export default function MarketplaceView({ user }) {
 
       {/* Items List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Cargando...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Cargando artículos...</div>
       ) : filtered.length === 0 ? (
         <div style={{
           textAlign: 'center', padding: '4rem 2rem', borderRadius: '1rem',
           border: '2px dashed var(--border)', color: 'var(--text-secondary)'
         }}>
           <ShoppingBag size={36} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-          <p style={{ fontWeight: '600' }}>No hay publicaciones{filterCat !== 'all' || filterType !== 'all' ? ' con estos filtros' : ' todavía'}.</p>
-          <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>Sé el primero en publicar algo para la comunidad.</p>
+          <p style={{ fontWeight: '600' }}>No hay artículos publicados todavía.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'grid', gap: '1.25rem', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
           {filtered.map(item => {
             const cat = MARKETPLACE_CATEGORIES[item.categoria] || MARKETPLACE_CATEGORIES.otros;
             const tipo = MARKETPLACE_TYPES[item.tipo] || MARKETPLACE_TYPES.ofrezco;
+            const isRegisteredUser = !!item.creador_id;
+            
             return (
-              <div key={item.id} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Header row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-                    {/* Category icon */}
-                    <div style={{
-                      width: '48px', height: '48px', borderRadius: '1rem',
-                      backgroundColor: `${cat.color}15`, display: 'flex',
-                      alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0
-                    }}>
-                      {cat.icon}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '800', fontSize: '1rem', color: '#fff', lineHeight: '1.3' }}>
-                        {item.titulo}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {cat.label}
-                      </div>
+              <div 
+                key={item.id} 
+                className="card" 
+                style={{ 
+                  padding: '1.25rem', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '0.75rem',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)',
+                  position: 'relative'
+                }}
+              >
+                {/* Visual Queen: Large Photo on Top */}
+                {item.fotos && item.fotos.length > 0 && (
+                  <div style={{ width: '100%', height: '220px', overflow: 'hidden', borderRadius: '0.75rem', position: 'relative', border: '1px solid var(--border)' }}>
+                    <img
+                      src={item.fotos[0]}
+                      alt={item.titulo}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    {/* Floating type badge */}
+                    <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}>
+                      <span style={{
+                        padding: '0.25rem 0.6rem', borderRadius: '2rem',
+                        backgroundColor: tipo.bg, color: tipo.color,
+                        fontSize: '0.65rem', fontWeight: '800', backdropFilter: 'blur(8px)',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                      }}>
+                        {tipo.icon} {tipo.label.toUpperCase()}
+                      </span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {/* Type badge */}
-                    <span style={{
-                      padding: '0.25rem 0.6rem', borderRadius: '2rem',
-                      backgroundColor: tipo.bg, color: tipo.color,
-                      fontSize: '0.7rem', fontWeight: '800', whiteSpace: 'nowrap'
-                    }}>
-                      {tipo.icon} {tipo.label}
-                    </span>
-                    {(user?.rol === 'admin' || user?.id === item.creador_id) && (
-                      <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+                )}
+
+                {/* Badge de usuario registrado vs invitado */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: '800',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.15)' : 'rgba(255,255,255,0.06)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Perfil Registrado' : '📢 Reporte Ciudadano'}
+                  </span>
+                  
+                  {(user?.rol === 'admin' || user?.id === item.creador_id) && (
+                    <button 
+                      onClick={() => handleDelete(item.id)} 
+                      style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '4px', padding: '4px', color: '#ef4444', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Title and Category */}
+                <div>
+                  <h3 className="font-display" style={{ fontWeight: '800', fontSize: '1.15rem', color: '#fff', margin: 0, lineHeight: '1.3' }}>
+                    {item.titulo}
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'inline-block', marginTop: '2px' }}>
+                    {cat.icon} {cat.label}
+                  </span>
                 </div>
 
                 {/* Description */}
                 {item.descripcion && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5', margin: 0 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>
                     {item.descripcion}
                   </p>
                 )}
 
-                {/* Photo Gallery */}
-                {item.fotos && item.fotos.length > 0 && (
-                  <div className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', margin: '0.25rem 0' }}>
-                    {item.fotos.map((f, idx) => (
+                {/* Other Photos Thumbnails */}
+                {item.fotos && item.fotos.length > 1 && (
+                  <div className="hide-scrollbar" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', margin: '0.1rem 0' }}>
+                    {item.fotos.slice(1).map((f, idx) => (
                       <img
                         key={idx}
                         src={f}
-                        alt={`Articulo ${idx + 1}`}
+                        alt={`Miniatura ${idx + 2}`}
                         style={{
-                          width: '100px',
-                          height: '100px',
-                          borderRadius: '0.75rem',
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '0.5rem',
                           objectFit: 'cover',
                           border: '1px solid var(--border)',
                           flexShrink: 0
@@ -439,40 +436,51 @@ export default function MarketplaceView({ user }) {
                   </div>
                 )}
 
-                {/* Location + time */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {item.ubicacion_text && <span>📍 {item.ubicacion_text}</span>}
-                  <span>🕐 {new Date(item.created_at).toLocaleDateString()}</span>
-                  {item.creador?.nombre && <span>👤 {item.creador.nombre}</span>}
+                {/* Location and Metadata */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+                  {item.ubicacion_text && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <MapPin size={12} /> <span>{item.ubicacion_text}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+                    <span>Por: <strong>{item.nombre_contacto || item.creador?.nombre || 'Anónimo'}</strong></span>
+                    <span>🕐 {new Date(item.created_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
 
-                {/* WhatsApp contact with privacy reveal */}
+                {/* WhatsApp direct contact (revealing phone number) */}
                 {!revealedContacts[item.id] ? (
                   <button
                     onClick={() => setRevealedContacts(prev => ({ ...prev, [item.id]: true }))}
                     style={{
-                      width: '100%', padding: '0.65rem 1rem', borderRadius: '0.75rem',
+                      width: '100%', padding: '0.75rem 1rem', borderRadius: '0.75rem',
                       fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
                       border: '1.5px dashed var(--border)', backgroundColor: 'transparent',
-                      color: 'var(--text-secondary)'
+                      color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                     }}
                   >
-                    👁️ Revelar Datos de Contacto
+                    📞 Mostrar Teléfono de Contacto
                   </button>
                 ) : (
-                  <a
-                    href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en FiloSOS. ¿Sigue disponible?`)}`}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      padding: '0.65rem 1rem', backgroundColor: '#25D366', color: '#fff',
-                      borderRadius: '0.75rem', textDecoration: 'none', fontWeight: '700',
-                      fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,211,102,0.3)',
-                      transition: 'transform 0.15s'
-                    }}
-                  >
-                    <MessageCircle size={16} /> WhatsApp: {item.contacto_whatsapp}
-                  </a>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>
+                      <Phone size={14} style={{ color: 'var(--primary)' }} />
+                      <span>{item.contacto_whatsapp}</span>
+                    </div>
+                    <a
+                      href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en FiloSOS. ¿Sigue disponible?`)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                        padding: '0.75rem 1rem', backgroundColor: '#25D366', color: '#fff',
+                        borderRadius: '0.75rem', textDecoration: 'none', fontWeight: '700',
+                        fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,211,102,0.3)'
+                      }}
+                    >
+                      <MessageCircle size={16} /> Contactar por WhatsApp
+                    </a>
+                  </div>
                 )}
               </div>
             );
@@ -498,7 +506,7 @@ export default function MarketplaceView({ user }) {
       <BottomModal
         isOpen={showForm}
         onClose={() => setShowForm(false)}
-        title="📦 Nueva Publicación"
+        title="📦 Publicar en Mercado Solidario"
       >
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
 
@@ -574,8 +582,8 @@ export default function MarketplaceView({ user }) {
 
           {/* Carga de Imágenes (Máx 4) */}
           <div className="input-group">
-            <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Fotos del artículo (Máx 4)</span>
+            <label className="input-label" style={{ display: 'flex', justifyContext: 'space-between', justifyContent: 'space-between' }}>
+              <span>Fotos del artículo (Máx 4) *</span>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formImages.length}/4 cargadas</span>
             </label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
@@ -619,16 +627,28 @@ export default function MarketplaceView({ user }) {
             {compressing && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem' }}>Comprimiendo imágenes...</div>}
           </div>
 
-          <div className="input-group">
-            <label className="input-label">WhatsApp de Contacto *</label>
-            <input
-              type="tel"
-              className="input-field"
-              placeholder="+584121234567"
-              value={formData.contacto_whatsapp}
-              onChange={e => setFormData({ ...formData, contacto_whatsapp: e.target.value })}
-              required
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="input-group">
+              <label className="input-label">Nombre del Contacto *</label>
+              <input
+                className="input-field"
+                placeholder="Ej. Juan Pérez"
+                value={formData.nombre_contacto}
+                onChange={e => setFormData({ ...formData, nombre_contacto: e.target.value })}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <label className="input-label">WhatsApp de Contacto *</label>
+              <input
+                type="tel"
+                className="input-field"
+                placeholder="Ej. 04121234567"
+                value={formData.contacto_whatsapp}
+                onChange={e => setFormData({ ...formData, contacto_whatsapp: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
           {/* Safety reminder */}

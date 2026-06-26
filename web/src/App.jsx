@@ -18,7 +18,9 @@ import CookieBanner from './components/CookieBanner';
 import EmergencyShortcutsView from './views/EmergencyShortcutsView';
 import HospitalizedPersonsView from './views/HospitalizedPersonsView';
 import InternationalSheltersView from './views/InternationalSheltersView';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
+import ServicesView from './views/ServicesView';
+import BottomModal from './components/BottomModal';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu } from 'lucide-react';
 
 // ─── Error Boundary ────────────────────────────────────────────────
 // Prevents a crash in one view from making the entire app go black.
@@ -80,6 +82,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
   const [theme, setTheme] = useState(() => localStorage.getItem('filoSOS_theme') || 'dark');
 
@@ -324,7 +327,7 @@ export default function App() {
       case 'international_shelters': return <InternationalSheltersView user={user} onRequireLogin={handleRequireLogin} onBack={() => setView('dashboard')} />;
       case 'missing_pets': return <MissingPetsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'services': return (
-        <DirectoryView 
+        <ServicesView 
           user={user} 
           onViewProfile={(id) => {
             setViewUserId(id);
@@ -333,6 +336,7 @@ export default function App() {
           onRequireLogin={handleRequireLogin}
         />
       );
+      case 'resources': return <ResourcesView user={user} onRequireLogin={handleRequireLogin} />;
       case 'chat_rooms': return (
         <ChatRoomsView 
           user={user} 
@@ -577,17 +581,21 @@ export default function App() {
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
           { id: 'missing_persons', label: 'Personas', icon: Users },
-          { id: 'missing_pets', label: 'Mascotas', icon: Heart },
-          { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
-          { id: 'services', label: 'Servicios', icon: Activity },
           { id: 'marketplace', label: 'Mercado', icon: ShoppingBag },
-          ...(user && user.rol === 'admin' ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])
+          { id: 'menu', label: 'Menú', icon: Menu }
         ].map(({ id, label, icon: Icon }) => {
-          const isActive = view === id;
+          const isMenuTabActive = ['missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal'].includes(view);
+          const isActive = id === 'menu' ? isMenuTabActive : (view === id);
           return (
             <button
               key={id}
-              onClick={() => setView(id)}
+              onClick={() => {
+                if (id === 'menu') {
+                  setIsMenuOpen(true);
+                } else {
+                  setView(id);
+                }
+              }}
               style={{
                 flex: 1,
                 flexShrink: 0,
@@ -630,6 +638,120 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* Menu/Dashboard Bottom Sheet */}
+      <BottomModal 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
+        title="Venezuela SOS - Menú de Opciones"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '1rem' }}>
+          
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
+              Servicios y Ayuda Directa
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { id: 'services', label: 'Servicios y Apoyo', desc: 'Médicos, escombros, etc.', icon: Activity, color: '#2563eb' },
+                { id: 'resources', label: 'Recursos / Comida', desc: 'Centros de acopio, sopa, etc.', icon: Heart, color: '#16a34a' },
+                { id: 'marketplace', label: 'Mercado Solidario', desc: 'Donaciones y apoyo gratis', icon: ShoppingBag, color: '#a855f7' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
+                  style={{
+                    backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
+                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
+                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
+                >
+                  <item.icon size={20} style={{ color: item.color }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
+              Búsqueda y Localización
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { id: 'missing_persons', label: 'Personas Buscadas', desc: 'Red de localización familiar', icon: Users, color: '#dc2626' },
+                { id: 'hospitalized_persons', label: 'Hospitalizados', desc: 'Estatus en centros médicos', icon: ShieldAlert, color: '#3b82f6' },
+                { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Localización de mascotas', icon: Heart, color: '#d97706' },
+                { id: 'international_shelters', label: 'Puntos de Acogida', desc: 'Refugios internacionales', icon: Home, color: '#0d9488' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
+                  style={{
+                    backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
+                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
+                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
+                >
+                  <item.icon size={20} style={{ color: item.color }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
+              Comunidad e Información
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { id: 'chat_rooms', label: 'Salas de Chat', desc: 'Coordinación comunitaria', icon: MessageSquare, color: '#ec4899' },
+                { id: 'legal', label: 'Aviso Legal', desc: 'Transparencia y políticas', icon: HelpCircle, color: '#6b7280' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
+                  style={{
+                    backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
+                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
+                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
+                >
+                  <item.icon size={20} style={{ color: item.color }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {user && user.rol === 'admin' && (
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+              <button
+                onClick={() => { setView('admin_panel'); setIsMenuOpen(false); }}
+                style={{
+                  width: '100%', backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: '1rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem',
+                  cursor: 'pointer', color: '#f87171', fontWeight: '700', fontSize: '0.95rem'
+                }}
+              >
+                <ShieldAlert size={20} />
+                <span>Panel de Administración</span>
+              </button>
+            </div>
+          )}
+
+        </div>
+      </BottomModal>
 
       {/* Toast Alert */}
       {toast.show && (

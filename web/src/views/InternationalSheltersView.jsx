@@ -231,8 +231,32 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
               Aún no hay puntos de acogida internacionales registrados.
             </div>
           ) : (
-            shelters.map(s => (
-              <div key={s.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            shelters.map(s => {
+              const isRegisteredUser = !!s.creador_id;
+              return (
+              <div 
+                key={s.id} 
+                className="card" 
+                style={{ 
+                  display: 'flex', flexDirection: 'column', gap: '0.75rem',
+                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)'
+                }}
+              >
+                <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: '800',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    textTransform: 'uppercase',
+                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.15)' : 'rgba(255,255,255,0.06)',
+                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
+                  }}>
+                    {isRegisteredUser ? '👤 Perfil Registrado' : '📢 Reporte Ciudadano'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
@@ -282,7 +306,8 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
                   )}
                 </div>
               </div>
-            ))
+            );
+          })
           )}
         </div>
       )}
