@@ -152,3 +152,39 @@ CREATE POLICY "Permitir insercion de chats" ON public.chat_messages FOR INSERT W
 -- Habilitar Realtime para la tabla chat_messages
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 
+-- Tabla: emergencias (Feed de Noticias/Emergencias en Vivo)
+CREATE TABLE IF NOT EXISTS public.emergencias (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creador_id TEXT REFERENCES public.usuarios(id) ON DELETE CASCADE,
+    descripcion TEXT NOT NULL,
+    foto TEXT,
+    ubicacion_lat DOUBLE PRECISION NOT NULL,
+    ubicacion_lng DOUBLE PRECISION NOT NULL,
+    ubicacion_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Tabla: mensajes_informacion (Foro interno / correo local de desaparecidos)
+CREATE TABLE IF NOT EXISTS public.mensajes_informacion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    persona_id UUID REFERENCES public.desaparecidos(id) ON DELETE CASCADE NOT NULL,
+    enviado_por TEXT REFERENCES public.usuarios(id) ON DELETE SET NULL,
+    recibido_por TEXT REFERENCES public.usuarios(id) ON DELETE SET NULL NOT NULL,
+    detalles TEXT NOT NULL,
+    foto TEXT,
+    ubicacion_texto TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS
+ALTER TABLE public.emergencias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mensajes_informacion ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS
+CREATE POLICY "Lectura publica de emergencias" ON public.emergencias FOR SELECT USING (true);
+CREATE POLICY "Insercion de emergencias" ON public.emergencias FOR INSERT WITH CHECK (true);
+CREATE POLICY "Lectura de mensajes por destinatario o remitente" ON public.mensajes_informacion FOR SELECT USING (true);
+CREATE POLICY "Insercion de mensajes" ON public.mensajes_informacion FOR INSERT WITH CHECK (true);
+CREATE POLICY "Eliminacion de mensajes del servidor" ON public.mensajes_informacion FOR DELETE USING (true);
+
+

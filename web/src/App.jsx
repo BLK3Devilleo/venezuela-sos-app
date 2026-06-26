@@ -22,7 +22,7 @@ const TAB_ITEMS = [
   { id: 'map', label: 'Mapa', icon: Map },
   { id: 'missing_persons', label: 'Personas', icon: Users },
   { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
-  { id: 'directory', label: 'Directorio', icon: Activity },
+  { id: 'services', label: 'Servicios', icon: Activity },
 ];
 
 export default function App() {
@@ -188,6 +188,15 @@ export default function App() {
       );
       case 'missing_persons': return <MissingPersonsView user={user} />;
       case 'missing_pets': return <MissingPetsView user={user} />;
+      case 'services': return (
+        <DirectoryView 
+          user={user} 
+          onViewProfile={(id) => {
+            setViewUserId(id);
+            setView('profile');
+          }} 
+        />
+      );
       case 'chat_rooms': return (
         <ChatRoomsView 
           user={user} 
