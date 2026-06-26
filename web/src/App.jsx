@@ -167,11 +167,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Limpiar el hash de redirección de OAuth para evitar que se comparta el access_token o cause error 400
-    if (window.location.hash && (window.location.hash.includes('access_token=') || window.location.hash.includes('refresh_token='))) {
-      window.history.replaceState(null, null, window.location.pathname + window.location.search);
-    }
-
     // 1. Obtener la sesión inicial de Supabase Auth
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
@@ -187,6 +182,10 @@ export default function App() {
       setSession(currentSession);
       if (currentSession) {
         checkUserProfile(currentSession.user);
+        // Limpiar el hash solo después de que Supabase haya procesado la sesión
+        if (window.location.hash && (window.location.hash.includes('access_token=') || window.location.hash.includes('refresh_token='))) {
+          window.history.replaceState(null, null, window.location.pathname + window.location.search);
+        }
       } else {
         setUser(null);
         setNeedsOnboarding(false);

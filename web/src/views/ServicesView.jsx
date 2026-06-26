@@ -51,10 +51,11 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
     const result = formSchema.safeParse(formData);
     if (!result.success) {
       const errors = {};
-      result.error.errors.forEach(err => {
+      result.error.issues.forEach(err => {
         errors[err.path[0]] = err.message;
       });
       setFormErrors(errors);
+      window.showToast(`${result.error.issues[0].path[0].toUpperCase()}: ${result.error.issues[0].message}`, 'error');
       return;
     }
 

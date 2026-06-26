@@ -190,12 +190,11 @@ export default function MissingPetsView({ user, onRequireLogin }) {
     const result = formSchema.safeParse(formData);
     if (!result.success) {
       const errors = {};
-      result.error.errors.forEach(err => {
+      result.error.issues.forEach(err => {
         errors[err.path[0]] = err.message;
       });
       setFormErrors(errors);
-      const firstErr = result.error.errors[0].message;
-      window.showToast(`${result.error.errors[0].path[0].toUpperCase()}: ${firstErr}`, 'error');
+      window.showToast(`${result.error.issues[0].path[0].toUpperCase()}: ${result.error.issues[0].message}`, 'error');
       return;
     }
 
