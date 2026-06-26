@@ -237,52 +237,66 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
         </div>
       </div>
 
-      {/* Tips de emergencia */}
+      {/* Tutoriales en Inicio */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '0.75rem', color: '#fff' }}>
+          Guías de Ayuda Comunitaria
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.875rem' }}>
+          {[
+            { emoji: '🤝', title: 'El Mercado Solidario', desc: 'Espacio para donar y recibir ayuda 100% gratis. Prohibido trueques, negocios o intercambios monetarios. Si tienes algo que no uses, dónalo aquí.' },
+            { emoji: '🍲', title: 'Directorio de Recursos', desc: 'Registra o localiza centros de acopio, agua potable, alimentos y refugios activos. Coordinación directa e información verificada por la comunidad.' },
+            { emoji: '🐾', title: 'Mascotas Perdidas y Auxilio', desc: 'Publica fotos de mascotas perdidas, reporta animales encontrados en la calle o solicita asistencia veterinaria de urgencia.' }
+          ].map((tut, i) => (
+            <div key={i} style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '1rem',
+              padding: '1rem',
+              display: 'flex',
+              gap: '1rem',
+              alignItems: 'flex-start',
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              <span style={{ fontSize: '1.75rem', backgroundColor: 'var(--bg-surface-soft)', padding: '0.5rem', borderRadius: '0.75rem' }}>
+                {tut.emoji}
+              </span>
+              <div>
+                <h4 style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>{tut.title}</h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{tut.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Atajos de Emergencia */}
       <div style={{
         background: 'var(--bg-surface-soft)',
         borderRadius: '1.25rem',
         padding: '1.25rem',
         border: '1px solid var(--border)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        alignItems: 'center',
+        textAlign: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <AlertTriangle size={18} className="text-primary" />
-          <span className="font-display" style={{ fontWeight: '700', fontSize: '1rem' }}>Contactos de Emergencia</span>
+        <AlertTriangle size={24} style={{ color: 'var(--primary)' }} />
+        <div>
+          <h4 className="font-display" style={{ fontWeight: '800', fontSize: '1.05rem', margin: '0 0 0.25rem 0', color: '#fff' }}>¿Necesitas ayuda inmediata?</h4>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+            Accede al directorio de emergencias y cuerpos de bomberos filtrado por tu región (Caracas, Miranda, Zulia, Lara, etc.).
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
-          {[
-            { label: 'Emergencias Nacionales', num: '171', desc: 'Atención inmediata' },
-            { label: 'Bomberos / Rescate', num: '911', desc: 'Rescate y emergencias médicas' },
-            { label: 'Cruz Roja Venezolana', num: '0212-781', desc: 'Asistencia humanitaria' },
-          ].map((e, i) => (
-            <a key={i} href={`tel:${e.num}`} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.875rem 1rem',
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: '0.875rem',
-              textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.05)',
-              transition: 'background 0.2s ease'
-            }}>
-              <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.125rem' }}>{e.label}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.desc}</div>
-              </div>
-              <div style={{ 
-                backgroundColor: 'rgba(13, 148, 136, 0.1)', 
-                color: 'var(--primary)', 
-                padding: '0.375rem 0.75rem', 
-                borderRadius: '2rem', 
-                fontWeight: '700', 
-                fontSize: '0.875rem' 
-              }}>
-                {e.num}
-              </div>
-            </a>
-          ))}
-        </div>
+        <button 
+          onClick={() => setView('emergency_shortcuts')}
+          className="btn btn-primary"
+          style={{ width: '100%', marginTop: '0.5rem', fontWeight: 'bold' }}
+        >
+          <Phone size={16} /> Ver Atajos de Emergencia por Estado
+        </button>
       </div>
 
       {/* Footer / Credits */}

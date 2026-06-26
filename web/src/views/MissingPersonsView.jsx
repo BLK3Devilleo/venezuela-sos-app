@@ -85,12 +85,6 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
   const [formErrors, setFormErrors] = useState({});
   const [prefilled, setPrefilled] = useState(false);
 
-  // Message Inbox states
-  const [messages, setMessages] = useState([]);
-  const [localMessageIds, setLocalMessageIds] = useState(new Set());
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState(null);
-
   // "Tengo Información" form states
   const [showInfoForm, setShowInfoForm] = useState(false);
   const [infoFormData, setInfoFormData] = useState({
@@ -111,9 +105,6 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
   useEffect(() => {
     fetchPeople();
     fetchDrafts();
-    if (user) {
-      fetchMessages();
-    }
 
     if (navigator.onLine) {
       syncOfflineDrafts();
@@ -123,13 +114,11 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
       console.log('[Red] Conectado a internet. Sincronizando personas offline...');
       syncOfflineDrafts();
       fetchPeople();
-      if (user) fetchMessages();
     };
 
     const handleOffline = () => {
       console.log('[Red] Dispositivo offline. Cargando personas desde caché...');
       fetchPeople();
-      if (user) fetchMessages();
     };
 
     window.addEventListener('online', handleOnline);
@@ -177,42 +166,7 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
     }
   };
 
-  const fetchMessages = async () => {
-    if (!user) return;
-    setLoadingMessages(true);
-    try {
-      let onlineMsgs = [];
-      if (navigator.onLine) {
-        const { data, error } = await supabase
-          .from('mensajes_informacion')
-          .select('*, desaparecidos(nombre_y_edad)')
-          .eq('recibido_por', user.id)
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          onlineMsgs = data;
-        }
-      }
-      
-      const localMsgs = await dbLocal.mensajesLocal.toArray();
-      const localIds = new Set(localMsgs.map(m => m.id));
-      setLocalMessageIds(localIds);
 
-      const msgMap = {};
-      localMsgs.forEach(m => {
-        msgMap[m.id] = { ...m, isLocal: true };
-      });
-      onlineMsgs.forEach(m => {
-        msgMap[m.id] = { ...msgMap[m.id], ...m, isOnline: true };
-      });
-
-      const combined = Object.values(msgMap).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      setMessages(combined);
-    } catch (err) {
-      console.error('Error fetching messages:', err);
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
 
   const syncOfflineDrafts = async () => {
     if (!navigator.onLine) return;
@@ -602,61 +556,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
     { id: 'emergencia', label: 'Emergencia' }
   ];
 
-  // Open & cache message locally
-  const handleOpenMessage = async (msg) => {
-    setSelectedMessage(msg);
-    if (!localMessageIds.has(msg.id)) {
-      try {
-        const toSave = {
-          id: msg.id,
-          persona_id: msg.persona_id,
-          enviado_por: msg.enviado_por,
-          recibido_por: msg.recibido_por,
-          detalles: msg.detalles,
-          foto: msg.foto,
-          ubicacion_texto: msg.ubicacion_texto,
-          created_at: msg.created_at,
-          desaparecidos: msg.desaparecidos
-        };
-        await dbLocal.mensajesLocal.put(toSave);
-        setLocalMessageIds(prev => {
-          const next = new Set(prev);
-          next.add(msg.id);
-          return next;
-        });
-        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isLocal: true } : m));
-      } catch (err) {
-        console.error('Error saving message locally:', err);
-      }
-    }
-  };
 
-  // Backup all messages to Dexie
-  const handleBackupAllMessages = async () => {
-    try {
-      const toSave = messages.map(msg => ({
-        id: msg.id,
-        persona_id: msg.persona_id,
-        enviado_por: msg.enviado_por,
-        recibido_por: msg.recibido_por,
-        detalles: msg.detalles,
-        foto: msg.foto,
-        ubicacion_texto: msg.ubicacion_texto,
-        created_at: msg.created_at,
-        desaparecidos: msg.desaparecidos
-      }));
-      if (toSave.length > 0) {
-        await dbLocal.mensajesLocal.bulkPut(toSave);
-        const newIds = new Set(toSave.map(m => m.id));
-        setLocalMessageIds(newIds);
-        setMessages(prev => prev.map(m => ({ ...m, isLocal: true })));
-        alert('Todos los mensajes han sido respaldados en tu dispositivo.');
-      }
-    } catch (err) {
-      console.error('Error backing up all messages:', err);
-      alert('Error al respaldar los mensajes.');
-    }
-  };
 
   // Submit "Tengo Información"
   const handleSendInfo = async (e) => {
@@ -1153,107 +1053,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Recipient Inbox (Buzón de Mensajes) */}
-      {user && (
-        <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Inbox size={22} style={{ color: 'var(--primary)' }} />
-              <h2 className="font-display" style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0 }}>Buzón de Reportes Recibidos</h2>
-            </div>
-            {messages.length > 0 && (
-              <button 
-                onClick={handleBackupAllMessages}
-                className="btn"
-                style={{ 
-                  backgroundColor: 'var(--bg-surface-soft)', 
-                  border: '1px solid var(--border)', 
-                  color: 'var(--text-primary)',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px', 
-                  padding: '0.5rem 1rem', 
-                  borderRadius: '2rem',
-                  fontSize: '0.8rem',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <Download size={14} />
-                Respaldar Todos en el Móvil
-              </button>
-            )}
-          </div>
-
-          {loadingMessages && messages.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>Cargando buzón...</div>
-          ) : messages.length === 0 ? (
-            <div style={{ 
-              backgroundColor: 'var(--bg-surface)', 
-              borderRadius: '12px', 
-              padding: '2rem 1rem', 
-              textAlign: 'center', 
-              border: '1px solid var(--border)', 
-              color: 'var(--text-muted)' 
-            }}>
-              No has recibido ningún mensaje de información sobre tus reportes aún.
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              {messages.map(msg => {
-                const isLocal = localMessageIds.has(msg.id);
-                return (
-                  <div 
-                    key={msg.id} 
-                    onClick={() => handleOpenMessage(msg)}
-                    style={{
-                      backgroundColor: 'var(--bg-surface)',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      padding: '1rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '1rem',
-                      transition: 'transform 0.1s'
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--primary)', textTransform: 'uppercase' }}>
-                          Reporte: {msg.desaparecidos?.nombre_y_edad || 'Persona desaparecida'}
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          {new Date(msg.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {msg.detalles}
-                      </p>
-                    </div>
-                    
-                    {/* Visual indicator of local backup status */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                      {isLocal ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                          <Check size={12} />
-                          <span>En móvil</span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', padding: '4px 8px', borderRadius: '12px', fontSize: '0.7rem' }}>
-                          <span>Nube</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
 
@@ -1852,71 +1651,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
         )}
       </BottomModal>
 
-      {/* Message Viewer Bottom Sheet */}
-      <BottomModal isOpen={!!selectedMessage} onClose={() => setSelectedMessage(null)} title="Detalle del Reporte de Información">
-        {selectedMessage && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Banner alert warning of deletion */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              backgroundColor: 'rgba(13,148,136,0.1)',
-              border: '1px solid rgba(13,148,136,0.2)',
-              color: 'var(--primary)',
-              borderRadius: '8px',
-              fontSize: '0.8rem'
-            }}>
-              <ShieldAlert size={16} />
-              <span>Este mensaje está guardado en tu móvil. Se borrará del servidor en 15 días.</span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                Referencia de persona:
-              </span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {selectedMessage.desaparecidos?.nombre_y_edad || 'Desconocido'}
-              </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Recibido el {new Date(selectedMessage.created_at).toLocaleString()}
-              </span>
-            </div>
-
-            <div style={{ backgroundColor: 'var(--bg-surface)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
-              <span style={{ fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '0.5rem', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                Detalles del Avistamiento:
-              </span>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                {selectedMessage.detalles}
-              </p>
-            </div>
-
-            {selectedMessage.ubicacion_texto && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                <MapPin size={16} style={{ color: 'var(--primary)' }} />
-                <span>Ubicación descrita: <strong>{selectedMessage.ubicacion_texto}</strong></span>
-              </div>
-            )}
-
-            {selectedMessage.foto && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                  Foto adjunta:
-                </span>
-                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)', maxHeight: '300px', backgroundColor: 'var(--bg-primary)' }}>
-                  <img 
-                    src={selectedMessage.foto} 
-                    alt="Evidencia adjunta" 
-                    style={{ width: '100%', maxHeight: '300px', objectFit: 'contain' }} 
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </BottomModal>
     </div>
   );
 }

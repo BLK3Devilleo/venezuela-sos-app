@@ -15,7 +15,8 @@ import ProfileView from './views/ProfileView';
 import LegalView from './views/LegalView';
 import AdminPanelView from './views/AdminPanelView';
 import CookieBanner from './components/CookieBanner';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert } from 'lucide-react';
+import EmergencyShortcutsView from './views/EmergencyShortcutsView';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
 
 const TAB_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: Home },
@@ -36,6 +37,43 @@ export default function App() {
   const [isGuest, setIsGuest] = useState(false);
   const [showGuestAuthModal, setShowGuestAuthModal] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+  const [theme, setTheme] = useState(() => localStorage.getItem('filoSOS_theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.body.classList.add('light');
+    } else {
+      document.body.classList.remove('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('filoSOS_theme', nextTheme);
+  };
+
+  useEffect(() => {
+    window.history.pushState({ path: view }, '');
+
+    const handlePopState = () => {
+      if (view !== 'dashboard') {
+        setView('dashboard');
+        window.history.pushState({ path: 'dashboard' }, '');
+      } else {
+        if (window.lastBackPress && Date.now() - window.lastBackPress < 2000) {
+          window.close();
+        } else {
+          window.lastBackPress = Date.now();
+          showToast("Presiona atrás de nuevo para salir de la app", "info");
+          window.history.pushState({ path: 'dashboard' }, '');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [view]);
 
   const showToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
@@ -274,6 +312,7 @@ export default function App() {
       );
       case 'admin_panel': return <AdminPanelView user={user} />;
       case 'legal': return <LegalView setView={setView} />;
+      case 'emergency_shortcuts': return <EmergencyShortcutsView setView={setView} />;
       default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
     }
   };
@@ -364,6 +403,23 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Day/Night Mode toggle */}
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+            style={{
+              background: 'var(--bg-surface-soft)',
+              border: '1px solid var(--border)',
+              borderRadius: '0.5rem',
+              padding: '0.4rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
           {user ? (
             <>
               {/* Clickable Profile Badge */}
