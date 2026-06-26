@@ -61,12 +61,15 @@ CREATE TABLE IF NOT EXISTS public.iniciativas (
 -- Tabla: desaparecidos (búsqueda de personas)
 CREATE TABLE IF NOT EXISTS public.desaparecidos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creador_id TEXT REFERENCES public.usuarios(id) ON DELETE SET NULL,
     nombre_y_edad TEXT NOT NULL,
     descripcion TEXT,
     ultima_ubicacion TEXT,
-    contacto TEXT NOT NULL,
+    contacto TEXT NOT NULL, -- Teléfono histórico/opcional
     redes_sociales JSONB DEFAULT '{}'::jsonb,
     fotos TEXT[] DEFAULT '{}'::text[],
+    estado TEXT NOT NULL CHECK (estado IN ('buscan_a', 'localizado', 'peligro', 'emergencia')) DEFAULT 'buscan_a',
+    canales_contacto JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

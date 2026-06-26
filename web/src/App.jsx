@@ -20,7 +20,7 @@ import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, Use
 const TAB_ITEMS = [
   { id: 'dashboard', label: 'Inicio', icon: Home },
   { id: 'map', label: 'Mapa', icon: Map },
-  { id: 'missing_persons', label: 'Buscar', icon: Users },
+  { id: 'missing_persons', label: 'Personas', icon: Users },
   { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
   { id: 'services', label: 'Servicios', icon: Activity },
 ];
@@ -33,6 +33,13 @@ export default function App() {
   const [view, setView] = useState('dashboard');
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
+
+  useEffect(() => {
+    const savedZoom = localStorage.getItem('filoSOS_fontZoom');
+    if (savedZoom) {
+      document.documentElement.style.fontSize = savedZoom;
+    }
+  }, []);
 
   useEffect(() => {
     // 1. Obtener la sesión inicial de Supabase Auth
@@ -346,7 +353,7 @@ export default function App() {
         {[
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
-          { id: 'missing_persons', label: 'Buscar', icon: Users },
+          { id: 'missing_persons', label: 'Personas', icon: Users },
           { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
           { id: 'services', label: 'Servicios', icon: Activity },
           ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])

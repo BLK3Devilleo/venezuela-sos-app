@@ -12,6 +12,21 @@ const QUICK_ACTIONS = [
 
 export default function DashboardView({ user, setView }) {
   const [stats, setStats] = useState({ desaparecidos: '—', mascotas: '—', recursos: '—', servicios: '—' });
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    return localStorage.getItem('filoSOS_fontZoom') || '16px';
+  });
+
+  const toggleZoom = () => {
+    let nextZoom = '16px';
+    if (zoomLevel === '16px') {
+      nextZoom = '19px';
+    } else if (zoomLevel === '19px') {
+      nextZoom = '22px';
+    }
+    setZoomLevel(nextZoom);
+    localStorage.setItem('filoSOS_fontZoom', nextZoom);
+    document.documentElement.style.fontSize = nextZoom;
+  };
 
   useEffect(() => {
     (async () => {
@@ -31,6 +46,49 @@ export default function DashboardView({ user, setView }) {
 
   return (
     <div style={{ paddingTop: '0.5rem', paddingBottom: '2rem' }}>
+
+      {/* Botón de Accesibilidad */}
+      <div 
+        onClick={toggleZoom}
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '2px dashed var(--primary)',
+          borderRadius: '1rem',
+          padding: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+          marginBottom: '1.5rem',
+          transition: 'all 0.2s ease',
+          userSelect: 'none'
+        }}
+        className="btn-accessibility"
+      >
+        <div style={{
+          fontSize: '1.75rem',
+          backgroundColor: 'var(--primary-glow)',
+          width: '48px',
+          height: '48px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          🔍
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1rem' }}>
+            ¿No lees bien? Toca aquí
+          </div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            Tamaño de letra actual: <strong style={{ color: 'var(--primary)' }}>
+              {zoomLevel === '16px' ? 'Normal' : zoomLevel === '19px' ? 'Grande' : 'Muy Grande'}
+            </strong> (Toca para agrandar o restablecer)
+          </div>
+        </div>
+      </div>
 
       {/* Guía de Uso Formal/Cercana */}
       <div style={{

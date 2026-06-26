@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { supabase } from '../supabase';
-import { Plus, X, MapPin, Navigation2, Search, MessageCircle, Phone, ArrowLeft } from 'lucide-react';
+import { Plus, X, MapPin, Navigation2, Search, MessageCircle, Phone, ArrowLeft, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 
 // Fix Leaflet marker icon URLs
@@ -232,6 +232,17 @@ export default function MapView({ user }) {
     return filters;
   });
 
+  // Collapsible category cards state (false means collapsed by default)
+  const [expandedMacros, setExpandedMacros] = useState({
+    salud: false,
+    rescate: false,
+    suministros: false,
+    servicios_com: false
+  });
+
+  // State to manage the lateral filter modal slide-in
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
   // Map positioning state
   const [mapCenter, setMapCenter] = useState([10.5000, -66.9000]); // Caracas default
   const [mapZoom, setMapZoom] = useState(13);
@@ -344,6 +355,13 @@ export default function MapView({ user }) {
     setActiveFilters([]);
   };
 
+  const toggleMacroCardExpansion = (macroKey) => {
+    setExpandedMacros(prev => ({
+      ...prev,
+      [macroKey]: !prev[macroKey]
+    }));
+  };
+
   // Map Click Listener
   function MapEvents() {
     useMapEvents({
@@ -372,7 +390,7 @@ export default function MapView({ user }) {
 
     try {
       const { error } = await supabase.from('recursos').insert({
-        creador_id: user.id,
+        creador_id: user?.id || null,
         tipo: formData.macro,
         categoria: formData.sub,
         nombre: formData.nombre.trim(),
@@ -447,9 +465,9 @@ export default function MapView({ user }) {
             <button
               onClick={() => setShowMap(false)}
               style={{
-                background: 'rgba(19, 28, 46, 0.85)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                background: 'rgba(19, 28, 46, 0.65)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid var(--border)',
                 borderRadius: '2rem',
                 padding: '0.6rem 1.2rem',
@@ -469,8 +487,9 @@ export default function MapView({ user }) {
 
             {/* Indicator of active points */}
             <div style={{
-              background: 'rgba(19, 28, 46, 0.85)',
-              backdropFilter: 'blur(12px)',
+              background: 'rgba(19, 28, 46, 0.65)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid var(--border)',
               borderRadius: '2rem',
               padding: '0.6rem 1.2rem',
@@ -518,16 +537,17 @@ export default function MapView({ user }) {
                     border: '1px solid',
                     borderColor: isAnyActive ? macro.color : 'var(--border)',
                     backgroundColor: isAllActive 
-                      ? `${macro.color}e0` 
+                      ? `${macro.color}cc` 
                       : isAnyActive 
-                        ? `${macro.color}35` 
-                        : 'rgba(19, 28, 46, 0.85)',
-                    backdropFilter: 'blur(12px)',
+                        ? `${macro.color}25` 
+                        : 'rgba(19, 28, 46, 0.45)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                     color: isAnyActive ? '#fff' : 'var(--text-secondary)',
                     fontWeight: '800',
                     fontSize: '0.75rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
                     transition: 'all 0.2s ease',
                     userSelect: 'none'
                   }}
@@ -573,26 +593,26 @@ export default function MapView({ user }) {
               >
                 {activePopupId === item.id && (
                   <Popup position={[item.ubicacion_lat, item.ubicacion_lng]} onClose={() => setActivePopupId(null)}>
-                    <div style={{ color: '#111', fontSize: '0.85rem', width: '220px', fontFamily: 'var(--font-sans)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', color: '#f8fafc' }}>
                       <div style={{ 
                         fontSize: '0.65rem', 
                         fontWeight: '800', 
                         textTransform: 'uppercase', 
-                        marginBottom: '4px', 
-                        color: MACRO_CATEGORIES[item.tipo]?.color || '#2563eb' 
+                        color: MACRO_CATEGORIES[item.tipo]?.color || '#2563eb',
+                        letterSpacing: '0.05em'
                       }}>
                         {item.displayType}
                       </div>
-                      <div style={{ fontWeight: '800', fontSize: '1rem', marginBottom: '4px', lineHeight: '1.2', color: '#1e293b' }}>
+                      <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff', lineHeight: '1.2' }}>
                         {item.nombre || item.subtipo}
                       </div>
                       {item.descripcion && (
-                        <div style={{ color: '#555', fontSize: '0.8rem', marginBottom: '8px', lineHeight: '1.3' }}>
+                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: '1.4', marginTop: '2px' }}>
                           {item.descripcion}
                         </div>
                       )}
                       {item.cantidad && (
-                        <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '8px' }}>
+                        <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '2px' }}>
                           <strong>Cantidad/Estado:</strong> {item.cantidad}
                         </div>
                       )}
@@ -611,7 +631,7 @@ export default function MapView({ user }) {
                           textDecoration: 'none', 
                           fontWeight: '700', 
                           fontSize: '0.8rem', 
-                          marginTop: '10px',
+                          marginTop: '8px',
                           boxShadow: '0 2px 8px rgba(37,211,102,0.3)'
                         }}
                       >
@@ -627,7 +647,7 @@ export default function MapView({ user }) {
             {newMarkerPos && (
               <Marker position={[newMarkerPos.lat, newMarkerPos.lng]}>
                 <Popup>
-                  <div style={{ color: '#1e293b', fontSize: '0.8rem', fontWeight: '700' }}>
+                  <div style={{ color: '#f8fafc', fontSize: '0.8rem', fontWeight: '700' }}>
                     Nueva ubicación seleccionada
                   </div>
                 </Popup>
@@ -676,7 +696,7 @@ export default function MapView({ user }) {
         </div>
       ) : (
         /* ================== CONFIGURATION & DIRECTORY MODE ================== */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease', width: '100%', padding: '1rem 1.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'sos-fade-in 0.3s ease', width: '100%', padding: '1rem 1.25rem', paddingBottom: '5rem' }}>
           
           {/* Guide Header */}
           <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
@@ -688,40 +708,41 @@ export default function MapView({ user }) {
             </p>
           </div>
 
-          {/* Explanation Banner */}
-          <div className="card" style={{
-            background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(29, 78, 216, 0.08) 100%)',
-            borderColor: 'rgba(13, 148, 136, 0.25)',
-            padding: '1.25rem',
+          {/* Explanation Header Banner */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%)',
+            border: '1px solid rgba(13, 148, 136, 0.2)',
+            padding: '1.5rem',
             borderRadius: '1rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.5rem',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
           }}>
             <div style={{
-              position: 'absolute', top: 0, left: 0, width: '4px', height: '100%',
-              background: 'linear-gradient(to bottom, var(--ve-yellow), var(--ve-blue), var(--ve-red))'
+              position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px',
+              background: 'linear-gradient(to bottom, #ffcc00, #00247d, #cf142b)' // Venezuela tricolor
             }} />
-            <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>Antes de ver el mapa, configura qué quieres ver:</span>
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5' }}>
+            <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff', margin: 0 }}>
+              Antes de ver el mapa, configura qué quieres ver
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
               Personaliza el mapa marcando o desmarcando categorías a continuación. Esto filtrará tanto los pines en el mapa interactivo como el listado del directorio en tiempo real.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <button 
                 onClick={selectAllFilters}
                 className="btn btn-secondary"
-                style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', borderRadius: '2rem' }}
+                style={{ padding: '0.45rem 1rem', fontSize: '0.75rem', borderRadius: '2rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer', fontWeight: '700' }}
               >
                 👀 Mostrar Todo
               </button>
               <button 
                 onClick={clearAllFilters}
                 className="btn btn-secondary"
-                style={{ padding: '0.4rem 0.9rem', fontSize: '0.75rem', borderRadius: '2rem' }}
+                style={{ padding: '0.45rem 1rem', fontSize: '0.75rem', borderRadius: '2rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer', fontWeight: '700' }}
               >
                 🧹 Limpiar
               </button>
@@ -735,14 +756,15 @@ export default function MapView({ user }) {
             </div>
           </div>
 
-          {/* The 4 Category Cards Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          {/* The 4 Category Cards Grid (Collapsible by default) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {Object.keys(MACRO_CATEGORIES).map(macroKey => {
               const macro = MACRO_CATEGORIES[macroKey];
               const subKeys = Object.keys(macro.sub).map(s => `${macroKey}_${s}`);
               const activeCount = subKeys.filter(k => activeFilters.includes(k)).length;
               const allSubKeysCount = subKeys.length;
               const isAllActive = activeCount === allSubKeysCount;
+              const isExpanded = expandedMacros[macroKey];
               
               return (
                 <div 
@@ -753,10 +775,12 @@ export default function MapView({ user }) {
                     boxShadow: activeCount > 0 ? `0 8px 30px ${macro.color}08` : 'none',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1rem',
+                    gap: isExpanded ? '1rem' : '0px',
                     padding: '1.25rem',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => toggleMacroCardExpansion(macroKey)}
                 >
                   {/* Card Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -770,7 +794,7 @@ export default function MapView({ user }) {
                         {macro.icon}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <h4 className="font-display" style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', lineHeight: '1.2' }}>
+                        <h4 className="font-display" style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', lineHeight: '1.2', margin: 0 }}>
                           {macro.label}
                         </h4>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
@@ -779,31 +803,44 @@ export default function MapView({ user }) {
                       </div>
                     </div>
                     
-                    <button
-                      onClick={() => toggleMacroCategory(macroKey)}
-                      style={{
-                        background: activeCount > 0 ? `${macro.color}15` : 'var(--bg-surface-soft)',
-                        border: '1px solid',
-                        borderColor: activeCount > 0 ? `${macro.color}30` : 'var(--border)',
-                        padding: '0.3rem 0.75rem',
-                        borderRadius: '2rem',
-                        fontSize: '0.7rem',
-                        color: activeCount > 0 ? '#fff' : 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        fontWeight: '700',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {isAllActive ? 'Ocultar todo' : 'Mostrar todo'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => toggleMacroCategory(macroKey)}
+                        style={{
+                          background: activeCount > 0 ? `${macro.color}15` : 'var(--bg-surface-soft)',
+                          border: '1px solid',
+                          borderColor: activeCount > 0 ? `${macro.color}30` : 'var(--border)',
+                          padding: '0.3rem 0.75rem',
+                          borderRadius: '2rem',
+                          fontSize: '0.7rem',
+                          color: activeCount > 0 ? '#fff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontWeight: '700',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {isAllActive ? 'Ocultar todo' : 'Mostrar todo'}
+                      </button>
+                      <div 
+                        onClick={() => toggleMacroCardExpansion(macroKey)}
+                        style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.2rem' }}
+                      >
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Subcategories grid */}
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                    gap: '0.5rem' 
-                  }}>
+                    gap: '0.5rem',
+                    maxHeight: isExpanded ? '400px' : '0px',
+                    opacity: isExpanded ? 1 : 0,
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    pointerEvents: isExpanded ? 'auto' : 'none'
+                  }} onClick={e => e.stopPropagation()}>
                     {Object.keys(macro.sub).map(subKey => {
                       const sub = macro.sub[subKey];
                       const filterKey = `${macroKey}_${subKey}`;
@@ -1073,6 +1110,155 @@ export default function MapView({ user }) {
         </div>
       )}
 
+      {/* Fixed floating button to Adjust Filters (only in list view) */}
+      {!showMap && (
+        <button
+          onClick={() => setIsFilterModalOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            right: '2rem',
+            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '2rem',
+            border: 'none',
+            background: 'linear-gradient(135deg, #0d9488, #0f766e)',
+            color: '#fff',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(13, 148, 136, 0.4)',
+            transition: 'transform 0.2s ease',
+            userSelect: 'none'
+          }}
+          onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <SlidersHorizontal size={16} />
+          Ajusta tus filtros
+        </button>
+      )}
+
+      {/* Lateral slide-in filter modal */}
+      {isFilterModalOpen && (
+        <div 
+          className="slide-in-modal-overlay active"
+          onClick={() => setIsFilterModalOpen(false)}
+        >
+          <div 
+            className="slide-in-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff', margin: 0 }}>
+                  Ajustar Filtros
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  {activeFilters.length} activos
+                </span>
+              </div>
+              <button 
+                onClick={() => setIsFilterModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem' }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <button 
+                onClick={selectAllFilters}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.75rem', borderRadius: '0.5rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+              >
+                👀 Marcar todos
+              </button>
+              <button 
+                onClick={clearAllFilters}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.75rem', borderRadius: '0.5rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+              >
+                🧹 Limpiar filtros
+              </button>
+            </div>
+
+            {/* Macro Categories and their Subcategories Toggles */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1, overflowY: 'auto' }} className="hide-scrollbar">
+              {Object.keys(MACRO_CATEGORIES).map(macroKey => {
+                const macro = MACRO_CATEGORIES[macroKey];
+                return (
+                  <div key={macroKey} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.35rem' }}>
+                      <span style={{ fontSize: '1rem' }}>{macro.icon}</span>
+                      <span className="font-display" style={{ fontSize: '0.9rem', fontWeight: '900', color: macro.color }}>
+                        {macro.label}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {Object.keys(macro.sub).map(subKey => {
+                        const sub = macro.sub[subKey];
+                        const filterKey = `${macroKey}_${subKey}`;
+                        const isActive = activeFilters.includes(filterKey);
+                        return (
+                          <button
+                            key={subKey}
+                            onClick={() => handleFilterToggle(filterKey)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.6rem 0.8rem',
+                              borderRadius: '0.5rem',
+                              border: '1px solid',
+                              borderColor: isActive ? `${macro.color}40` : 'rgba(255, 255, 255, 0.04)',
+                              backgroundColor: isActive ? `${macro.color}15` : 'var(--bg-surface-soft)',
+                              color: isActive ? '#fff' : 'var(--text-secondary)',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem',
+                              fontWeight: isActive ? '700' : '500',
+                              textAlign: 'left',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span>{sub.icon}</span>
+                              <span>{sub.label}</span>
+                            </div>
+                            <div style={{
+                              width: '10px',
+                              height: '10px',
+                              borderRadius: '50%',
+                              backgroundColor: isActive ? macro.color : 'transparent',
+                              border: `1.5px solid ${isActive ? macro.color : 'var(--text-muted)'}`,
+                              transition: 'all 0.15s ease'
+                            }} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Apply Action */}
+            <button 
+              onClick={() => setIsFilterModalOpen(false)}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.85rem', marginTop: '1.25rem', borderRadius: '0.5rem', fontWeight: '800', background: 'var(--primary)', borderColor: 'var(--primary)', color: '#fff', cursor: 'pointer' }}
+            >
+              Aplicar Filtros ({activeFilters.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Sheet — Form for adding a new report */}
       <BottomModal
         isOpen={showForm}
@@ -1189,6 +1375,10 @@ export default function MapView({ user }) {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes slide-in {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
         .btn-map-card {
           position: relative;
           background-color: var(--bg-surface);
@@ -1219,6 +1409,73 @@ export default function MapView({ user }) {
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        
+        /* Lateral slide-in modal overlay & content styles */
+        .slide-in-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background-color: rgba(7, 11, 21, 0.75);
+          backdrop-filter: blur(8px);
+          z-index: 2000;
+          display: flex;
+          justify-content: flex-end;
+          transition: opacity 0.3s ease;
+        }
+        .slide-in-modal-content {
+          width: 100%;
+          max-width: 400px;
+          height: 100%;
+          background-color: #131c2e;
+          border-left: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+          display: flex;
+          flex-direction: column;
+          padding: 1.5rem;
+          overflow-y: auto;
+          animation: slide-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Custom Leaflet Popup styling */
+        .leaflet-popup-content-wrapper {
+          background: #131c2e !important;
+          color: #f8fafc !important;
+          border-radius: 12px !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+          padding: 0 !important;
+          overflow: hidden;
+        }
+        .leaflet-popup-content {
+          margin: 0 !important;
+          padding: 12px 16px !important;
+          width: 240px !important;
+          line-height: 1.4;
+          font-family: var(--font-sans), sans-serif !important;
+        }
+        .leaflet-popup-tip {
+          background: #131c2e !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+          color: #94a3b8 !important;
+          padding: 6px 6px 0 0 !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button:hover {
+          color: #f8fafc !important;
+        }
+
+        .live-pulse {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+          animation: pulse-dot 2s infinite ease-in-out;
+        }
+        @keyframes pulse-dot {
+          0% { transform: scale(0.9); opacity: 0.6; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(0.9); opacity: 0.6; }
         }
       `}</style>
     </div>
