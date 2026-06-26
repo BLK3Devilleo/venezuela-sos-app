@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { supabase } from '../supabase';
-import { Plus, MapPin, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, MapPin, MessageCircle, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 
 // Fix Leaflet marker icon URLs
@@ -227,7 +227,7 @@ function ChangeMapView({ center, zoom }) {
   return null;
 }
 
-export default function MapView({ user }) {
+export default function MapView({ user, onRequireLogin }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activePopupId, setActivePopupId] = useState(null);
@@ -370,10 +370,14 @@ export default function MapView({ user }) {
     }));
   };
 
-  // Map Click Listener
   function MapEvents() {
     useMapEvents({
       click(e) {
+        if (!user) {
+          alert('Debes iniciar sesión con Google para reportar o añadir un marcador al mapa.');
+          if (onRequireLogin) onRequireLogin();
+          return;
+        }
         setNewMarkerPos(e.latlng);
         setShowForm(true);
       }
@@ -596,6 +600,44 @@ export default function MapView({ user }) {
                       >
                         <MessageCircle size={14} /> Contactar por WhatsApp
                       </a>
+
+                      {(user?.rol === 'admin' || user?.rol === 'staff' || item.creador_id === user?.id) && (
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('¿Seguro que deseas eliminar este marcador del mapa?')) return;
+                            try {
+                              const table = item.mapType === 'servicio' ? 'servicios' : 'recursos';
+                              const { error } = await supabase.from(table).delete().eq('id', item.id);
+                              if (error) throw error;
+                              setActivePopupId(null);
+                              fetchMapData();
+                            } catch (err) {
+                              console.error(err);
+                              alert('Error al eliminar el marcador.');
+                            }
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.4rem',
+                            padding: '8px 12px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            color: '#ef4444',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            fontSize: '0.8rem',
+                            marginTop: '8px',
+                            cursor: 'pointer',
+                            width: '100%',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(239,68,68,0.1)'
+                          }}
+                        >
+                          <Trash2 size={14} /> Eliminar Marcador
+                        </button>
+                      )}
                     </div>
                   </Popup>
                 )}
@@ -770,6 +812,11 @@ export default function MapView({ user }) {
       {/* Floating Action Button (FAB) to Add report without map tap */}
       <button
         onClick={() => {
+          if (!user) {
+            alert('Debes iniciar sesión con Google para reportar o añadir un marcador al mapa.');
+            if (onRequireLogin) onRequireLogin();
+            return;
+          }
           setNewMarkerPos(null);
           setShowForm(true);
         }}

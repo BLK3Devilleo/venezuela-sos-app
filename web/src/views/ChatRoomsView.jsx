@@ -10,7 +10,34 @@ const ROOMS = [
   { id: 'general', name: 'Chat General', icon: Hash, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' }
 ];
 
-export default function ChatRoomsView({ user, onViewProfile }) {
+const EMOJIS = ['😀', '😅', '😂', '😊', '👍', '😭', '🆘', '🙏', '❤️', '🏥', '🍲', '💧', '🔋', '🔌'];
+
+const getHSLColor = (userId) => {
+  if (!userId) return 'hsl(210, 30%, 25%)';
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 45%, 28%)`;
+};
+
+const renderMessageContent = (text) => {
+  if (!text) return '';
+  const parts = text.split(/(\s+)/);
+  return parts.map((part, index) => {
+    if (part.startsWith('@') && part.length > 1) {
+      return (
+        <span key={index} style={{ color: '#60a5fa', fontWeight: '800', backgroundColor: 'rgba(96,165,250,0.15)', padding: '1px 4px', borderRadius: '4px' }}>
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
+export default function ChatRoomsView({ user, onViewProfile, onRequireLogin }) {
   const [activeRoom, setActiveRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -91,7 +118,12 @@ export default function ChatRoomsView({ user, onViewProfile }) {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if (!user) {
+      alert('Debes iniciar sesión con Google para enviar mensajes en el chat.');
+      if (onRequireLogin) onRequireLogin();
+      return;
+    }
+    if (!newMessage.trim()) return;
 
     const content = newMessage.trim();
     setNewMessage(''); 
@@ -171,15 +203,15 @@ export default function ChatRoomsView({ user, onViewProfile }) {
                   <div style={{
                     padding: '0.75rem 1rem',
                     borderRadius: isMe ? '1.25rem 1.25rem 0.25rem 1.25rem' : '1.25rem 1.25rem 1.25rem 0.25rem',
-                    backgroundColor: isMe ? 'var(--primary)' : 'var(--bg-surface)',
-                    color: isMe ? '#ffffff' : 'var(--text-primary)',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                    backgroundColor: isMe ? 'var(--primary)' : getHSLColor(msg.user_id),
+                    color: '#ffffff',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
                     fontSize: '0.9375rem',
                     lineHeight: '1.4',
                     wordBreak: 'break-word'
                   }}>
-                    {msg.content}
-                    <div style={{ fontSize: '0.65rem', textAlign: 'right', marginTop: '0.25rem', opacity: isMe ? 0.8 : 0.5 }}>
+                    {renderMessageContent(msg.content)}
+                    <div style={{ fontSize: '0.65rem', textAlign: 'right', marginTop: '0.25rem', opacity: 0.8 }}>
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
@@ -210,12 +242,54 @@ export default function ChatRoomsView({ user, onViewProfile }) {
           <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSendMessage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)' }}>
+        {/* Emoji Selector Panel */}
+        <div 
+          className="hide-scrollbar"
+          style={{ 
+            display: 'flex', 
+            gap: '0.45rem', 
+            overflowX: 'auto', 
+            padding: '0.45rem 1rem', 
+            borderTop: '1px solid var(--border)', 
+            backgroundColor: 'var(--bg-surface)' 
+          }}
+        >
+          {EMOJIS.map(emoji => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => setNewMessage(prev => prev + emoji)}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                fontSize: '1.25rem', 
+                padding: '0.15rem 0.35rem', 
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'transform 0.1s'
+              }}
+              onMouseDown={e => e.preventDefault()}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+         <form onSubmit={handleSendMessage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)' }}>
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Escribe un mensaje..."
+            placeholder={user ? "Escribe un mensaje..." : "Inicia sesión con Google para escribir..."}
+            onClick={() => {
+              if (!user) {
+                alert('Debes iniciar sesión con Google para participar en el chat.');
+                if (onRequireLogin) onRequireLogin();
+              }
+            }}
+            readOnly={!user}
             style={{
               flex: 1,
               padding: '0.875rem 1.25rem',

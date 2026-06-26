@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Package, Plus, Search, MessageCircle, MapPin, Trash2, Edit3, Tag, FileText } from 'lucide-react';
 
-export default function ResourcesView({ user, isChild = false }) {
+export default function ResourcesView({ user, isChild = false, onRequireLogin }) {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -125,7 +125,14 @@ export default function ResourcesView({ user, isChild = false }) {
         <button 
           className="btn btn-primary" 
           style={{ marginLeft: 'auto' }}
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => {
+            if (!user) {
+              alert('Debes iniciar sesión con Google para ofrecer o solicitar recursos.');
+              if (onRequireLogin) onRequireLogin();
+              return;
+            }
+            setShowAddForm(!showAddForm);
+          }}
         >
           <Plus size={18} />
           <span>{showAddForm ? 'Cerrar Formulario' : 'Ofrecer Recurso'}</span>

@@ -24,8 +24,8 @@ function MapSelector({ position, setPosition }) {
   return position ? <Marker position={position} /> : null;
 }
 
-export default function DirectoryView({ user, onViewProfile }) {
-  const [activeTab, setActiveTab] = useState('emergencias'); // Emergencias por defecto
+export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
+  const [activeTab, setActiveTab] = useState('landing');
   const [emergencias, setEmergencias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -130,6 +130,27 @@ export default function DirectoryView({ user, onViewProfile }) {
   return (
     <div className="fade-in" style={{ paddingBottom: '2rem', paddingTop: '1rem' }}>
       
+      {activeTab !== 'landing' && (
+        <button
+          onClick={() => setActiveTab('landing')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--primary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            marginBottom: '1rem',
+            padding: 0
+          }}
+        >
+          ← Volver al Menú de Directorio
+        </button>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
         <div>
           <h1 className="font-display" style={{ fontSize: '2rem', fontWeight: '800' }}>Directorio</h1>
@@ -139,7 +160,14 @@ export default function DirectoryView({ user, onViewProfile }) {
         </div>
         {activeTab === 'emergencias' && (
           <button 
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              if (!user) {
+                alert('Debes iniciar sesión con Google para reportar una emergencia.');
+                if (onRequireLogin) onRequireLogin();
+                return;
+              }
+              setShowForm(true);
+            }}
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 1rem', borderRadius: '2rem' }}
           >
@@ -148,246 +176,274 @@ export default function DirectoryView({ user, onViewProfile }) {
         )}
       </div>
 
-      {/* Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '0.35rem', 
-        marginBottom: '1.5rem', 
-        backgroundColor: 'var(--bg-surface)', 
-        padding: '0.35rem', 
-        borderRadius: '1.25rem',
-        border: '1px solid var(--border)',
-        overflowX: 'auto'
-      }}>
-        {[
-          { id: 'emergencias', label: '🚨 Emergencias en Vivo', color: 'var(--ve-red)' },
-          { id: 'services', label: '🤝 Servicios y Apoyo', color: 'var(--primary)' },
-          { id: 'resources', label: '📦 Suministros y Refugios', color: 'var(--ve-blue)' },
-        ].map(t => (
-          <button
-            key={t.id}
-            style={{ 
-              flex: 1, 
-              padding: '0.65rem 0.75rem', 
-              borderRadius: '1rem', 
-              border: 'none', 
-              backgroundColor: activeTab === t.id ? t.color : 'transparent', 
-              color: activeTab === t.id ? 'white' : 'var(--text-secondary)', 
-              fontWeight: activeTab === t.id ? '700' : '500', 
-              transition: 'all 0.2s',
-              fontSize: '0.85rem',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer'
-            }}
-            onClick={() => setActiveTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {activeTab === 'landing' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem', animation: 'sos-fade-in 0.3s ease' }}>
+          <h2 className="font-display" style={{ fontSize: '1.3rem', fontWeight: '800', textAlign: 'center', marginBottom: '0.5rem', color: '#fff' }}>
+            ¿Qué deseas consultar u ofrecer hoy?
+          </h2>
+          
+          {[
+            { id: 'emergencias', label: '🚨 Emergencias en Vivo', color: '#ef4444', desc: 'Incidentes críticos, zonas de peligro activas y pedidos de auxilio urgente en tiempo real.', bg: 'rgba(239, 68, 68, 0.1)' },
+            { id: 'services', label: '🛠️ Servicios y Apoyo', color: '#3b82f6', desc: 'Asistencia voluntaria de médicos, apoyo psicológico, transporte y remoción de escombros.', bg: 'rgba(59, 130, 246, 0.1)' },
+            { id: 'resources', label: '🎪 Suministros y Refugios', color: '#10b981', desc: 'Puntos de agua, centros de acopio, campamentos, albergues temporales y baños.', bg: 'rgba(16, 185, 129, 0.1)' }
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setActiveTab(opt.id)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '1.5rem',
+                borderRadius: '1.25rem',
+                border: '1.5px solid var(--border)',
+                backgroundColor: 'var(--bg-surface)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: 'var(--shadow-md)',
+                gap: '0.5rem'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = opt.color;
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = `0 12px 30px ${opt.color}15`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+            >
+              <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: '800', color: opt.color, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {opt.label}
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                {opt.desc}
+              </p>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: opt.color, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Ingresar sección →
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Tabs */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '0.35rem', 
+            marginBottom: '1.5rem', 
+            backgroundColor: 'var(--bg-surface)', 
+            padding: '0.35rem', 
+            borderRadius: '1.25rem',
+            border: '1px solid var(--border)',
+            overflowX: 'auto'
+          }} className="hide-scrollbar">
+            {[
+              { id: 'emergencias', label: '🚨 Emergencias en Vivo', color: 'var(--ve-red)' },
+              { id: 'services', label: '🤝 Servicios y Apoyo', color: 'var(--primary)' },
+              { id: 'resources', label: '📦 Suministros y Refugios', color: 'var(--ve-blue)' },
+            ].map(t => (
+              <button
+                key={t.id}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.65rem 0.75rem', 
+                  borderRadius: '1rem', 
+                  border: 'none', 
+                  backgroundColor: activeTab === t.id ? t.color : 'transparent', 
+                  color: activeTab === t.id ? 'white' : 'var(--text-secondary)', 
+                  fontWeight: activeTab === t.id ? '700' : '500', 
+                  transition: 'all 0.2s',
+                  fontSize: '0.85rem',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setActiveTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-      {/* Active Tab rendering */}
-      {activeTab === 'services' && (
-        <ServicesView user={user} onViewProfile={onViewProfile} isChild />
-      )}
+          {/* Active Tab rendering */}
+          {activeTab === 'services' && (
+            <ServicesView user={user} onViewProfile={onViewProfile} isChild onRequireLogin={onRequireLogin} />
+          )}
 
-      {activeTab === 'resources' && (
-        <ResourcesView user={user} isChild />
-      )}
+          {activeTab === 'resources' && (
+            <ResourcesView user={user} isChild onRequireLogin={onRequireLogin} />
+          )}
 
-      {activeTab === 'emergencias' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-              Cargando reportes de emergencia...
+          {activeTab === 'emergencias' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Cargando emergencias...</div>
+              ) : emergencias.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                  No hay reportes de emergencia activos en este momento.
+                </div>
+              ) : (
+                emergencias.map(e => (
+                  <div key={e.id} className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {e.creador?.foto_perfil ? (
+                          <img src={e.creador.foto_perfil} alt={e.creador.nombre} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--bg-surface-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            👤
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>
+                            {e.creador?.nombre || 'Usuario Anónimo'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            <Clock size={10} /> {new Date(e.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {(user?.rol === 'admin' || user?.rol === 'staff' || e.creador_id === user?.id) && (
+                        <button 
+                          onClick={() => handleDelete(e.id)}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.25rem' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: '1.5', margin: 0 }}>
+                      {e.descripcion}
+                    </p>
+
+                    {e.foto && (
+                      <div style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--border)', maxHeight: '240px' }}>
+                        <img src={e.foto} alt="Evidencia" style={{ width: '100%', maxHeight: '240px', objectFit: 'cover' }} />
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <MapPin size={12} style={{ color: 'var(--ve-red)' }} />
+                        <strong>{e.ubicacion_text}</strong>
+                      </div>
+                      
+                      {e.ubicacion_lat && e.ubicacion_lng && (
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${e.ubicacion_lat},${e.ubicacion_lng}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-gradient"
+                          style={{ fontSize: '0.75rem', fontWeight: '800', marginLeft: 'auto', textDecoration: 'none' }}
+                        >
+                          Ver en Google Maps →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          ) : emergencias.length === 0 ? (
+          )}
+
+          {/* Formulario Bottom Sheet */}
+          {showForm && (
             <div style={{
-              textAlign: 'center',
-              padding: '4rem 2rem',
-              borderRadius: '1rem',
-              border: '2px dashed var(--border)',
-              color: 'var(--text-secondary)'
+              position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000,
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
             }}>
-              <AlertTriangle size={36} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-              <p style={{ fontWeight: '600' }}>No hay reportes de emergencia activos en este momento.</p>
-              <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>La comunidad está a salvo. Reporta si ves una situación de peligro.</p>
-            </div>
-          ) : (
-            emergencias.map(item => (
               <div 
-                key={item.id}
-                className="card"
+                className="glass" 
                 style={{
-                  borderLeft: '4px solid var(--ve-red)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  padding: '1.25rem'
+                  width: '100%', maxWidth: '480px', borderTopLeftRadius: '1.5rem', borderTopRightRadius: '1.5rem',
+                  padding: '1.5rem', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)',
+                  maxHeight: '85vh', overflowY: 'auto', animation: 'sos-fade-in 0.2s ease'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>🚨</span>
-                    <span style={{ fontWeight: '800', color: 'var(--ve-red)', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                      Emergencia Crítica
-                    </span>
-                  </div>
-                  {(user?.rol === 'admin' || user?.id === item.creador_id) && (
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <h3 className="font-display" style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                    🚨 Reportar Emergencia Crítica
+                  </h3>
+                  <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <X size={20} />
+                  </button>
                 </div>
 
-                {item.foto && (
-                  <img 
-                    src={item.foto} 
-                    alt="Reporte de Emergencia" 
-                    style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', borderRadius: '0.75rem' }} 
-                  />
-                )}
-
-                <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
-                  {item.descripcion}
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem', fontSize: '0.8rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                    <MapPin size={14} style={{ color: 'var(--ve-red)' }} />
-                    <span><strong>Ubicación:</strong> {item.ubicacion_text}</span>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  
+                  {/* Imagen */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '100%', height: '140px', borderRadius: '0.75rem', backgroundColor: 'var(--bg-primary)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                      {imagePreview ? (
+                        <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                          <ImageIcon size={28} />
+                          <span style={{ fontSize: '0.75rem' }}>Añadir Foto Evidencia</span>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleImageSelect} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                    <Clock size={14} />
-                    <span>Reportado hace {new Date(item.created_at).toLocaleDateString()} a las {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                  <a 
-                    href={`https://maps.google.com/?q=${item.ubicacion_lat},${item.ubicacion_lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.8rem', padding: '0.5rem 1rem', flex: 1, borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+                  {/* Descripción */}
+                  <div className="input-group">
+                    <label className="input-label">Describe la emergencia *</label>
+                    <textarea 
+                      className="input-field"
+                      style={{ height: '70px', resize: 'none' }}
+                      placeholder="Ej: Inundación en la calle principal, se requiere evacuación de ancianos..."
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Ubicación Texto */}
+                  <div className="input-group">
+                    <label className="input-label">Ubicación (Referencia / Dirección)</label>
+                    <input 
+                      className="input-field"
+                      type="text"
+                      placeholder="Ej: Av. Francisco de Miranda, frente al Metro de Chacao"
+                      value={locationText}
+                      onChange={e => setLocationText(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Mini mapa selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <span className="input-label">Selecciona el punto en el mapa (Toca para marcar)</span>
+                    <div style={{ height: '180px', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      <MapContainer center={mapPos} zoom={13} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <MapSelector position={selectedPos} setPosition={setSelectedPos} />
+                      </MapContainer>
+                    </div>
+                    {selectedPos && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>
+                        📍 Coordenadas marcadas: {selectedPos[0].toFixed(5)}, {selectedPos[1].toFixed(5)}
+                      </span>
+                    )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="btn btn-danger"
+                    disabled={submitting}
+                    style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem', fontWeight: 'bold' }}
                   >
-                    <MapPin size={14} /> Ver en Google Maps
-                  </a>
-                </div>
+                    {submitting ? 'Publicando reporte...' : '🚨 Publicar Reporte de Emergencia'}
+                  </button>
+                </form>
               </div>
-            ))
+            </div>
           )}
-        </div>
-      )}
-
-      {/* Modal Reportar Emergencia */}
-      {showForm && (
-        <div style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1200,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="card" style={{
-            width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto',
-            backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)',
-            padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem',
-            position: 'relative'
-          }}>
-            <button 
-              onClick={() => setShowForm(false)}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-            >
-              <X size={20} />
-            </button>
-
-            <h2 className="font-display" style={{ fontSize: '1.35rem', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              🚨 Reportar Emergencia en Vivo
-            </h2>
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              
-              {/* Foto */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <span className="input-label">Foto del Incidente (Opcional)</span>
-                {imagePreview ? (
-                  <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '0.75rem', overflow: 'hidden' }}>
-                    <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
-                    <button 
-                      type="button"
-                      onClick={() => { setImageFile(null); setImagePreview(''); }}
-                      style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', borderRadius: '50%', padding: '0.25rem', cursor: 'pointer' }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <label style={{
-                    height: '100px', border: '2px dashed var(--border)', borderRadius: '0.75rem',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', gap: '0.25rem', color: 'var(--text-secondary)'
-                  }}>
-                    <ImageIcon size={24} />
-                    <span style={{ fontSize: '0.8rem' }}>Subir Imagen de la Emergencia</span>
-                    <input type="file" accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
-                  </label>
-                )}
-              </div>
-
-              {/* Descripción */}
-              <div className="input-group">
-                <label className="input-label">¿Qué está sucediendo?</label>
-                <textarea 
-                  className="input-field"
-                  placeholder="Describe la emergencia. Ej: Inundación en la calle 4, postes eléctricos caídos o personas atrapadas..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  style={{ height: '80px', resize: 'none' }}
-                  required
-                />
-              </div>
-
-              {/* Ubicación Texto */}
-              <div className="input-group">
-                <label className="input-label">Ubicación (Referencia / Dirección)</label>
-                <input 
-                  className="input-field"
-                  type="text"
-                  placeholder="Ej: Av. Francisco de Miranda, frente al Metro de Chacao"
-                  value={locationText}
-                  onChange={e => setLocationText(e.target.value)}
-                />
-              </div>
-
-              {/* Mini mapa selector */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <span className="input-label">Selecciona el punto en el mapa (Toca para marcar)</span>
-                <div style={{ height: '180px', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                  <MapContainer center={mapPos} zoom={13} style={{ height: '100%', width: '100%' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <MapSelector position={selectedPos} setPosition={setSelectedPos} />
-                  </MapContainer>
-                </div>
-                {selectedPos && (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>
-                    📍 Coordenadas marcadas: {selectedPos[0].toFixed(5)}, {selectedPos[1].toFixed(5)}
-                  </span>
-                )}
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn btn-danger"
-                disabled={submitting}
-                style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem', fontWeight: 'bold' }}
-              >
-                {submitting ? 'Publicando reporte...' : '🚨 Publicar Reporte de Emergencia'}
-              </button>
-            </form>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

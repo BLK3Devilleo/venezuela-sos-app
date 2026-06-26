@@ -10,7 +10,7 @@ const loginSchema = z.object({
   telefono: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
-export default function LoginView({ onLogin, needsOnboarding = false, authUserId = null, authUserName = '' }) {
+export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = null, needsOnboarding = false, authUserId = null, authUserName = '' }) {
   const [step, setStep] = useState(needsOnboarding ? 3 : 1);
   const [nombre, setNombre] = useState(authUserName || '');
   const [telefono, setTelefono] = useState('');
@@ -244,6 +244,57 @@ export default function LoginView({ onLogin, needsOnboarding = false, authUserId
             <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
             <ArrowRight size={18} />
           </button>
+          
+          {onEnterAsGuest && (
+            <button
+              onClick={onEnterAsGuest}
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                borderRadius: '0.875rem',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+            >
+              Explorar como Invitado
+            </button>
+          )}
+
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '0.875rem',
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'underline'
+              }}
+            >
+              Volver al inicio
+            </button>
+          )}
+
           <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
             <p>Gratuito · Sin fines comerciales · Código abierto</p>
             <div style={{ display: 'flex', gap: '1rem' }}>

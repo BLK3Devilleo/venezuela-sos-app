@@ -33,6 +33,7 @@ export default function App() {
   const [view, setView] = useState('dashboard');
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const savedZoom = localStorage.getItem('filoSOS_fontZoom');
@@ -101,13 +102,25 @@ export default function App() {
         .eq('id', authUser.id)
         .single();
 
+      const isOwner = authUser.email === 'devimeo@gmail.com';
+
       if (error || !data) {
         // Usuario logueado en Google, pero no registrado en la BD de perfiles
-        setUser({ id: authUser.id, nombre: authUser.user_metadata?.full_name || '' });
+        setUser({ id: authUser.id, nombre: authUser.user_metadata?.full_name || '', rol: isOwner ? 'admin' : 'afectado' });
         setNeedsOnboarding(true);
       } else {
-        // El perfil existe, entra directo
-        setUser(data);
+        let finalProfile = data;
+        if (isOwner && data.rol !== 'admin') {
+          const { data: updated } = await supabase
+            .from('usuarios')
+            .update({ rol: 'admin' })
+            .eq('id', authUser.id)
+            .select();
+          if (updated && updated.length > 0) {
+            finalProfile = updated[0];
+          }
+        }
+        setUser(finalProfile);
         setNeedsOnboarding(false);
       }
     } catch (err) {
@@ -160,6 +173,7 @@ export default function App() {
 
   const handleLogin = (loggedUser) => {
     setUser(loggedUser);
+    setIsGuest(false);
     setNeedsOnboarding(false);
     setView('dashboard');
   };
@@ -169,14 +183,30 @@ export default function App() {
     localStorage.removeItem('sos_user');
     setUser(null);
     setSession(null);
+    setIsGuest(false);
     setNeedsOnboarding(false);
     setView('dashboard');
   };
 
+  const handleRequireLogin = () => {
+    setIsGuest(false);
+    setUser(null);
+    setView('login');
+  };
+
   const renderView = () => {
     switch (view) {
-      case 'dashboard': return <DashboardView user={user} setView={setView} />;
-      case 'map': return <MapView user={user} />;
+      case 'login': return (
+        <LoginView 
+          onLogin={handleLogin} 
+          needsOnboarding={false} 
+          authUserId={null}
+          authUserName={null}
+          onBack={() => setView('dashboard')}
+        />
+      );
+      case 'dashboard': return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
+      case 'map': return <MapView user={user} onRequireLogin={handleRequireLogin} />;
       case 'directory': return (
         <DirectoryView 
           user={user} 
@@ -184,10 +214,11 @@ export default function App() {
             setViewUserId(id);
             setView('profile');
           }} 
+          onRequireLogin={handleRequireLogin}
         />
       );
-      case 'missing_persons': return <MissingPersonsView user={user} />;
-      case 'missing_pets': return <MissingPetsView user={user} />;
+      case 'missing_persons': return <MissingPersonsView user={user} onRequireLogin={handleRequireLogin} />;
+      case 'missing_pets': return <MissingPetsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'services': return (
         <DirectoryView 
           user={user} 
@@ -195,6 +226,7 @@ export default function App() {
             setViewUserId(id);
             setView('profile');
           }} 
+          onRequireLogin={handleRequireLogin}
         />
       );
       case 'chat_rooms': return (
@@ -204,9 +236,10 @@ export default function App() {
             setViewUserId(id);
             setView('profile');
           }} 
+          onRequireLogin={handleRequireLogin}
         />
       );
-      case 'marketplace': return <MarketplaceView user={user} />;
+      case 'marketplace': return <MarketplaceView user={user} onRequireLogin={handleRequireLogin} />;
       case 'profile': return (
         <ProfileView 
           user={user} 
@@ -220,7 +253,7 @@ export default function App() {
       );
       case 'admin_panel': return <AdminPanelView user={user} />;
       case 'legal': return <LegalView setView={setView} />;
-      default: return <DashboardView user={user} setView={setView} />;
+      default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} />;
     }
   };
 
@@ -245,10 +278,14 @@ export default function App() {
     );
   }
 
-  if (!user || needsOnboarding) {
+  if ((!user && !isGuest) || (user && needsOnboarding)) {
     return (
       <LoginView 
         onLogin={handleLogin} 
+        onEnterAsGuest={() => {
+          setIsGuest(true);
+          setView('dashboard');
+        }}
         needsOnboarding={needsOnboarding} 
         authUserId={user?.id}
         authUserName={user?.nombre}
@@ -306,54 +343,80 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {/* Clickable Profile Badge */}
-          <div 
-            onClick={() => {
-              setViewUserId(null);
-              setView('profile');
-            }}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.4rem', 
-              cursor: 'pointer',
-              backgroundColor: 'var(--bg-surface-soft)',
-              padding: '0.25rem 0.65rem 0.25rem 0.35rem',
-              borderRadius: '2rem',
-              border: '1px solid var(--border)',
-              transition: 'all 0.2s',
-              userSelect: 'none'
-            }}
-            className="btn-profile-badge"
-          >
-            {user.foto_perfil ? (
-              <img src={user.foto_perfil} alt={user.nombre} style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={12} style={{ color: 'var(--primary)' }} />
+          {user ? (
+            <>
+              {/* Clickable Profile Badge */}
+              <div 
+                onClick={() => {
+                  setViewUserId(null);
+                  setView('profile');
+                }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.4rem', 
+                  cursor: 'pointer',
+                  backgroundColor: 'var(--bg-surface-soft)',
+                  padding: '0.25rem 0.65rem 0.25rem 0.35rem',
+                  borderRadius: '2rem',
+                  border: '1px solid var(--border)',
+                  transition: 'all 0.2s',
+                  userSelect: 'none'
+                }}
+                className="btn-profile-badge"
+              >
+                {user.foto_perfil ? (
+                  <img src={user.foto_perfil} alt={user.nombre} style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <User size={12} style={{ color: 'var(--primary)' }} />
+                  </div>
+                )}
+                <span style={{ fontSize: '0.725rem', fontWeight: '700', color: 'var(--text-primary)', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.nombre.split(' ')[0]}
+                </span>
               </div>
-            )}
-            <span style={{ fontSize: '0.725rem', fontWeight: '700', color: 'var(--text-primary)', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.nombre.split(' ')[0]}
-            </span>
-          </div>
 
-          <button
-            onClick={handleLogout}
-            title="Cerrar Sesión"
-            style={{
-              background: 'var(--bg-surface-soft)',
-              border: '1px solid var(--border)',
-              borderRadius: '0.5rem',
-              padding: '0.4rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              color: 'var(--text-secondary)'
-            }}
-          >
-            <LogOut size={15} />
-          </button>
+              <button
+                onClick={handleLogout}
+                title="Cerrar Sesión"
+                style={{
+                  background: 'var(--bg-surface-soft)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                  padding: '0.4rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                <LogOut size={15} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                setView('login');
+              }}
+              style={{
+                background: 'var(--primary)',
+                border: 'none',
+                borderRadius: '0.5rem',
+                padding: '0.4rem 0.75rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                color: '#fff',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                transition: 'all 0.2s'
+              }}
+            >
+              <User size={14} /> Iniciar Sesión
+            </button>
+          )}
         </div>
       </header>
 
@@ -387,6 +450,10 @@ export default function App() {
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
           { id: 'missing_persons', label: 'Personas', icon: Users },
+          ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [
+            { id: 'missing_pets', label: 'Mascotas', icon: Heart },
+            { id: 'marketplace', label: 'Mercado', icon: ShoppingBag }
+          ] : []),
           { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
           { id: 'services', label: 'Servicios', icon: Activity },
           ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])

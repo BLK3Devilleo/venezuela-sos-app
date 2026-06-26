@@ -14,7 +14,7 @@ const formSchema = z.object({
   contacto_whatsapp: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
-export default function ServicesView({ user, onViewProfile, isChild = false }) {
+export default function ServicesView({ user, onViewProfile, isChild = false, onRequireLogin }) {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -117,7 +117,14 @@ export default function ServicesView({ user, onViewProfile, isChild = false }) {
         <button 
           className="btn btn-primary" 
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }} 
-          onClick={() => setShowAddForm(true)}
+          onClick={() => {
+            if (!user) {
+              alert('Debes iniciar sesión con Google para ofrecer o solicitar servicios.');
+              if (onRequireLogin) onRequireLogin();
+              return;
+            }
+            setShowAddForm(true);
+          }}
         >
           <Plus size={18} /> Publicar
         </button>

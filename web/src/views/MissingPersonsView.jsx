@@ -42,7 +42,7 @@ const formSchema = z.object({
   estado: z.enum(['buscan_a', 'peligro', 'emergencia'])
 });
 
-export default function MissingPersonsView({ user }) {
+export default function MissingPersonsView({ user, onRequireLogin }) {
   const [people, setPeople] = useState([]);
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,13 @@ export default function MissingPersonsView({ user }) {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('gallery');
+  const [advSearchOpen, setAdvSearchOpen] = useState(false);
+  const [advNombre, setAdvNombre] = useState('');
+  const [advApellido, setAdvApellido] = useState('');
+  const [advCedula, setAdvCedula] = useState('');
+  const [advTelefono, setAdvTelefono] = useState('');
+  const [randomSeed, setRandomSeed] = useState(() => Math.random());
   
   // Extended form states
   const [formData, setFormData] = useState({
@@ -529,16 +535,59 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
     ...people
   ];
 
+  const isRecent = (createdAtStr) => {
+    if (!createdAtStr) return false;
+    const date = new Date(createdAtStr);
+    const now = new Date();
+    return (now - date) < 24 * 60 * 60 * 1000;
+  };
+
+  const recentPeople = combinedPeople.filter(p => {
+    if (p.isDraft) return true;
+    return isRecent(p.created_at);
+  }).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
   const filtered = combinedPeople.filter(p => {
     const q = search.toLowerCase();
-    const match = p.nombre_y_edad?.toLowerCase().includes(q) ||
-                  p.descripcion?.toLowerCase().includes(q) ||
-                  p.ultima_ubicacion?.toLowerCase().includes(q);
+    const matchBasic = !search || 
+                       p.nombre_y_edad?.toLowerCase().includes(q) ||
+                       p.descripcion?.toLowerCase().includes(q) ||
+                       p.ultima_ubicacion?.toLowerCase().includes(q);
+
+    let matchAdvanced = true;
+    if (advSearchOpen) {
+      if (advNombre) {
+        const namePart = p.nombre_y_edad?.split(' ')[0] || '';
+        if (!namePart.toLowerCase().includes(advNombre.toLowerCase())) matchAdvanced = false;
+      }
+      if (advApellido) {
+        const descMatch = p.descripcion?.toLowerCase().includes(`apellido: ${advApellido.toLowerCase()}`) || 
+                          p.redes_sociales?.apellido?.toLowerCase().includes(advApellido.toLowerCase());
+        if (!descMatch) matchAdvanced = false;
+      }
+      if (advCedula) {
+        const descMatch = p.descripcion?.toLowerCase().includes(`cédula: ${advCedula.toLowerCase()}`) || 
+                          p.redes_sociales?.cedula?.toLowerCase().includes(advCedula.toLowerCase());
+        if (!descMatch) matchAdvanced = false;
+      }
+      if (advTelefono) {
+        const telMatch = (p.contacto && p.contacto.includes(advTelefono)) || 
+                         (p.canales_contacto && Array.isArray(p.canales_contacto) && p.canales_contacto.some(c => c.valor && c.valor.includes(advTelefono)));
+        if (!telMatch) matchAdvanced = false;
+      }
+    }
     
     const pEstado = getPersonEstado(p);
+    const totalMatch = matchBasic && matchAdvanced;
 
-    if (filterStatus === 'all') return match;
-    return match && pEstado === filterStatus;
+    if (filterStatus === 'all') return totalMatch;
+    return totalMatch && pEstado === filterStatus;
+  });
+
+  const shuffledPeople = [...filtered].sort((a, b) => {
+    const hashA = (a.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hashB = (b.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hashA % 100) - (hashB % 100);
   });
 
   const filterOptions = [
@@ -670,42 +719,20 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0 }}>Buscar Personas</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>Red de búsqueda y contacto.</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {/* Toggle View */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--bg-surface)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <button 
-              type="button"
-              onClick={() => setViewMode('list')}
-              style={{
-                display: 'flex', padding: '6px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                backgroundColor: viewMode === 'list' ? 'var(--bg-surface-soft)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-muted)'
-              }}
-              title="Vista Lista"
-            >
-              <List size={16} />
-            </button>
-            <button 
-              type="button"
-              onClick={() => setViewMode('gallery')}
-              style={{
-                display: 'flex', padding: '6px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                backgroundColor: viewMode === 'gallery' ? 'var(--bg-surface-soft)' : 'transparent',
-                color: viewMode === 'gallery' ? 'var(--text-primary)' : 'var(--text-muted)'
-              }}
-              title="Vista Galería"
-            >
-              <Grid size={16} />
-            </button>
-          </div>
-          <button 
-            className="btn btn-primary" 
-            style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
-            onClick={() => setShowAddForm(true)}
-          >
-            <Plus size={18} /> Reportar
-          </button>
-        </div>
+        <button 
+          className="btn btn-primary" 
+          style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
+          onClick={() => {
+            if (!user) {
+              alert('Debes iniciar sesión con Google para reportar la desaparición de una persona.');
+              if (onRequireLogin) onRequireLogin();
+              return;
+            }
+            setShowAddForm(true);
+          }}
+        >
+          <Plus size={18} /> Reportar
+        </button>
       </div>
 
       {isOfflineData && (
@@ -726,91 +753,254 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
         </div>
       )}
 
-      {/* Stories / Carousel */}
-      {combinedPeople.length > 0 && (
-        <div style={{ 
-          display: 'flex', gap: '0.875rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1rem', scrollbarWidth: 'none' 
-        }}>
-          {combinedPeople.map(p => {
-            const estado = getPersonEstado(p);
-            const statusGradient = estado === 'localizado' ? 'linear-gradient(45deg, #10b981, #059669)' :
-                                   estado === 'peligro' ? 'linear-gradient(45deg, #a855f7, #7c3aed)' :
-                                   estado === 'emergencia' ? 'linear-gradient(45deg, #ef4444, #dc2626)' :
-                                   'linear-gradient(45deg, #f59e0b, #d97706)';
-            return (
-              <div key={p.isDraft ? `draft-avatar-${p.id}` : p.id} onClick={() => setSelected(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }}>
-                <div style={{ 
-                  width: '68px', height: '68px', borderRadius: '50%', padding: '3px',
-                  background: statusGradient,
-                  marginBottom: '6px',
-                  position: 'relative'
-                }}>
-                  <img 
-                    src={getImageUrl(p) || AVATAR_PERSON} 
-                    alt="Avatar" 
-                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--bg-primary)' }} 
-                  />
-                  {p.isDraft && (
-                    <span style={{ position: 'absolute', bottom: '0', right: '0', fontSize: '0.75rem', background: '#eab308', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>⏳</span>
-                  )}
+      {/* Stories / Carousel for Recent posts in last 24 hours */}
+      {recentPeople.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 className="font-display" style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.65rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            🔥 Reportes Recientes (Últimas 24h)
+          </h3>
+          <div 
+            className="hide-scrollbar"
+            style={{ 
+              display: 'flex', gap: '0.875rem', overflowX: 'auto', paddingBottom: '0.5rem' 
+            }}
+          >
+            {recentPeople.map(p => {
+              const estado = getPersonEstado(p);
+              const statusGradient = estado === 'localizado' ? 'linear-gradient(45deg, #10b981, #059669)' :
+                                     estado === 'peligro' ? 'linear-gradient(45deg, #a855f7, #7c3aed)' :
+                                     estado === 'emergencia' ? 'linear-gradient(45deg, #ef4444, #dc2626)' :
+                                     'linear-gradient(45deg, #f59e0b, #d97706)';
+              return (
+                <div key={p.isDraft ? `draft-avatar-${p.id}` : p.id} onClick={() => setSelected(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }}>
+                  <div style={{ 
+                    width: '68px', height: '68px', borderRadius: '50%', padding: '3px',
+                    background: statusGradient,
+                    marginBottom: '6px',
+                    position: 'relative'
+                  }}>
+                    <img 
+                      src={getImageUrl(p) || AVATAR_PERSON} 
+                      alt="Avatar" 
+                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--bg-primary)' }} 
+                    />
+                    {p.isDraft && (
+                      <span style={{ position: 'absolute', bottom: '0', right: '0', fontSize: '0.75rem', background: '#eab308', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>⏳</span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', fontWeight: '500' }}>
+                    {p.nombre_y_edad?.split(' ')[0]}
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', fontWeight: '500' }}>
-                  {p.nombre_y_edad?.split(' ')[0]}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* Buscador y Filtros */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <div className="search-bar" style={{ flex: 1, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Search size={18} style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre, lugar..." 
-            value={search} 
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.95rem' }}
-          />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="search-bar" style={{ flex: 1, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Search size={18} style={{ color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre, lugar..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.95rem' }}
+            />
+          </div>
+          
+          <button
+            onClick={() => setAdvSearchOpen(prev => !prev)}
+            style={{
+              padding: '0.75rem 1.25rem',
+              borderRadius: '1rem',
+              border: '1.5px solid',
+              borderColor: advSearchOpen ? 'var(--primary)' : 'var(--border)',
+              backgroundColor: advSearchOpen ? 'var(--primary-glow)' : 'var(--bg-surface)',
+              color: advSearchOpen ? '#fff' : 'var(--text-secondary)',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            🔍 Filtros
+          </button>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }}>
-          {filterOptions.map(opt => {
-            const isActive = filterStatus === opt.id;
-            const styles = getStatusStyles(opt.id);
-            return (
+
+        {/* Panel Búsqueda Avanzada */}
+        {advSearchOpen && (
+          <div style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '1.25rem',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            boxShadow: 'var(--shadow-md)',
+            animation: 'sos-fade-in 0.25s ease'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '800', color: '#fff' }}>Búsqueda Avanzada</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Nombre</span>
+                <input 
+                  className="input-field" 
+                  value={advNombre} 
+                  onChange={e => setAdvNombre(e.target.value)} 
+                  placeholder="Ej. Juan" 
+                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Apellido</span>
+                <input 
+                  className="input-field" 
+                  value={advApellido} 
+                  onChange={e => setAdvApellido(e.target.value)} 
+                  placeholder="Ej. Pérez" 
+                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Cédula</span>
+                <input 
+                  className="input-field" 
+                  value={advCedula} 
+                  onChange={e => setAdvCedula(e.target.value)} 
+                  placeholder="Ej. V12345" 
+                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Teléfono/Contacto</span>
+                <input 
+                  className="input-field" 
+                  value={advTelefono} 
+                  onChange={e => setAdvTelefono(e.target.value)} 
+                  placeholder="Ej. 412" 
+                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setAdvNombre('');
+                  setAdvApellido('');
+                  setAdvCedula('');
+                  setAdvTelefono('');
+                }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '0.5rem' }}
+              >
+                Limpiar Filtros
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Toggle de Vistas y Botón de Aleatorizar (Prominente debajo del buscador) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none', flex: 1 }} className="hide-scrollbar">
+            {filterOptions.map(opt => {
+              const isActive = filterStatus === opt.id;
+              const styles = getStatusStyles(opt.id);
+              return (
+                <button 
+                  key={opt.id}
+                  onClick={() => setFilterStatus(opt.id)}
+                  style={{
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '2rem',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s',
+                    border: isActive ? `1.5px solid ${styles.color}` : '1.5px solid var(--border)',
+                    backgroundColor: isActive ? styles.bg : 'var(--bg-surface)',
+                    color: isActive ? styles.color : 'var(--text-secondary)'
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button
+              onClick={handleShuffle}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.5rem 0.85rem',
+                borderRadius: '0.5rem',
+                border: '1.5px solid var(--border)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              title="Mezclar el orden de las personas al azar"
+            >
+              🎲 Rotar
+            </button>
+
+            {/* Selector de Vista (Lista / Galería) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--bg-surface)', padding: '3px', borderRadius: '8px', border: '1.5px solid var(--border)' }}>
               <button 
-                key={opt.id}
-                onClick={() => setFilterStatus(opt.id)}
+                type="button"
+                onClick={() => setViewMode('list')}
                 style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '2rem',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s',
-                  border: isActive ? `1.5px solid ${styles.color}` : '1.5px solid var(--border)',
-                  backgroundColor: isActive ? styles.bg : 'var(--bg-surface)',
-                  color: isActive ? styles.color : 'var(--text-secondary)'
+                  display: 'flex', padding: '6px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  backgroundColor: viewMode === 'list' ? 'var(--bg-surface-soft)' : 'transparent',
+                  color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontSize: '0.75rem', fontWeight: '700', alignItems: 'center', gap: '0.25rem'
                 }}
               >
-                {opt.label}
+                <List size={14} /> Lista
               </button>
-            );
-          })}
+              <button 
+                type="button"
+                onClick={() => setViewMode('gallery')}
+                style={{
+                  display: 'flex', padding: '6px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  backgroundColor: viewMode === 'gallery' ? 'var(--bg-surface-soft)' : 'transparent',
+                  color: viewMode === 'gallery' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontSize: '0.75rem', fontWeight: '700', alignItems: 'center', gap: '0.25rem'
+                }}
+              >
+                <Grid size={14} /> Galería
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Grid or List content */}
       {loading && people.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Cargando...</div>
-      ) : filtered.length === 0 ? (
+      ) : shuffledPeople.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>No se encontraron personas con esos criterios.</div>
       ) : viewMode === 'list' ? (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-          {filtered.map(p => {
+          {shuffledPeople.map(p => {
             const estado = getPersonEstado(p);
             const styles = getStatusStyles(estado);
             return (
@@ -850,19 +1040,12 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                       borderRadius: '4px',
                       whiteSpace: 'nowrap'
                     }}>
-                      {styles.label}
+                      {estado === 'buscan_a' ? 'Buscan a' : estado}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <MapPin size={12} /> {p.ultima_ubicacion || 'No especificada'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    {p.isDraft && (
-                      <span style={{ fontSize: '0.65rem', backgroundColor: '#fef08a', color: '#854d0e', padding: '0.2rem 0.4rem', borderRadius: '0.25rem', fontWeight: 'bold' }}>
-                        ⏳ OFFLINE
-                      </span>
-                    )}
-                  </div>
+                  </p>
                 </div>
               </div>
             );
@@ -876,7 +1059,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           gap: '8px',
           marginTop: '0.5rem'
         }}>
-          {filtered.map(p => {
+          {shuffledPeople.map(p => {
             const estado = getPersonEstado(p);
             const styles = getStatusStyles(estado);
             return (
@@ -1379,7 +1562,14 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                 {isPrivate ? (
                   <div style={{ marginTop: '0.5rem' }}>
                     <button
-                      onClick={() => setShowInfoForm(true)}
+                      onClick={() => {
+                        if (!user) {
+                          alert('Debes iniciar sesión con Google para enviar reportes de información privada.');
+                          if (onRequireLogin) onRequireLogin();
+                          return;
+                        }
+                        setShowInfoForm(true);
+                      }}
                       className="btn"
                       style={{
                         width: '100%',

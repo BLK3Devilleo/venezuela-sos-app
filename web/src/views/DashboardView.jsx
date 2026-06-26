@@ -4,14 +4,14 @@ import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle 
 
 const QUICK_ACTIONS = [
   { emoji: '🆘', label: 'Persona', sublabel: 'Desaparecida', view: 'missing_persons', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
-  { emoji: '🐾', label: 'Mascota', sublabel: 'Perdida', view: 'missing_pets', color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
-  { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'services', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
+  { emoji: '🐾', label: 'Mascota', sublabel: 'Perdida', view: 'missing_pets', color: '#d97706', bg: 'rgba(217,119,6,0.1)', restricted: true },
+  { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'services', color: '#16a34a', bg: 'rgba(22,163,74,0.1)', restricted: true },
   { emoji: '⚕️', label: 'Servicio', sublabel: 'Médico/Apoyo', view: 'services', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
-  { emoji: '🤝', label: 'Mercado', sublabel: 'Solidario', view: 'marketplace', color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
+  { emoji: '🤝', label: 'Mercado', sublabel: 'Solidario', view: 'marketplace', color: '#a855f7', bg: 'rgba(168,85,247,0.1)', restricted: true },
   { emoji: '🗺️', label: 'Ver', sublabel: 'en el Mapa', view: 'map', color: '#0d9488', bg: 'rgba(13,148,136,0.1)' },
 ];
 
-export default function DashboardView({ user, setView }) {
+export default function DashboardView({ user, setView, onRequireLogin }) {
   const [stats, setStats] = useState({ desaparecidos: '—', mascotas: '—', recursos: '—', servicios: '—' });
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem('filoSOS_fontZoom') || '16px';
@@ -44,6 +44,28 @@ export default function DashboardView({ user, setView }) {
 
   return (
     <div style={{ paddingTop: '0.5rem', paddingBottom: '2rem' }}>
+
+      {/* Tarjeta de Instalación PWA (Truquito para pantalla completa e instalar app) */}
+      <div 
+        style={{
+          background: 'linear-gradient(135deg, rgba(13,148,136,0.15) 0%, rgba(37,99,235,0.1) 100%)',
+          border: '1px solid var(--border)',
+          borderRadius: '1.25rem',
+          padding: '1.25rem',
+          marginBottom: '1.5rem',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <span style={{ fontSize: '1.5rem' }}>💡</span>
+          <span style={{ fontWeight: '800', color: '#fff', fontSize: '1.05rem' }}>
+            Truco: Úsalo como aplicación nativa
+          </span>
+        </div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4' }}>
+          Instala **VenezuelaSOS** en tu pantalla de inicio (**Compartir / Opciones ➔ Agregar a pantalla de inicio** o **Instalar**) para ejecutarla a pantalla completa sin barra de navegación del navegador, optimizar el consumo de batería y permitir el funcionamiento sin conexión.
+        </p>
+      </div>
 
       {/* Selector de Accesibilidad Viejitos-Friendly */}
       <div 
@@ -112,7 +134,7 @@ export default function DashboardView({ user, setView }) {
             paddingRight: '1rem'
           }}
         >
-          {QUICK_ACTIONS.map((act, i) => (
+          {QUICK_ACTIONS.filter(act => !act.restricted || (user && (user.rol === 'admin' || user.rol === 'staff'))).map((act, i) => (
             <button
               key={i}
               onClick={() => setView(act.view)}
