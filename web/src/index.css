@@ -394,4 +394,50 @@ body {
   scrollbar-width: none;
 }
 
+/* ==========================================================================
+   GLOBAL CONTRAST & RESPONSIVE UX FOR LIGHT MODE / DESKTOP
+   ========================================================================== */
+
+/* Corrección global de contraste en Tema Claro: 
+   Convierte cualquier texto (inline #fff / #ffffff / rgb) a color oscuro legible. */
+body.light h1[style*="#fff"], body.light h1[style*="#ffffff"], body.light h1[style*="255, 255, 255"], body.light h1[style*="255,255,255"],
+body.light h2[style*="#fff"], body.light h2[style*="#ffffff"], body.light h2[style*="255, 255, 255"], body.light h2[style*="255,255,255"],
+body.light h3[style*="#fff"], body.light h3[style*="#ffffff"], body.light h3[style*="255, 255, 255"], body.light h3[style*="255,255,255"],
+body.light h4[style*="#fff"], body.light h4[style*="#ffffff"], body.light h4[style*="255, 255, 255"], body.light h4[style*="255,255,255"],
+body.light h5[style*="#fff"], body.light h5[style*="#ffffff"], body.light h5[style*="255, 255, 255"], body.light h5[style*="255,255,255"],
+body.light p[style*="#fff"], body.light p[style*="#ffffff"], body.light p[style*="255, 255, 255"], body.light p[style*="255,255,255"],
+body.light span[style*="#fff"], body.light span[style*="#ffffff"], body.light span[style*="255, 255, 255"], body.light span[style*="255,255,255"],
+body.light strong[style*="#fff"], body.light strong[style*="#ffffff"], body.light strong[style*="255, 255, 255"], body.light strong[style*="255,255,255"],
+body.light label[style*="#fff"], body.light label[style*="#ffffff"], body.light label[style*="255, 255, 255"], body.light label[style*="255,255,255"],
+body.light summary[style*="#fff"], body.light summary[style*="#ffffff"], body.light summary[style*="255, 255, 255"], body.light summary[style*="255,255,255"],
+body.light div[style*="#fff"], body.light div[style*="#ffffff"], body.light div[style*="255, 255, 255"], body.light div[style*="255,255,255"] {
+  color: var(--text-primary) !important;
+}
+
+/* Centrado responsivo premium de estilo app frame para pantallas de escritorio y tablets */
+@media (min-width: 641px) {
+  header.glass,
+  main,
+  nav.hide-scrollbar {
+    max-width: 600px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  header.glass {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+  }
+  
+  nav.hide-scrollbar {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    border-left: 1px solid var(--border) !important;
+    border-right: 1px solid var(--border) !important;
+  }
+}
+
 
