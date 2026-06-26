@@ -1,16 +1,17 @@
 plugins {
   alias(libs.plugins.android.application)
+  id("org.jetbrains.kotlin.android")
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.example.venezuelasos"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.example.venezuelasos"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }
