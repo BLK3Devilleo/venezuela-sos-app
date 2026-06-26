@@ -383,10 +383,6 @@ export default function MissingPetsView({ user, onRequireLogin }) {
           className="btn btn-primary" 
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
           onClick={() => {
-            if (!user) {
-              if (onRequireLogin) onRequireLogin();
-              return;
-            }
             setFormData(prev => ({
               ...prev,
               estado: activeArea === 'reportes' ? 'perdida' : 'donacion_alimento'

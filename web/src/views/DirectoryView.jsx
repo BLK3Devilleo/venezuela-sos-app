@@ -161,10 +161,6 @@ export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
         {activeTab === 'emergencias' && (
           <button 
             onClick={() => {
-              if (!user) {
-                if (onRequireLogin) onRequireLogin();
-                return;
-              }
               setShowForm(true);
             }}
             className="btn btn-primary"

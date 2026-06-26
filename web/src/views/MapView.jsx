@@ -398,10 +398,6 @@ export default function MapView({ user, onRequireLogin }) {
   function MapEvents() {
     useMapEvents({
       click(e) {
-        if (!user) {
-          if (onRequireLogin) onRequireLogin();
-          return;
-        }
         setNewMarkerPos(e.latlng);
         setShowForm(true);
       }
@@ -836,10 +832,6 @@ export default function MapView({ user, onRequireLogin }) {
       {/* Floating Action Button (FAB) to Add report without map tap */}
       <button
         onClick={() => {
-          if (!user) {
-            if (onRequireLogin) onRequireLogin();
-            return;
-          }
           setNewMarkerPos(null);
           setShowForm(true);
         }}

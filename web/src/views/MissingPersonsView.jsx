@@ -658,10 +658,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           className="btn btn-primary" 
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
           onClick={() => {
-            if (!user) {
-              if (onRequireLogin) onRequireLogin();
-              return;
-            }
             setShowAddForm(true);
           }}
         >
@@ -1426,10 +1422,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                   <div style={{ marginTop: '0.5rem' }}>
                     <button
                       onClick={() => {
-                        if (!user) {
-                          if (onRequireLogin) onRequireLogin();
-                          return;
-                        }
                         setShowInfoForm(true);
                       }}
                       className="btn"

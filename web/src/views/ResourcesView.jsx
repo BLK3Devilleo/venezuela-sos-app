@@ -126,10 +126,6 @@ export default function ResourcesView({ user, isChild = false, onRequireLogin })
           className="btn btn-primary" 
           style={{ marginLeft: 'auto' }}
           onClick={() => {
-            if (!user) {
-              if (onRequireLogin) onRequireLogin();
-              return;
-            }
             setShowAddForm(!showAddForm);
           }}
         >
