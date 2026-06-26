@@ -1,4 +1,4 @@
-package com.venezuelasos.app;
+package com.filosos.app;
 
 import com.getcapacitor.BridgeActivity;
 

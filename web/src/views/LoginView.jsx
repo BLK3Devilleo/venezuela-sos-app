@@ -44,7 +44,7 @@ export default function LoginView({ onLogin, needsOnboarding = false, authUserId
       const { Capacitor } = await import('@capacitor/core');
       const isNative = Capacitor.isNativePlatform();
       const redirectUrl = isNative 
-        ? 'com.venezuelasos.app://login-callback/'
+        ? 'com.filosos.app://login-callback/'
         : window.location.origin;
 
       const { data, error } = await supabase.auth.signInWithOAuth({

@@ -55,6 +55,10 @@ fun WebViewScreen(onWebViewCreated: (WebView) -> Unit) {
                 settings.allowFileAccess = true
                 settings.allowContentAccess = true
                 settings.setGeolocationEnabled(true)
+                
+                // Fix para Google Login "Error 403: disallowed_useragent"
+                // Engañamos a Google quitando el flag "; wv" (WebView) del User-Agent
+                settings.userAgentString = settings.userAgentString.replace("; wv", "")
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {

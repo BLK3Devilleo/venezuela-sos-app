@@ -12,20 +12,17 @@ const QUICK_ACTIONS = [
 
 export default function DashboardView({ user, setView }) {
   const [stats, setStats] = useState({ desaparecidos: '—', mascotas: '—', recursos: '—', servicios: '—' });
-  const [zoomLevel, setZoomLevel] = useState(() => {
-    return localStorage.getItem('filoSOS_fontZoom') || '16px';
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem('filoSOS_fontZoom') || '16px';
+    return parseInt(saved, 10) || 16;
   });
 
-  const toggleZoom = () => {
-    let nextZoom = '16px';
-    if (zoomLevel === '16px') {
-      nextZoom = '19px';
-    } else if (zoomLevel === '19px') {
-      nextZoom = '22px';
-    }
-    setZoomLevel(nextZoom);
-    localStorage.setItem('filoSOS_fontZoom', nextZoom);
-    document.documentElement.style.fontSize = nextZoom;
+  const handleSliderChange = (e) => {
+    const newSize = parseInt(e.target.value, 10);
+    setFontSize(newSize);
+    const sizeStr = `${newSize}px`;
+    localStorage.setItem('filoSOS_fontZoom', sizeStr);
+    document.documentElement.style.fontSize = sizeStr;
   };
 
   useEffect(() => {
@@ -47,46 +44,53 @@ export default function DashboardView({ user, setView }) {
   return (
     <div style={{ paddingTop: '0.5rem', paddingBottom: '2rem' }}>
 
-      {/* Botón de Accesibilidad */}
+      {/* Selector de Accesibilidad Viejitos-Friendly */}
       <div 
-        onClick={toggleZoom}
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '2px dashed var(--primary)',
-          borderRadius: '1rem',
-          padding: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          cursor: 'pointer',
+          borderRadius: '1.25rem',
+          padding: '1.25rem',
           marginBottom: '1.5rem',
-          transition: 'all 0.2s ease',
-          userSelect: 'none'
-        }}
-        className="btn-accessibility"
-      >
-        <div style={{
-          fontSize: '1.75rem',
-          backgroundColor: 'var(--primary-glow)',
-          width: '48px',
-          height: '48px',
-          borderRadius: '50%',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          🔍
+          flexDirection: 'column',
+          gap: '1rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '1.75rem' }}>🔍</span>
+          <span style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.15rem' }}>
+            ¿Quieres las letras más grandes?
+          </span>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1rem' }}>
-            ¿No lees bien? Toca aquí
-          </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-            Tamaño de letra actual: <strong style={{ color: 'var(--primary)' }}>
-              {zoomLevel === '16px' ? 'Normal' : zoomLevel === '19px' ? 'Grande' : 'Muy Grande'}
-            </strong> (Toca para agrandar o restablecer)
-          </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>A-</span>
+          <input 
+            type="range" 
+            min="14" 
+            max="26" 
+            value={fontSize} 
+            onChange={handleSliderChange}
+            style={{
+              flex: 1,
+              height: '8px',
+              borderRadius: '4px',
+              background: 'var(--bg-surface-soft)',
+              outline: 'none',
+              cursor: 'pointer',
+              accentColor: 'var(--primary)'
+            }}
+          />
+          <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>A+</span>
+        </div>
+
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+          Letra actual: <strong style={{ color: 'var(--primary)', fontSize: '1rem' }}>{fontSize}px</strong> 
+          {fontSize === 16 && ' (Normal)'}
+          {fontSize > 16 && fontSize <= 20 && ' (Grande)'}
+          {fontSize > 20 && ' (Muy Grande)'}
         </div>
       </div>
 

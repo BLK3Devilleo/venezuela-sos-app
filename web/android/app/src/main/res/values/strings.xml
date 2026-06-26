@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">venezuelasos</string>
-    <string name="title_activity_main">venezuelasos</string>
-    <string name="package_name">com.venezuelasos.app</string>
-    <string name="custom_url_scheme">com.venezuelasos.app</string>
+    <string name="app_name">FILO:SoS</string>
+    <string name="title_activity_main">FILO:SoS</string>
+    <string name="package_name">com.filosos.app</string>
+    <string name="custom_url_scheme">com.filosos.app</string>
 </resources>
