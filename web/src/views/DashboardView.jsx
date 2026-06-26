@@ -7,6 +7,7 @@ const QUICK_ACTIONS = [
   { emoji: '🐾', label: 'Mascota', sublabel: 'Perdida', view: 'missing_pets', color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
   { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'services', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
   { emoji: '⚕️', label: 'Servicio', sublabel: 'Médico/Apoyo', view: 'services', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
+  { emoji: '🤝', label: 'Mercado', sublabel: 'Solidario', view: 'marketplace', color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
   { emoji: '🗺️', label: 'Ver', sublabel: 'en el Mapa', view: 'map', color: '#0d9488', bg: 'rgba(13,148,136,0.1)' },
 ];
 
@@ -94,6 +95,64 @@ export default function DashboardView({ user, setView }) {
         </div>
       </div>
 
+      {/* Botones de Acceso Rápido (QUICK ACTIONS) */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '0.75rem', color: '#fff' }}>
+          Accesos Rápidos
+        </h3>
+        <div 
+          className="hide-scrollbar"
+          style={{ 
+            display: 'flex', 
+            gap: '0.75rem', 
+            overflowX: 'auto', 
+            paddingBottom: '0.5rem',
+            margin: '0 -1rem',
+            paddingLeft: '1rem',
+            paddingRight: '1rem'
+          }}
+        >
+          {QUICK_ACTIONS.map((act, i) => (
+            <button
+              key={i}
+              onClick={() => setView(act.view)}
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100px',
+                height: '100px',
+                borderRadius: '1rem',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--bg-surface)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                gap: '0.35rem',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.borderColor = act.color;
+                e.currentTarget.style.boxShadow = `0 8px 20px ${act.color}25`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              }}
+            >
+              <span style={{ fontSize: '1.75rem' }}>{act.emoji}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.15' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fff' }}>{act.label}</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{act.sublabel}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Guía de Uso Formal/Cercana */}
       <div style={{
         marginBottom: '2rem',
@@ -108,21 +167,28 @@ export default function DashboardView({ user, setView }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {[
-            { icon: '🗺️', title: 'Revisa el Mapa en Vivo', desc: 'Visualiza en tiempo real quién necesita ayuda en tu zona o dónde se han habilitado refugios y centros de acopio.' },
-            { icon: '🆘', title: 'Reporta en la sección Buscar', desc: 'Si estás buscando a un familiar, amigo o incluso a tu mascota, publícalo aquí para que toda la red esté pendiente.' },
-            { icon: '📦', title: 'Pide u Ofrece Apoyo (Servicios)', desc: 'Si tienes insumos médicos, alimentos, o si por el contrario necesitas asistencia, repórtalo en la sección de Servicios. Échanos una mano si está a tu alcance.' },
-            { icon: '💬', title: 'Conéctate en los Chats', desc: 'Ingresa a las salas temáticas para coordinar acciones directas con la comunidad en tiempo real, sin intermediarios.' }
+            { icon: '🗺️', title: 'Revisa el Mapa en Vivo', desc: 'Visualiza en tiempo real quién necesita ayuda en tu zona o dónde se han habilitado refugios y centros de acopio.', view: 'map' },
+            { icon: '🆘', title: 'Reporta en la sección Buscar', desc: 'Si estás buscando a un familiar, amigo o incluso a tu mascota, publícalo aquí para que toda la red esté pendiente.', view: 'missing_persons' },
+            { icon: '📦', title: 'Pide u Ofrece Apoyo (Servicios)', desc: 'Si tienes insumos médicos, alimentos, o si por el contrario necesitas asistencia, repórtalo en la sección de Servicios. Échanos una mano si está a tu alcance.', view: 'services' },
+            { icon: '💬', title: 'Conéctate en los Chats', desc: 'Ingresa a las salas temáticas para coordinar acciones directas con la comunidad en tiempo real, sin intermediarios.', view: 'chat_rooms' }
           ].map((item, i) => (
-            <div key={i} style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '1rem',
-              padding: '1rem',
-              display: 'flex',
-              gap: '1rem',
-              alignItems: 'flex-start',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-            }}>
+            <div key={i} 
+              onClick={() => setView(item.view)}
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '1rem',
+                padding: '1rem',
+                display: 'flex',
+                gap: '1rem',
+                alignItems: 'flex-start',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
               <div style={{
                 fontSize: '1.5rem',
                 backgroundColor: 'var(--bg-surface-soft)',

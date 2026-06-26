@@ -244,9 +244,13 @@ export default function LoginView({ onLogin, needsOnboarding = false, authUserId
             <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
             <ArrowRight size={18} />
           </button>
-          <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
-            Gratuito · Sin fines comerciales · Código abierto
-          </p>
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+            <p>Gratuito · Sin fines comerciales · Código abierto</p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Política de Privacidad</a>
+              <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Términos de Servicio</a>
+            </div>
+          </div>
         </div>
       ) : (
         /* --- FORMULARIO & ONBOARDING --- */

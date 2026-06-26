@@ -187,4 +187,25 @@ CREATE POLICY "Lectura de mensajes por destinatario o remitente" ON public.mensa
 CREATE POLICY "Insercion de mensajes" ON public.mensajes_informacion FOR INSERT WITH CHECK (true);
 CREATE POLICY "Eliminacion de mensajes del servidor" ON public.mensajes_informacion FOR DELETE USING (true);
 
+-- Tabla: marketplace (Mercado Solidario 100% Gratuito)
+CREATE TABLE IF NOT EXISTS public.marketplace (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    creador_id TEXT REFERENCES public.usuarios(id) ON DELETE CASCADE,
+    titulo TEXT NOT NULL,
+    descripcion TEXT,
+    categoria TEXT NOT NULL CHECK (categoria IN ('ropa', 'energia', 'hogar', 'higiene', 'herramientas', 'otros')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('ofrezco', 'necesito', 'intercambio')),
+    ubicacion_text TEXT,
+    contacto_whatsapp TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.marketplace ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir lectura publica de marketplace" ON public.marketplace FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion de marketplace" ON public.marketplace FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir edicion de marketplace" ON public.marketplace FOR UPDATE USING (true);
+CREATE POLICY "Permitir eliminacion de marketplace" ON public.marketplace FOR DELETE USING (true);
+
+
 

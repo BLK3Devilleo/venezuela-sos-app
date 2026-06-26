@@ -52,32 +52,43 @@ const createCustomIcon = (color, emoji) => {
 const MACRO_CATEGORIES = {
   salud: {
     label: 'Salud y Bienestar',
-    color: '#ef4444', // Red
+    color: '#ef4444',
     bg: 'rgba(239, 68, 68, 0.1)',
     icon: '❤️',
     sub: {
       'primeros_auxilios': { label: 'Primeros Auxilios', icon: '⚕️' },
       'medicamentos': { label: 'Medicamentos', icon: '💊' },
-      'atencion_medica': { label: 'Hospitales/Clínicas', icon: '🏥' },
+      'atencion_medica': { label: 'Hospitales / Clínicas', icon: '🏥' },
       'atencion_psicologica': { label: 'Apoyo Mental', icon: '🧠' }
     }
   },
   rescate: {
-    label: 'Rescate y Refugio',
-    color: '#ea580c', // Orange/Yellow
+    label: 'Rescate y Auxilio',
+    color: '#ea580c',
     bg: 'rgba(234, 88, 12, 0.1)',
-    icon: '🆘',
+    icon: '🚨',
     sub: {
       'atrapados': { label: 'Auxilio Inmediato', icon: '🚨' },
       'colapsos': { label: 'Zonas de Riesgo', icon: '⚠️' },
+      'control': { label: 'Puntos de Control', icon: '🚧' },
+      'primeros_auxilios_campo': { label: 'Primeros Auxilios de Campo', icon: '🩹' }
+    }
+  },
+  refugio: {
+    label: 'Refugio y Hospedaje',
+    color: '#0d9488',
+    bg: 'rgba(13, 148, 136, 0.1)',
+    icon: '🏠',
+    sub: {
       'refugios': { label: 'Refugios Oficiales', icon: '🎪' },
-      'acampada': { label: 'Campamentos', icon: '⛺' },
-      'control': { label: 'Puntos de Control', icon: '🚧' }
+      'acampada': { label: 'Zonas de Acampada', icon: '⛺' },
+      'hospedaje': { label: 'Casas de Hospedaje', icon: '🏠' },
+      'bano': { label: 'Baños Disponibles', icon: '🚿' }
     }
   },
   suministros: {
     label: 'Alimentos y Agua',
-    color: '#3b82f6', // Blue
+    color: '#3b82f6',
     bg: 'rgba(59, 130, 246, 0.1)',
     icon: '🍲',
     sub: {
@@ -89,7 +100,7 @@ const MACRO_CATEGORIES = {
   },
   servicios_com: {
     label: 'Servicios y Conexión',
-    color: '#a855f7', // Purple
+    color: '#a855f7',
     bg: 'rgba(168, 85, 247, 0.1)',
     icon: '🔌',
     sub: {
@@ -113,8 +124,10 @@ Object.keys(MACRO_CATEGORIES).forEach(macroKey => {
 const legacyIcons = {
   emergencia: createCustomIcon('#ef4444', '🆘'),
   alimentos: createCustomIcon('#3b82f6', '🍲'),
-  baños: createCustomIcon('#3b82f6', '🚿'),
-  refugio: createCustomIcon('#ea580c', '🎪'),
+  baños: createCustomIcon('#0d9488', '🚿'),
+  refugio: createCustomIcon('#0d9488', '🎪'),
+  hospedaje: createCustomIcon('#0d9488', '🏠'),
+  bano: createCustomIcon('#0d9488', '🚿'),
   medicamentos: createCustomIcon('#ef4444', '💊'),
   servicio_medico: createCustomIcon('#ef4444', '⚕️'),
   servicio_apoyo: createCustomIcon('#ea580c', '🛠️'),
@@ -139,10 +152,10 @@ const mapItemToModernCategory = (item) => {
       return { macro: 'suministros', sub: 'comida' };
     }
     if (cat === 'baños') {
-      return { macro: 'suministros', sub: 'agua' }; 
+      return { macro: 'refugio', sub: 'bano' }; 
     }
     if (cat === 'refugio') {
-      return { macro: 'rescate', sub: 'refugios' };
+      return { macro: 'refugio', sub: 'refugios' };
     }
     if (cat === 'medicamentos') {
       return { macro: 'salud', sub: 'medicamentos' };
@@ -185,7 +198,7 @@ const mapItemToModernCategory = (item) => {
         return { macro: 'rescate', sub: 'colapsos' };
       }
       if (subtipo.includes('refugio') || subtipo.includes('albergue') || subtipo.includes('carpa')) {
-        return { macro: 'rescate', sub: 'refugios' };
+        return { macro: 'refugio', sub: 'refugios' };
       }
       if (subtipo.includes('comida') || subtipo.includes('alimento') || subtipo.includes('sopa') || subtipo.includes('comedor')) {
         return { macro: 'suministros', sub: 'comida' };
@@ -234,6 +247,7 @@ export default function MapView({ user }) {
   const [expandedMacros, setExpandedMacros] = useState({
     salud: false,
     rescate: false,
+    refugio: false,
     suministros: false,
     servicios_com: false
   });
@@ -251,7 +265,8 @@ export default function MapView({ user }) {
     nombre: '',
     descripcion: '',
     cantidad: '',
-    contacto_whatsapp: user?.contacto || ''
+    contacto_whatsapp: user?.contacto || '',
+    banoOptions: []
   });
 
   useEffect(() => {
@@ -402,7 +417,8 @@ export default function MapView({ user }) {
         ...formData,
         nombre: '',
         descripcion: '',
-        cantidad: ''
+        cantidad: '',
+        banoOptions: []
       });
       fetchMapData();
     } catch (err) {
@@ -699,9 +715,9 @@ export default function MapView({ user }) {
                 {/* Subcategories grid */}
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(145px, 1fr))', 
                   gap: '0.5rem',
-                  maxHeight: isExpanded ? '400px' : '0px',
+                  maxHeight: isExpanded ? '500px' : '0px',
                   opacity: isExpanded ? 1 : 0,
                   overflow: 'hidden',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -736,9 +752,8 @@ export default function MapView({ user }) {
                       >
                         <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{sub.icon}</span>
                         <span style={{ 
-                          whiteSpace: 'nowrap', 
-                          overflow: 'hidden', 
-                          textOverflow: 'ellipsis' 
+                          lineHeight: '1.25',
+                          wordBreak: 'break-word'
                         }}>
                           {sub.label}
                         </span>
@@ -827,6 +842,62 @@ export default function MapView({ user }) {
               ))}
             </select>
           </div>
+
+          {formData.sub === 'bano' && (
+            <div className="input-group" style={{ marginTop: '-0.25rem', marginBottom: '0.25rem' }}>
+              <label className="input-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Servicios del Baño Disponibles</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                {[
+                  { id: 'wc', label: 'WC / Necesidades Básicas 🚽' },
+                  { id: 'ducha', label: 'Ducha disponible 🚿' },
+                  { id: 'limpieza', label: 'Solo limpieza / Lavado de manos 🧼' }
+                ].map(opt => {
+                  const isChecked = (formData.banoOptions || []).includes(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        const currentOpts = formData.banoOptions || [];
+                        const nextOpts = currentOpts.includes(opt.id)
+                          ? currentOpts.filter(o => o !== opt.id)
+                          : [...currentOpts, opt.id];
+                        
+                        const labels = {
+                          wc: 'WC/Necesidades básicas',
+                          ducha: 'Ducha disponible',
+                          limpieza: 'Solo limpieza/lavado'
+                        };
+                        const selectedLabels = nextOpts.map(o => labels[o]).join(', ');
+                        
+                        setFormData(prev => ({
+                          ...prev,
+                          banoOptions: nextOpts,
+                          descripcion: selectedLabels 
+                            ? `Servicios disponibles: ${selectedLabels}. ${prev.descripcion.replace(/^Servicios disponibles: [^.]*\.?\s*/, '')}`
+                            : prev.descripcion.replace(/^Servicios disponibles: [^.]*\.?\s*/, '')
+                        }));
+                      }}
+                      style={{
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '2rem',
+                        border: '1px solid',
+                        borderColor: isChecked ? 'var(--primary)' : 'var(--border)',
+                        background: isChecked ? 'var(--primary-glow)' : 'var(--bg-surface-soft)',
+                        color: isChecked ? '#fff' : 'var(--text-secondary)',
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="input-group">
             <label className="input-label">Nombre o Título Breve *</label>
