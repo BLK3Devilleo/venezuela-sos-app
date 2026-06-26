@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Condiciones del Servicio y Aviso Legal - FiloSOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060d1a;
+            --bg-card: #0b1c2e;
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #0d9488;
+            --primary-glow: rgba(13, 148, 136, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --ve-red: #dc2626;
+            --ve-yellow: #eab308;
+            --ve-blue: #1d4ed8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at top right, rgba(13,148,136,0.08) 0%, transparent 60%),
+                radial-gradient(circle at bottom left, rgba(220,38,38,0.04) 0%, transparent 60%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 680px;
+            width: 100%;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tricolor-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--ve-red) 33.3%, var(--ve-yellow) 33.3% 66.6%, var(--ve-blue) 66.6%);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(220, 38, 38, 0.15);
+            border: 1px solid var(--ve-red);
+            color: #f87171;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #0d9488, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .alert-box {
+            background: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            color: #f87171;
+        }
+
+        .alert-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ef4444;
+        }
+
+        section {
+            margin-bottom: 1.75rem;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
+        p, li {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        ul li::before {
+            content: '•';
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tricolor-strip"></div>
+        
+        <header>
+            <div class="badge">Condiciones del Servicio</div>
+            <h1>Venezuela<span>SOS</span></h1>
+        </header>
+
+        <div class="alert-box">
+            <strong>ADVERTENCIA DE SEGURIDAD</strong>
+            Esta aplicación actúa únicamente como un enlace directo y colaborativo entre particulares. Queda terminantemente prohibido acordar encuentros en domicilios privados de personas desconocidas. Todos los encuentros para la entrega de insumos deben realizarse en espacios públicos y concurridos.
+        </div>
+
+        <section>
+            <h2>1. Información General y Objeto</h2>
+            <p>El sitio web y la aplicación móvil "FiloSOS" son iniciativas tecnológicas desarrolladas por la marca Filo Digital Solutions ("Filo DS"), con el único propósito de servir como canal de comunicación y enlace para la coordinación de ayuda humanitaria y resiliencia comunitaria ante la situación de emergencia por sismos en el territorio de Venezuela.</p>
+        </section>
+
+        <section>
+            <h2>2. Condiciones de Uso del Directorio y Mapa</h2>
+            <p>Al utilizar las herramientas de geolocalización, reportes y chats de la plataforma, te comprometes a:</p>
+            <ul>
+                <li>Proporcionar información fidedigna, veraz, actualizada y exacta respecto a las necesidades reportadas o recursos disponibles.</li>
+                <li>No publicar información falsa, alarmista, duplicada o de carácter comercial, lucrativo o político.</li>
+                <li>Hacer un uso estrictamente solidario y no lucrativo de la plataforma.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. Exención de Responsabilidad</h2>
+            <p>Filo DS proporciona la infraestructura técnica "tal cual está" y según su disponibilidad técnica en zonas afectadas:</p>
+            <ul>
+                <li>No realizamos validaciones previas en el terreno sobre la identidad de los usuarios ni sobre la veracidad o estado físico de los recursos ofrecidos (alimentos, medicinas o herramientas).</li>
+                <li>Los creadores y administradores de FiloSOS quedan completamente exentos de cualquier responsabilidad derivada de las interacciones personales entre los usuarios o del mal uso de la información publicada.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>4. Modificación y Cierre del Servicio</h2>
+            <p>Filo DS se reserva el derecho de retirar cualquier publicación que infrinja estas condiciones o ponga en riesgo la seguridad de la comunidad. Las bases de datos y la plataforma serán apagadas y destruidas de forma segura y permanente una vez superada la contingencia humanitaria.</p>
+        </section>
+
+        <footer>
+            <p>© 2026 Filo Digital Solutions. Desarrollado con fines exclusivamente humanitarios.</p>
+        </footer>
+    </div>
+</body>
+</html>

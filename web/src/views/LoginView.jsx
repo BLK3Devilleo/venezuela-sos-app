@@ -146,7 +146,7 @@ export default function LoginView({ onLogin, needsOnboarding = false, authUserId
             marginBottom: '0.4rem',
             color: '#fff'
           }}>
-            Venezuela<span style={{
+            Filo<span style={{
               background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'

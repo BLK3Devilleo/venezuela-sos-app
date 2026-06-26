@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - FiloSOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060d1a;
+            --bg-card: #0b1c2e;
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #0d9488;
+            --primary-glow: rgba(13, 148, 136, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --ve-red: #dc2626;
+            --ve-yellow: #eab308;
+            --ve-blue: #1d4ed8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at top right, rgba(13,148,136,0.08) 0%, transparent 60%),
+                radial-gradient(circle at bottom left, rgba(220,38,38,0.04) 0%, transparent 60%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 680px;
+            width: 100%;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tricolor-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--ve-red) 33.3%, var(--ve-yellow) 33.3% 66.6%, var(--ve-blue) 66.6%);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--primary-glow);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #0d9488, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-statement {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--primary);
+            padding: 1.25rem;
+            border-radius: 0 0.75rem 0.75rem 0;
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+        }
+
+        .main-statement .flag {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        section {
+            margin-bottom: 1.75rem;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
+        p, li {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 1.25rem;
+        }
+
+        ul li::before {
+            content: '•';
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .contact-mail {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-mail:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tricolor-strip"></div>
+        
+        <header>
+            <div class="badge">Privacidad</div>
+            <h1>Venezuela<span>SOS</span></h1>
+        </header>
+
+        <!-- Declaración principal solicitada por el usuario -->
+        <div class="main-statement">
+            <span class="flag">🇻🇪</span>
+            <strong>Venezuela te busca</strong><br>
+            Iniciativa ciudadana, voluntaria y sin fines de lucro para ayudar a localizar a las personas desaparecidas tras el terremoto de 2026.<br><br>
+            No vendemos ni compartimos tu información con terceros y solo la usamos para ayudar a localizar personas. Los datos que se publican son responsabilidad de quien los envía, verifícalos antes de difundirlos.
+        </div>
+
+        <!-- Cláusulas requeridas para cumplimiento de Google Cloud y Play Store -->
+        <section>
+            <h2>1. Datos recolectados</h2>
+            <p>Al registrarte e iniciar sesión con Google, recopilamos únicamente los datos básicos proporcionados por tu proveedor de autenticación:</p>
+            <ul>
+                <li>Nombre completo o alias del perfil.</li>
+                <li>Dirección de correo electrónico.</li>
+                <li>Identificador único de usuario (ID de Google).</li>
+            </ul>
+            <p>Adicionalmente, si decides publicar reportes de ayuda o personas desaparecidas, recopilamos la información que ingreses voluntariamente (fotos, teléfono y ubicaciones).</p>
+        </section>
+
+        <section>
+            <h2>2. Finalidad del tratamiento</h2>
+            <p>Usamos tu información exclusivamente para permitirte crear una cuenta en la aplicación, publicar reportes de personas desaparecidas, suministros o asistencia y facilitar que otros ciudadanos se comuniquen contigo en el marco de la emergencia humanitaria.</p>
+        </section>
+
+        <section>
+            <h2>3. Derechos del usuario y eliminación de datos</h2>
+            <p>Tienes control absoluto sobre tu información. Puedes solicitar la supresión completa de tu cuenta y de todos los reportes asociados en cualquier momento.</p>
+            <p>Para solicitar la eliminación definitiva de tus datos, puedes enviarnos un correo electrónico directamente a: <a class="contact-mail" href="mailto:filocentraldemando@gmail.com">filocentraldemando@gmail.com</a>. Tu solicitud será procesada en un lapso de 24 horas.</p>
+        </section>
+
+        <footer>
+            <p>© 2026 Filo Digital Solutions. Desarrollado con fines exclusivamente humanitarios.</p>
+        </footer>
+    </div>
+</body>
+</html>
