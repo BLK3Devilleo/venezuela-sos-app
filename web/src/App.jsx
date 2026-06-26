@@ -21,7 +21,8 @@ import HospitalizedPersonsView from './views/HospitalizedPersonsView';
 import InternationalSheltersView from './views/InternationalSheltersView';
 import ServicesView from './views/ServicesView';
 import BottomModal from './components/BottomModal';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu } from 'lucide-react';
+import ExternalSearchView from './views/ExternalSearchView';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText } from 'lucide-react';
 
 // ─── Error Boundary ────────────────────────────────────────────────
 // Prevents a crash in one view from making the entire app go black.
@@ -323,6 +324,7 @@ export default function App() {
           onRequireLogin={handleRequireLogin}
         />
       );
+      case 'external_search': return <ExternalSearchView onBack={() => setView('dashboard')} />;
       case 'missing_persons': return <MissingPersonsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'family_reunification': return <FamilyReunificationView user={user} onRequireLogin={handleRequireLogin} />;
       case 'hospitalized_persons': return <HospitalizedPersonsView user={user} onRequireLogin={handleRequireLogin} />;
@@ -582,12 +584,14 @@ export default function App() {
         {[
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
+          { id: 'menu', label: 'Menú', icon: Menu, isCenter: true },
           { id: 'family_reunification', label: 'Familias', icon: Heart, isSpecial: true },
-          { id: 'missing_persons', label: 'Personas', icon: Users },
-          { id: 'menu', label: 'Menú', icon: Menu }
-        ].map(({ id, label, icon: Icon, isSpecial }) => {
-          const isMenuTabActive = ['marketplace', 'missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal'].includes(view);
+          { id: 'directory', label: 'Noticias', icon: FileText }
+        ].map(({ id, label, icon: Icon, isSpecial, isCenter }) => {
+          const isMenuTabActive = ['marketplace', 'missing_persons', 'missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal', 'emergency_shortcuts', 'external_search'].includes(view);
           const isActive = id === 'menu' ? isMenuTabActive : (view === id);
+          const activeColor = isSpecial ? '#fb7185' : (isCenter ? '#a855f7' : 'var(--primary)');
+          const inactiveColor = isSpecial ? 'rgba(251, 113, 133, 0.75)' : (isCenter ? 'rgba(168, 85, 247, 0.75)' : 'var(--text-muted)');
           return (
             <button
               key={id}
@@ -601,7 +605,7 @@ export default function App() {
               style={{
                 flex: 1,
                 flexShrink: 0,
-                minWidth: '68px',
+                minWidth: '60px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -610,7 +614,7 @@ export default function App() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: isActive ? (isSpecial ? '#fb7185' : 'var(--primary)') : (isSpecial ? 'rgba(251, 113, 133, 0.75)' : 'var(--text-muted)'),
+                color: isActive ? activeColor : inactiveColor,
                 transition: 'all 0.15s ease',
                 position: 'relative',
                 padding: '0.5rem 0'
@@ -624,7 +628,7 @@ export default function App() {
                   left: '20%',
                   right: '20%',
                   height: '2px',
-                  backgroundColor: isSpecial ? '#fb7185' : 'var(--primary)',
+                  backgroundColor: activeColor,
                   borderRadius: '0 0 2px 2px'
                 }} />
               )}
@@ -686,6 +690,7 @@ export default function App() {
               {[
                 { id: 'family_reunification', label: 'Reuniendo Familias', desc: 'Niños y reencuentro seguro', icon: Heart, color: '#fb7185' },
                 { id: 'missing_persons', label: 'Personas Buscadas', desc: 'Red de localización familiar', icon: Users, color: '#dc2626' },
+                { id: 'external_search', label: 'Buscador Externo (APIs)', desc: 'Cruz Roja, Google y otros', icon: Globe, color: '#6366f1' },
                 { id: 'hospitalized_persons', label: 'Hospitalizados', desc: 'Estatus en centros médicos', icon: ShieldAlert, color: '#3b82f6' },
                 { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Localización de mascotas', icon: Heart, color: '#d97706' },
                 { id: 'international_shelters', label: 'Puntos de Acogida', desc: 'Refugios internacionales', icon: Home, color: '#0d9488' }

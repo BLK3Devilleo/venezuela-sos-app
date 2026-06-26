@@ -135,11 +135,17 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
           {[
             { label: 'Reportar Persona', desc: 'Desaparecidos', view: 'missing_persons', emoji: '🧍', color: '#dc2626' },
+            { label: 'Reuniendo Familias', desc: 'Niños e Infancia', view: 'family_reunification', emoji: '❤️', color: '#fb7185' },
+            { label: 'Pacientes Clínicas', desc: 'Hospitalizados', view: 'hospitalized_persons', emoji: '🏥', color: '#3b82f6' },
             { label: 'Reportar Mascota', desc: 'Perros, gatos...', view: 'missing_pets', emoji: '🐾', color: '#d97706' },
             { label: 'Agregar Refugio', desc: 'Acogidas y refugios', view: 'international_shelters', emoji: '🏠', color: '#0d9488' },
             { label: 'Donar Recursos', desc: 'Suministros y ropa', view: 'resources', emoji: '📦', color: '#16a34a' },
-            { label: 'Comida Hecha', desc: 'Comedores y ollas', view: 'resources', emoji: '🍲', color: '#ea580c' },
-            { label: 'Apoyo Médico', desc: 'Asistencia y salud', view: 'services', emoji: '⚕️', color: '#2563eb' }
+            { label: 'Comida Caliente', desc: 'Comedores y ollas', view: 'resources', emoji: '🍲', color: '#ea580c' },
+            { label: 'Apoyo Médico', desc: 'Asistencia y salud', view: 'services', emoji: '⚕️', color: '#2563eb' },
+            { label: 'Mercado Solidario', desc: 'Bienes gratis', view: 'marketplace', emoji: '🤝', color: '#a855f7' },
+            { label: 'Salas de Chat', desc: 'Apoyo voluntario', view: 'chat_rooms', emoji: '💬', color: '#ec4899' },
+            { label: 'Buscador Externo', desc: 'APIs Cruz Roja/Google', view: 'external_search', emoji: '🌐', color: '#6366f1' },
+            { label: 'Mapa en Vivo', desc: 'Alertas y refugios', view: 'map', emoji: '🗺️', color: '#14b8a6' }
           ].map((act, i) => (
             <button
               key={i}
@@ -170,7 +176,7 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
             >
               <span style={{ fontSize: '1.5rem' }}>{act.emoji}</span>
               <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: '800', color: '#fff' }}>{act.label}</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: '800', color: 'var(--text-primary)' }}>{act.label}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{act.desc}</div>
               </div>
             </button>
