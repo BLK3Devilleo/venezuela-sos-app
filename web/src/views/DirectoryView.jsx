@@ -50,7 +50,7 @@ export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
     try {
       const { data, error } = await supabase
         .from('emergencias')
-        .select('*, creador:usuarios(*)')
+        .select('*, creador:creador_id(*)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -162,7 +162,6 @@ export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
           <button 
             onClick={() => {
               if (!user) {
-                alert('Debes iniciar sesión con Google para reportar una emergencia.');
                 if (onRequireLogin) onRequireLogin();
                 return;
               }
