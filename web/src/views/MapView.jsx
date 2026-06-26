@@ -478,63 +478,14 @@ export default function MapView({ user, onRequireLogin }) {
           </p>
         </div>
 
-        {/* 1. Disclaimer Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%)',
-          border: '1px solid rgba(13, 148, 136, 0.2)',
-          padding: '1.5rem',
-          borderRadius: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
-        }}>
-          <div style={{
-            position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px',
-            background: 'linear-gradient(to bottom, #ffcc00, #00247d, #cf142b)' // Venezuela tricolor
-          }} />
-          <h2 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff', margin: 0 }}>
-            Antes de ver el mapa, configura qué quieres ver
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', margin: 0 }}>
-            Personaliza el mapa marcando o desmarcando categorías a continuación. Esto filtrará tanto los pines en el mapa interactivo como el listado del directorio en tiempo real.
-          </p>
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button 
-              onClick={selectAllFilters}
-              className="btn btn-secondary"
-              style={{ padding: '0.45rem 1rem', fontSize: '0.75rem', borderRadius: '2rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer', fontWeight: '700' }}
-            >
-              👀 Mostrar Todo
-            </button>
-            <button 
-              onClick={clearAllFilters}
-              className="btn btn-secondary"
-              style={{ padding: '0.45rem 1rem', fontSize: '0.75rem', borderRadius: '2rem', background: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: '#fff', cursor: 'pointer', fontWeight: '700' }}
-            >
-              🧹 Limpiar
-            </button>
-            <div style={{ 
-              display: 'flex', alignItems: 'center', gap: '0.35rem', 
-              fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600', marginLeft: 'auto' 
-            }}>
-              <span className="live-pulse" style={{ backgroundColor: activeFilters.length > 0 ? '#10b981' : '#ef4444' }} />
-              <span>{activeFilters.length} filtros activos</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. The Map Container (Inline by default) */}
+        {/* 1. The Map Container — PRIMERO */}
         <div style={{
           position: 'relative',
-          height: '400px',
+          height: '420px',
           width: '100%',
           borderRadius: '1.25rem',
           overflow: 'hidden',
           border: '1px solid var(--border)',
-          marginBottom: '0.5rem',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
         }}>
           {loading && (
@@ -694,7 +645,61 @@ export default function MapView({ user, onRequireLogin }) {
           </div>
         </div>
 
-        {/* 3. The Filter Cards Grid (Collapsible below map) */}
+        {/* 2. Panel de filtros compacto — Qué quieres ver */}
+        <div style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          borderRadius: '1rem',
+          padding: '0.875rem 1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.6rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              ¿Qué quieres ver en el mapa?
+            </span>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <button onClick={selectAllFilters} style={{ fontSize: '0.7rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '2rem', backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                Todos
+              </button>
+              <button onClick={clearAllFilters} style={{ fontSize: '0.7rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '2rem', backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                Ninguno
+              </button>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: activeFilters.length > 0 ? '#10b981' : '#ef4444', fontWeight: '700' }}>
+                <span className="live-pulse" style={{ backgroundColor: activeFilters.length > 0 ? '#10b981' : '#ef4444' }} />
+                {activeFilters.length} activos
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {Object.entries(MACRO_CATEGORIES).map(([macroKey, macro]) => {
+              const subKeys = Object.keys(macro.sub).map(s => `${macroKey}_${s}`);
+              const allActive = subKeys.every(k => activeFilters.includes(k));
+              return (
+                <button
+                  key={macroKey}
+                  onClick={() => toggleMacroCategory(macroKey)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.3rem',
+                    fontSize: '0.75rem', fontWeight: '700',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '2rem',
+                    border: `1px solid ${allActive ? macro.color : 'var(--border)'}`,
+                    backgroundColor: allActive ? `${macro.color}18` : 'var(--bg-surface-soft)',
+                    color: allActive ? macro.color : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span>{macro.icon}</span> {macro.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. The Filter Cards Grid (Collapsible — detalle por subcategoría) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {Object.keys(MACRO_CATEGORIES).map(macroKey => {
             const macro = MACRO_CATEGORIES[macroKey];

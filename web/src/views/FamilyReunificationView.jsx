@@ -284,6 +284,47 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
         </button>
       </div>
 
+      {/* ── Aviso de seguridad sobre menores (Accordion) ────────────── */}
+      <details style={{
+        backgroundColor: 'rgba(220, 38, 38, 0.06)',
+        border: '1.5px solid rgba(220, 38, 38, 0.25)',
+        borderRadius: '1rem',
+        marginBottom: '1.25rem',
+        overflow: 'hidden',
+      }}>
+        <summary style={{
+          display: 'flex', alignItems: 'center', gap: '0.6rem',
+          padding: '0.875rem 1.1rem',
+          cursor: 'pointer', userSelect: 'none', outline: 'none',
+          fontWeight: '800', fontSize: '0.9rem', color: '#f87171',
+          listStyle: 'none',
+        }}>
+          <ShieldAlert size={17} style={{ flexShrink: 0 }} />
+          🛑 Aviso de seguridad sobre menores — Léelo antes de continuar
+        </summary>
+        <div style={{ padding: '0 1.1rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+            <strong>La entrega de menores a desconocidos está absolutamente prohibida.</strong> Esta sección existe para <em>facilitar el reencuentro seguro</em> con sus familias, nunca para intermediar en transferencias no verificadas.
+          </p>
+          <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6, borderLeft: '3px solid #f87171', paddingLeft: '0.75rem' }}>
+            ⚠️ <strong>Recordatorio histórico — Tragedia de Vargas (1999):</strong> Tras la catástrofe, decenas de niños fueron separados de sus familias en el caos y entregados a personas desconocidas que alegaban ser familiares. Muchos no pudieron reencontrarse jamás. <strong>No repitamos ese error.</strong>
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)' }}>Protocolo obligatorio al encontrar un menor solo:</p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              <li>📍 Mantenerlo en un lugar público y seguro bajo tu supervisión directa.</li>
+              <li>🆔 Exigir identificación verificada del adulto que reclama parentesco.</li>
+              <li>🚓 Notificar siempre a las autoridades competentes (CICPC, Protección Civil, CECODAP).</li>
+              <li>🤍 No presionar al menor si está en estado de shock. Darle agua, abrigo y calma.</li>
+              <li>📵 No publicar datos completos (nombre, foto, ubicación exacta) en redes sociales abiertas.</li>
+            </ul>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            FiloSOS no valida la identidad de los adultos que contactan a través de esta plataforma. Toda entrega debe realizarse en presencia de autoridades.
+          </p>
+        </div>
+      </details>
+
       {/* 2. Buscador y Filtros */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
         <div className="search-bar" style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

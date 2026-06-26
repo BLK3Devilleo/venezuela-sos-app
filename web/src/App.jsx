@@ -24,7 +24,7 @@ import ExternalSourcesView from './views/ExternalSourcesView';
 import ApiGlobalSearchView from './views/ApiGlobalSearchView';
 import BottomModal from './components/BottomModal';
 import ExternalSearchView from './views/ExternalSearchView';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText } from 'lucide-react';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText, Search } from 'lucide-react';
 
 // ─── Error Boundary ────────────────────────────────────────────────
 // Prevents a crash in one view from making the entire app go black.
