@@ -374,7 +374,6 @@ export default function MapView({ user, onRequireLogin }) {
     useMapEvents({
       click(e) {
         if (!user) {
-          alert('Debes iniciar sesión con Google para reportar o añadir un marcador al mapa.');
           if (onRequireLogin) onRequireLogin();
           return;
         }
@@ -813,7 +812,6 @@ export default function MapView({ user, onRequireLogin }) {
       <button
         onClick={() => {
           if (!user) {
-            alert('Debes iniciar sesión con Google para reportar o añadir un marcador al mapa.');
             if (onRequireLogin) onRequireLogin();
             return;
           }

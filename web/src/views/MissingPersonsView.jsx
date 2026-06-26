@@ -724,7 +724,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
           onClick={() => {
             if (!user) {
-              alert('Debes iniciar sesión con Google para reportar la desaparición de una persona.');
               if (onRequireLogin) onRequireLogin();
               return;
             }
@@ -1564,7 +1563,6 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
                     <button
                       onClick={() => {
                         if (!user) {
-                          alert('Debes iniciar sesión con Google para enviar reportes de información privada.');
                           if (onRequireLogin) onRequireLogin();
                           return;
                         }

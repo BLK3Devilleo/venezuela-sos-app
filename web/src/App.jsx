@@ -34,6 +34,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [showGuestAuthModal, setShowGuestAuthModal] = useState(false);
 
   useEffect(() => {
     const savedZoom = localStorage.getItem('filoSOS_fontZoom');
@@ -189,9 +190,7 @@ export default function App() {
   };
 
   const handleRequireLogin = () => {
-    setIsGuest(false);
-    setUser(null);
-    setView('login');
+    setShowGuestAuthModal(true);
   };
 
   const renderView = () => {
@@ -444,19 +443,20 @@ export default function App() {
         display: 'flex',
         alignItems: 'stretch',
         zIndex: 200,
-        backdropFilter: 'blur(16px)'
-      }}>
+        backdropFilter: 'blur(16px)',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none'
+      }} className="hide-scrollbar">
         {[
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
           { id: 'missing_persons', label: 'Personas', icon: Users },
-          ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [
-            { id: 'missing_pets', label: 'Mascotas', icon: Heart },
-            { id: 'marketplace', label: 'Mercado', icon: ShoppingBag }
-          ] : []),
+          { id: 'missing_pets', label: 'Mascotas', icon: Heart },
           { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
           { id: 'services', label: 'Servicios', icon: Activity },
-          ...(user && (user.rol === 'admin' || user.rol === 'staff') ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])
+          { id: 'marketplace', label: 'Mercado', icon: ShoppingBag },
+          ...(user && user.rol === 'admin' ? [{ id: 'admin_panel', label: 'Admin', icon: ShieldAlert }] : [])
         ].map(({ id, label, icon: Icon }) => {
           const isActive = view === id;
           return (
@@ -465,6 +465,8 @@ export default function App() {
               onClick={() => setView(id)}
               style={{
                 flex: 1,
+                flexShrink: 0,
+                minWidth: '68px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -503,6 +505,97 @@ export default function App() {
           );
         })}
       </nav>
+
+      {/* Modal de Requisito de Login para Invitados */}
+      {showGuestAuthModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(6, 13, 26, 0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '1.5rem',
+            padding: '2rem 1.5rem',
+            maxWidth: '360px',
+            width: '100%',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            position: 'relative'
+          }}>
+            <div style={{
+              fontSize: '2.5rem',
+              marginBottom: '1rem'
+            }}>
+              🤝
+            </div>
+            
+            <h3 className="font-display" style={{
+              fontSize: '1.35rem',
+              fontWeight: '800',
+              color: '#fff',
+              marginBottom: '0.75rem'
+            }}>
+              ¿Quieres aportar?
+            </h3>
+            
+            <p style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.9rem',
+              lineHeight: '1.5',
+              marginBottom: '1.75rem'
+            }}>
+              Para una mejor gestión de los datos te pediremos que crees una cuenta y te sumes a esta gran comunidad.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => {
+                  setShowGuestAuthModal(false);
+                  setIsGuest(false);
+                  setUser(null);
+                  setView('login');
+                }}
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  borderRadius: '0.75rem',
+                  fontWeight: '700',
+                  fontSize: '0.95rem'
+                }}
+              >
+                Crear Cuenta / Iniciar Sesión
+              </button>
+              
+              <button
+                onClick={() => setShowGuestAuthModal(false)}
+                className="btn btn-secondary"
+                style={{
+                  width: '100%',
+                  padding: '0.85rem',
+                  borderRadius: '0.75rem',
+                  fontWeight: '600',
+                  fontSize: '0.9rem',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer'
+                }}
+              >
+                Seguir explorando
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cookie Banner */}
       <CookieBanner onConsentChange={handleConsentChange} />

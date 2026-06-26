@@ -127,7 +127,6 @@ export default function ResourcesView({ user, isChild = false, onRequireLogin })
           style={{ marginLeft: 'auto' }}
           onClick={() => {
             if (!user) {
-              alert('Debes iniciar sesión con Google para ofrecer o solicitar recursos.');
               if (onRequireLogin) onRequireLogin();
               return;
             }

@@ -72,17 +72,29 @@ export default function AdminPanelView({ user }) {
   };
 
   const fetchRecentReports = async () => {
-    const [desRes, masRes] = await Promise.all([
-      supabase.from('desaparecidos').select('*').order('created_at', { ascending: false }).limit(20),
-      supabase.from('mascotas').select('*').order('created_at', { ascending: false }).limit(20)
-    ]);
+    try {
+      const [desRes, masRes, recRes, serRes, emeRes, mrkRes] = await Promise.all([
+        supabase.from('desaparecidos').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('mascotas').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('recursos').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('servicios').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('emergencias').select('*').order('created_at', { ascending: false }).limit(20),
+        supabase.from('marketplace').select('*').order('created_at', { ascending: false }).limit(20)
+      ]);
 
-    const reports = [
-      ...(desRes.data || []).map(d => ({ ...d, reportType: 'Persona' })),
-      ...(masRes.data || []).map(m => ({ ...m, reportType: 'Mascota' }))
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const reports = [
+        ...(desRes.data || []).map(d => ({ ...d, reportType: 'Persona', title: d.nombre_y_edad, contact: d.contacto, location: d.ultimo_lugar_visto || d.ultima_ubicacion || 'No especificada' })),
+        ...(masRes.data || []).map(m => ({ ...m, reportType: 'Mascota', title: `${m.especie_y_raza} (${m.estado})`, contact: m.contacto, location: m.ultima_ubicacion || 'No especificada' })),
+        ...(recRes.data || []).map(r => ({ ...r, reportType: 'Recurso', title: r.nombre, contact: r.contacto_whatsapp, location: r.direccion_texto || 'No especificada' })),
+        ...(serRes.data || []).map(s => ({ ...s, reportType: 'Servicio', title: `${s.tipo} - ${s.subtipo}`, contact: s.contacto_whatsapp, location: s.zona || 'No especificada' })),
+        ...(emeRes.data || []).map(e => ({ ...e, reportType: 'Emergencia', title: e.descripcion, contact: 'N/A', location: e.ubicacion_text || 'No especificada' })),
+        ...(mrkRes.data || []).map(k => ({ ...k, reportType: 'Mercado', title: `${k.titulo} (${k.tipo})`, contact: k.contacto_whatsapp, location: k.ubicacion_text || 'No especificada' }))
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    setRecentReports(reports);
+      setRecentReports(reports);
+    } catch (err) {
+      console.error('Error fetching recent reports:', err);
+    }
   };
 
   const handleUpdateRole = async (userId, newRole) => {
@@ -99,9 +111,18 @@ export default function AdminPanelView({ user }) {
   };
 
   const handleDeleteReport = async (reportId, reportType) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este reporte?')) return;
+    if (!window.confirm(`¿Seguro que deseas eliminar este reporte de tipo ${reportType}?`)) return;
     try {
-      const table = reportType === 'Persona' ? 'desaparecidos' : 'mascotas';
+      let table = '';
+      switch (reportType) {
+        case 'Persona': table = 'desaparecidos'; break;
+        case 'Mascota': table = 'mascotas'; break;
+        case 'Recurso': table = 'recursos'; break;
+        case 'Servicio': table = 'servicios'; break;
+        case 'Emergencia': table = 'emergencias'; break;
+        case 'Mercado': table = 'marketplace'; break;
+        default: return;
+      }
       const { error } = await supabase.from(table).delete().eq('id', reportId);
       if (error) throw error;
       alert('Reporte eliminado.');
@@ -292,18 +313,26 @@ export default function AdminPanelView({ user }) {
                     <div>
                       <span style={{ 
                         fontSize: '0.7rem', fontWeight: '800', 
-                        backgroundColor: r.reportType === 'Persona' ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)', 
-                        color: r.reportType === 'Persona' ? '#dc2626' : '#d97706',
+                        backgroundColor: 
+                          r.reportType === 'Emergencia' || r.reportType === 'Persona' ? 'rgba(220,38,38,0.1)' :
+                          r.reportType === 'Mascota' ? 'rgba(217,119,6,0.1)' :
+                          r.reportType === 'Recurso' ? 'rgba(16,185,129,0.1)' :
+                          r.reportType === 'Servicio' ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.1)', 
+                        color: 
+                          r.reportType === 'Emergencia' || r.reportType === 'Persona' ? '#dc2626' :
+                          r.reportType === 'Mascota' ? '#d97706' :
+                          r.reportType === 'Recurso' ? '#10b981' :
+                          r.reportType === 'Servicio' ? '#3b82f6' : '#a855f7',
                         padding: '0.2rem 0.5rem', borderRadius: '0.25rem',
                         marginRight: '0.5rem'
                       }}>
                         {r.reportType.toUpperCase()}
                       </span>
                       <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                        {r.reportType === 'Persona' ? r.nombre_y_edad : r.especie_y_raza}
+                        {r.title}
                       </strong>
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        Lugar: {r.ultima_ubicacion} | Contacto: {r.contacto}
+                        Lugar: {r.location} | Contacto: {r.contact}
                       </p>
                     </div>
 

@@ -120,6 +120,27 @@ export default function MarketplaceView({ user }) {
         </button>
       </div>
 
+      {/* Onboarding Tutorial Card */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(59,130,246,0.15) 100%)',
+        border: '1px solid rgba(168,85,247,0.3)',
+        borderRadius: '1.25rem',
+        padding: '1.25rem',
+        marginBottom: '1.25rem',
+        boxShadow: '0 4px 12px rgba(168,85,247,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '1.35rem' }}>🤝</span>
+          <span style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>¿Cómo funciona el Mercado Solidario?</span>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+          ¿Tienes cosas que donar (una cobija, almohada, colchón, utensilios)? Súbelo aquí y alguien que lo necesite te contactará por WhatsApp de forma directa. Todo es 100% gratuito.
+        </p>
+      </div>
+
       {/* Safety Disclaimer */}
       <div style={{
         background: 'rgba(239, 68, 68, 0.08)',

@@ -119,7 +119,6 @@ export default function ChatRoomsView({ user, onViewProfile, onRequireLogin }) {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!user) {
-      alert('Debes iniciar sesión con Google para enviar mensajes en el chat.');
       if (onRequireLogin) onRequireLogin();
       return;
     }
@@ -285,7 +284,6 @@ export default function ChatRoomsView({ user, onViewProfile, onRequireLogin }) {
             placeholder={user ? "Escribe un mensaje..." : "Inicia sesión con Google para escribir..."}
             onClick={() => {
               if (!user) {
-                alert('Debes iniciar sesión con Google para participar en el chat.');
                 if (onRequireLogin) onRequireLogin();
               }
             }}

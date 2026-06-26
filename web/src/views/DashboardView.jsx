@@ -134,7 +134,7 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
             paddingRight: '1rem'
           }}
         >
-          {QUICK_ACTIONS.filter(act => !act.restricted || (user && (user.rol === 'admin' || user.rol === 'staff'))).map((act, i) => (
+          {QUICK_ACTIONS.map((act, i) => (
             <button
               key={i}
               onClick={() => setView(act.view)}

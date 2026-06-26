@@ -11,18 +11,21 @@ const AVATAR_PET = '/avatar_pet.png';
 const phoneRegex = /^\d{7,15}$/;
 const formSchema = z.object({
   especie_y_raza: z.string().min(3, "Mínimo 3 letras").max(60, "Nombre muy largo"),
-  estado: z.enum(['perdida', 'encontrada', 'necesita_atencion']),
+  estado: z.enum(['perdida', 'encontrada', 'necesita_atencion', 'donacion_alimento', 'donacion_medicina', 'donacion_otros']),
   ultima_ubicacion: z.string().max(100, "Ubicación muy larga").optional(),
   contacto: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
 const ESTADO_CONFIG = {
-  perdida:         { label: 'Perdida',     color: '#dc2626', bg: 'rgba(220,38,38,0.12)',  emoji: '🔍' },
-  encontrada:      { label: 'Encontrada',  color: '#16a34a', bg: 'rgba(22,163,74,0.12)',  emoji: '🏠' },
-  necesita_atencion:{ label: 'Necesita Atención', color: '#d97706', bg: 'rgba(217,119,6,0.12)', emoji: '🆘' },
+  perdida:          { label: 'Perdida',          color: '#dc2626', bg: 'rgba(220,38,38,0.12)',  emoji: '🔍' },
+  encontrada:       { label: 'Encontrada',       color: '#16a34a', bg: 'rgba(22,163,74,0.12)',  emoji: '🏠' },
+  necesita_atencion:{ label: 'Necesita Atención',  color: '#d97706', bg: 'rgba(217,119,6,0.12)', emoji: '🆘' },
+  donacion_alimento:{ label: 'Donación Alimento', color: '#10b981', bg: 'rgba(16,185,129,0.12)', emoji: '🥩' },
+  donacion_medicina:{ label: 'Donación Medicina', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  emoji: '💊' },
+  donacion_otros:   { label: 'Donación Otros',    color: '#a855f7', bg: 'rgba(168,85,247,0.12)', emoji: '📦' }
 };
 
-export default function MissingPetsView({ user }) {
+export default function MissingPetsView({ user, onRequireLogin }) {
   const [pets, setPets] = useState([]);
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +35,7 @@ export default function MissingPetsView({ user }) {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [activeArea, setActiveArea] = useState('reportes'); // 'reportes' or 'donaciones'
   
   const [formData, setFormData] = useState({
     especie_y_raza: '', estado: 'perdida',
@@ -328,28 +332,111 @@ export default function MissingPetsView({ user }) {
   ];
 
   const filtered = combinedPets.filter(p => {
+    // 1. Filter by Active Area
+    const isDonation = p.estado?.startsWith('donacion_');
+    if (activeArea === 'reportes' && isDonation) return false;
+    if (activeArea === 'donaciones' && !isDonation) return false;
+
+    // 2. Search Text
     const q = search.toLowerCase();
-    const match = p.especie_y_raza?.toLowerCase().includes(q) || p.ultima_ubicacion?.toLowerCase().includes(q);
-    if (filterStatus === 'all') return match;
-    return match && p.estado === filterStatus;
+    const matchSearch = p.especie_y_raza?.toLowerCase().includes(q) || p.ultima_ubicacion?.toLowerCase().includes(q);
+    if (!matchSearch) return false;
+
+    // 3. Status Filter
+    if (filterStatus === 'all') return true;
+    return p.estado === filterStatus;
   });
 
   return (
     <div style={{ paddingBottom: '2rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800' }}>Mascotas Perdidas</h1>
+          <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800' }}>
+            {activeArea === 'reportes' ? 'Mascotas' : 'Donaciones'}
+          </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-            {combinedPets.filter(p => p.estado === 'perdida').length} perdidas reportadas
+            {activeArea === 'reportes' 
+              ? `${combinedPets.filter(p => p.estado === 'perdida').length} perdidas reportadas`
+              : `${combinedPets.filter(p => p.estado?.startsWith('donacion_')).length} ofertas/pedidos de donación`
+            }
           </p>
         </div>
         <button 
           className="btn btn-primary" 
-          style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }} 
-          onClick={() => setShowAddForm(true)}
+          style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
+            if (!user) {
+              if (onRequireLogin) onRequireLogin();
+              return;
+            }
+            setFormData(prev => ({
+              ...prev,
+              estado: activeArea === 'reportes' ? 'perdida' : 'donacion_alimento'
+            }));
+            setShowAddForm(true);
+          }}
         >
-          <Plus size={18} /> Reportar
+          <Plus size={18} /> Publicar
+        </button>
+      </div>
+
+      {/* Area Selector Tabs */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '0.35rem', 
+        marginBottom: '1.25rem', 
+        backgroundColor: 'var(--bg-surface)', 
+        padding: '0.35rem', 
+        borderRadius: '1.25rem',
+        border: '1px solid var(--border)'
+      }}>
+        <button
+          onClick={() => {
+            setActiveArea('reportes');
+            setFilterStatus('all');
+          }}
+          style={{
+            flex: 1,
+            padding: '0.65rem',
+            borderRadius: '1rem',
+            border: 'none',
+            backgroundColor: activeArea === 'reportes' ? 'var(--primary)' : 'transparent',
+            color: activeArea === 'reportes' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.35rem'
+          }}
+        >
+          🐾 Mascotas Perdidas
+        </button>
+        <button
+          onClick={() => {
+            setActiveArea('donaciones');
+            setFilterStatus('all');
+          }}
+          style={{
+            flex: 1,
+            padding: '0.65rem',
+            borderRadius: '1rem',
+            border: 'none',
+            backgroundColor: activeArea === 'donaciones' ? 'var(--primary)' : 'transparent',
+            color: activeArea === 'donaciones' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.35rem'
+          }}
+        >
+          🎁 Donaciones e Insumos
         </button>
       </div>
 
@@ -413,11 +500,21 @@ export default function MissingPetsView({ user }) {
             style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.95rem' }}
           />
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }} className="hide-scrollbar">
           <button className={`filter-chip ${filterStatus === 'all' ? 'active' : ''}`} onClick={() => setFilterStatus('all')}>Todas</button>
-          <button className={`filter-chip ${filterStatus === 'perdida' ? 'active' : ''}`} onClick={() => setFilterStatus('perdida')}>Perdidas</button>
-          <button className={`filter-chip ${filterStatus === 'encontrada' ? 'active' : ''}`} onClick={() => setFilterStatus('encontrada')}>Encontradas</button>
-          <button className={`filter-chip ${filterStatus === 'necesita_atencion' ? 'active' : ''}`} onClick={() => setFilterStatus('necesita_atencion')}>Auxilio</button>
+          {activeArea === 'reportes' ? (
+            <>
+              <button className={`filter-chip ${filterStatus === 'perdida' ? 'active' : ''}`} onClick={() => setFilterStatus('perdida')}>Perdidas</button>
+              <button className={`filter-chip ${filterStatus === 'encontrada' ? 'active' : ''}`} onClick={() => setFilterStatus('encontrada')}>Encontradas</button>
+              <button className={`filter-chip ${filterStatus === 'necesita_atencion' ? 'active' : ''}`} onClick={() => setFilterStatus('necesita_atencion')}>Auxilio</button>
+            </>
+          ) : (
+            <>
+              <button className={`filter-chip ${filterStatus === 'donacion_alimento' ? 'active' : ''}`} onClick={() => setFilterStatus('donacion_alimento')}>🥩 Alimento</button>
+              <button className={`filter-chip ${filterStatus === 'donacion_medicina' ? 'active' : ''}`} onClick={() => setFilterStatus('donacion_medicina')}>💊 Medicina</button>
+              <button className={`filter-chip ${filterStatus === 'donacion_otros' ? 'active' : ''}`} onClick={() => setFilterStatus('donacion_otros')}>📦 Otros</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -495,11 +592,21 @@ export default function MissingPetsView({ user }) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Estado</label>
+            <label className="input-label">Categoría / Estado</label>
             <select className="input-field select-field" value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value })}>
-              <option value="perdida">Perdida — busco a mi mascota</option>
-              <option value="encontrada">Encontrada — encontré una mascota</option>
-              <option value="necesita_atencion">Necesita Atención Urgente / Comida</option>
+              {activeArea === 'reportes' ? (
+                <>
+                  <option value="perdida">Perdida — busco a mi mascota</option>
+                  <option value="encontrada">Encontrada — encontré una mascota</option>
+                  <option value="necesita_atencion">Necesita Atención Urgente / Auxilio</option>
+                </>
+              ) : (
+                <>
+                  <option value="donacion_alimento">🥩 Ofrecer/Solicitar Alimento</option>
+                  <option value="donacion_medicina">💊 Ofrecer/Solicitar Medicina</option>
+                  <option value="donacion_otros">📦 Ofrecer/Solicitar Otros Insumos</option>
+                </>
+              )}
             </select>
           </div>
 
