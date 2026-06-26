@@ -35,6 +35,23 @@ export default function App() {
   const [viewUserId, setViewUserId] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
   const [showGuestAuthModal, setShowGuestAuthModal] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => prev.message === message ? { ...prev, show: false } : prev);
+    }, 4500);
+  };
+
+  useEffect(() => {
+    window.showToast = showToast;
+    window.alert = (msg) => {
+      if (typeof msg !== 'string') msg = String(msg);
+      const isError = /error|falla|inválido|no tienes|permiso|requerido|obligatorio|vacío/i.test(msg);
+      showToast(msg, isError ? 'error' : 'success');
+    };
+  }, []);
 
   useEffect(() => {
     const savedZoom = localStorage.getItem('filoSOS_fontZoom');
@@ -69,6 +86,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Limpiar el hash de redirección de OAuth para evitar que se comparta el access_token o cause error 400
+    if (window.location.hash && (window.location.hash.includes('access_token=') || window.location.hash.includes('refresh_token='))) {
+      window.history.replaceState(null, null, window.location.pathname + window.location.search);
+    }
+
     // 1. Obtener la sesión inicial de Supabase Auth
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
@@ -594,6 +616,39 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Alert */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          top: '1.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: toast.type === 'error' ? '#dc2626' :
+                           toast.type === 'success' ? '#10b981' :
+                           toast.type === 'warning' ? '#ea580c' : '#0d9488',
+          color: '#ffffff',
+          padding: '0.85rem 1.5rem',
+          borderRadius: '1rem',
+          zIndex: 10000,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontWeight: '700',
+          fontSize: '0.85rem',
+          maxWidth: '90%',
+          width: 'max-content',
+          textAlign: 'center',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          {toast.type === 'error' && '🚨'}
+          {toast.type === 'success' && '✅'}
+          {toast.type === 'warning' && '⚠️'}
+          {toast.type === 'info' && '💡'}
+          <span>{toast.message}</span>
         </div>
       )}
 

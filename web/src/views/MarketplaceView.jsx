@@ -12,10 +12,11 @@ const MARKETPLACE_CATEGORIES = {
   otros: { label: 'Otros', icon: '📦', color: '#a855f7' }
 };
 
+import { compressImage } from '../utils/imageCompression';
+
 const MARKETPLACE_TYPES = {
-  ofrezco: { label: 'Ofrezco', color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: '🟢' },
-  necesito: { label: 'Necesito', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', icon: '🔴' },
-  intercambio: { label: 'Intercambio', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', icon: '🔄' }
+  ofrezco: { label: 'Ofrezco / Dono', color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: '🟢' },
+  necesito: { label: 'Necesito', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', icon: '🔴' }
 };
 
 export default function MarketplaceView({ user }) {
@@ -26,6 +27,17 @@ export default function MarketplaceView({ user }) {
   const [filterType, setFilterType] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Onboarding
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('filoSOS_marketplace_onboarding_dismissed'));
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  // Privacy: Reveal phone number
+  const [revealedContacts, setRevealedContacts] = useState({});
+
+  // Multiple image upload states
+  const [formImages, setFormImages] = useState([]);
+  const [compressing, setCompressing] = useState(false);
 
   const [formData, setFormData] = useState({
     titulo: '',
@@ -68,11 +80,13 @@ export default function MarketplaceView({ user }) {
         categoria: formData.categoria,
         tipo: formData.tipo,
         ubicacion_text: formData.ubicacion_text.trim(),
-        contacto_whatsapp: formData.contacto_whatsapp.trim()
+        contacto_whatsapp: formData.contacto_whatsapp.trim(),
+        fotos: formImages
       });
       if (error) throw error;
 
       setShowForm(false);
+      setFormImages([]);
       setFormData({ titulo: '', descripcion: '', categoria: 'ropa', tipo: 'ofrezco', ubicacion_text: '', contacto_whatsapp: user?.contacto || '' });
       fetchItems();
     } catch (e) {
@@ -81,6 +95,34 @@ export default function MarketplaceView({ user }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleImageAdd = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    if (formImages.length + files.length > 4) {
+      alert('Puedes subir un máximo de 4 imágenes por publicación.');
+      return;
+    }
+
+    setCompressing(true);
+    try {
+      const base64List = [];
+      for (const file of files) {
+        const compressedBase64 = await compressImage(file);
+        base64List.push(compressedBase64);
+      }
+      setFormImages(prev => [...prev, ...base64List]);
+    } catch (err) {
+      console.error(err);
+      alert('Error al comprimir una de las imágenes.');
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleImageRemove = (indexToRemove) => {
+    setFormImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const handleDelete = async (id) => {
@@ -100,6 +142,90 @@ export default function MarketplaceView({ user }) {
 
   return (
     <div className="fade-in" style={{ paddingBottom: '2rem', paddingTop: '1rem' }}>
+
+      {/* Modal Onboarding Reglas del Mercado */}
+      {showOnboarding && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(6, 13, 26, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '1.5rem',
+            padding: '2rem 1.5rem',
+            maxWidth: '380px',
+            width: '100%',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '50%',
+                backgroundColor: 'rgba(168, 85, 247, 0.15)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem'
+              }}>
+                🤝
+              </div>
+              <h3 className="font-display" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                Reglas del Mercado Solidario
+              </h3>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.5' }}>
+              <p style={{ margin: 0 }}>
+                Este espacio fue creado con el único propósito de **dar y recibir ayuda**. No se permiten transacciones comerciales de ningún tipo.
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <span>🚫</span>
+                <span><strong>Cero Negocios/Trueques:</strong> Quedan estrictamente prohibidos los trueques, intercambios con saldo o cualquier tipo de comercio con ánimo de lucro.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <span>🎁</span>
+                <span><strong>Solo Donaciones:</strong> Toda publicación tipo "Ofrezco" debe ser una entrega 100% gratuita y desinteresada a los afectados por el sismo.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <span>🔒</span>
+                <span><strong>Privacidad:</strong> Los números de contacto se ocultan tras un botón para proteger tu número de teléfono de rastreadores web.</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', cursor: 'pointer' }} onClick={() => setDontShowAgain(prev => !prev)}>
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={() => {}}
+                style={{ cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', userSelect: 'none' }}>
+                No volver a mostrar estas reglas
+              </span>
+            </div>
+
+            <button
+              onClick={() => {
+                if (dontShowAgain) {
+                  localStorage.setItem('filoSOS_marketplace_onboarding_dismissed', 'true');
+                }
+                setShowOnboarding(false);
+              }}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '0.75rem', fontWeight: '700' }}
+            >
+              Entendido y Acepto
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -292,6 +418,27 @@ export default function MarketplaceView({ user }) {
                   </p>
                 )}
 
+                {/* Photo Gallery */}
+                {item.fotos && item.fotos.length > 0 && (
+                  <div className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', margin: '0.25rem 0' }}>
+                    {item.fotos.map((f, idx) => (
+                      <img
+                        key={idx}
+                        src={f}
+                        alt={`Articulo ${idx + 1}`}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: '0.75rem',
+                          objectFit: 'cover',
+                          border: '1px solid var(--border)',
+                          flexShrink: 0
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+
                 {/* Location + time */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   {item.ubicacion_text && <span>📍 {item.ubicacion_text}</span>}
@@ -299,20 +446,34 @@ export default function MarketplaceView({ user }) {
                   {item.creador?.nombre && <span>👤 {item.creador.nombre}</span>}
                 </div>
 
-                {/* WhatsApp contact */}
-                <a
-                  href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en filoSOS Marketplace. ¿Aún está disponible?`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                    padding: '0.65rem 1rem', backgroundColor: '#25D366', color: '#fff',
-                    borderRadius: '0.75rem', textDecoration: 'none', fontWeight: '700',
-                    fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,211,102,0.3)',
-                    transition: 'transform 0.15s'
-                  }}
-                >
-                  <MessageCircle size={16} /> Contactar por WhatsApp
-                </a>
+                {/* WhatsApp contact with privacy reveal */}
+                {!revealedContacts[item.id] ? (
+                  <button
+                    onClick={() => setRevealedContacts(prev => ({ ...prev, [item.id]: true }))}
+                    style={{
+                      width: '100%', padding: '0.65rem 1rem', borderRadius: '0.75rem',
+                      fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer',
+                      border: '1.5px dashed var(--border)', backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    👁️ Revelar Datos de Contacto
+                  </button>
+                ) : (
+                  <a
+                    href={`https://wa.me/${item.contacto_whatsapp?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en FiloSOS. ¿Sigue disponible?`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                      padding: '0.65rem 1rem', backgroundColor: '#25D366', color: '#fff',
+                      borderRadius: '0.75rem', textDecoration: 'none', fontWeight: '700',
+                      fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,211,102,0.3)',
+                      transition: 'transform 0.15s'
+                    }}
+                  >
+                    <MessageCircle size={16} /> WhatsApp: {item.contacto_whatsapp}
+                  </a>
+                )}
               </div>
             );
           })}
@@ -409,6 +570,53 @@ export default function MarketplaceView({ user }) {
               value={formData.ubicacion_text}
               onChange={e => setFormData({ ...formData, ubicacion_text: e.target.value })}
             />
+          </div>
+
+          {/* Carga de Imágenes (Máx 4) */}
+          <div className="input-group">
+            <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Fotos del artículo (Máx 4)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formImages.length}/4 cargadas</span>
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+              {formImages.map((img, idx) => (
+                <div key={idx} style={{ position: 'relative', width: '60px', height: '60px' }}>
+                  <img src={img} alt="Preview" style={{ width: '100%', height: '100%', borderRadius: '0.5rem', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                  <button
+                    type="button"
+                    onClick={() => handleImageRemove(idx)}
+                    style={{
+                      position: 'absolute', top: '-4px', right: '-4px', backgroundColor: '#ef4444',
+                      border: 'none', borderRadius: '50%', width: '16px', height: '16px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                      fontSize: '9px', cursor: 'pointer', fontWeight: 'bold'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {formImages.length < 4 && (
+                <label style={{
+                  width: '60px', height: '60px', borderRadius: '0.5rem', border: '2px dashed var(--border)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.65rem', fontWeight: 'bold',
+                  backgroundColor: 'var(--bg-surface-soft)', gap: '2px'
+                }}>
+                  <span>➕</span>
+                  <span>Subir</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageAdd}
+                    disabled={compressing}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+            {compressing && <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem' }}>Comprimiendo imágenes...</div>}
           </div>
 
           <div className="input-group">
