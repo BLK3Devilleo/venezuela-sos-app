@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
-import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle } from 'lucide-react';
+import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle, Phone } from 'lucide-react';
 
 const QUICK_ACTIONS = [
   { emoji: '🆘', label: 'Persona', sublabel: 'Desaparecida', view: 'missing_persons', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
