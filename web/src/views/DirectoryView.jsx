@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ServicesView from './ServicesView';
 import ResourcesView from './ResourcesView';
+import HospitalsView from './HospitalsView';
 import { supabase } from '../supabase';
 import { AlertTriangle, Plus, MapPin, Image as ImageIcon, Trash2, Clock, X } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -188,6 +189,7 @@ export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
               { id: 'emergencias', label: '🚨 Emergencias', color: '#ef4444', desc: 'Zonas de peligro y pedidos de auxilio en vivo.', bg: 'rgba(239, 68, 68, 0.1)' },
               { id: 'services', label: '🛠️ Servicios y Apoyo', color: '#3b82f6', desc: 'Asistencia de médicos, apoyo y remoción de escombros.', bg: 'rgba(59, 130, 246, 0.1)' },
               { id: 'resources', label: '🎪 Suministros/Refugios', color: '#10b981', desc: 'Puntos de agua, acopio, albergues y baños.', bg: 'rgba(16, 185, 129, 0.1)' },
+              { id: 'hospitales', label: '🏥 Hospitales', color: '#0a8d8f', desc: 'Estado de la red nacional de salud.', bg: 'rgba(10, 141, 143, 0.1)' },
               { id: 'all', label: '👁️ Mostrar Todo', color: '#a855f7', desc: 'Visualiza todo el directorio en un feed unificado.', bg: 'rgba(168, 85, 247, 0.1)' }
             ].map(opt => (
               <button
@@ -235,14 +237,9 @@ export default function DirectoryView({ user, onViewProfile, onRequireLogin }) {
         </div>
       ) : (
         <>
-          {/* Active Tab rendering */}
-          {activeTab === 'services' && (
-            <ServicesView user={user} onViewProfile={onViewProfile} isChild onRequireLogin={onRequireLogin} />
-          )}
-
-          {activeTab === 'resources' && (
-            <ResourcesView user={user} isChild onRequireLogin={onRequireLogin} />
-          )}
+          {activeTab === 'services' && <ServicesView user={user} onRequireLogin={onRequireLogin} />}
+          {activeTab === 'resources' && <ResourcesView user={user} onRequireLogin={onRequireLogin} />}
+          {activeTab === 'hospitales' && <HospitalsView />}
 
           {activeTab === 'emergencias' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
