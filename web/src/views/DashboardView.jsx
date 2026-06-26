@@ -5,8 +5,8 @@ import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle 
 const QUICK_ACTIONS = [
   { emoji: '🆘', label: 'Persona', sublabel: 'Desaparecida', view: 'missing_persons', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
   { emoji: '🐾', label: 'Mascota', sublabel: 'Perdida', view: 'missing_pets', color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
-  { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'resources', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
-  { emoji: '⚕️', label: 'Servicio', sublabel: 'Médico/Apoyo', view: 'services', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
+  { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'directory', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
+  { emoji: '⚕️', label: 'Servicio', sublabel: 'Médico/Apoyo', view: 'directory', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
   { emoji: '🗺️', label: 'Ver', sublabel: 'en el Mapa', view: 'map', color: '#0d9488', bg: 'rgba(13,148,136,0.1)' },
 ];
 

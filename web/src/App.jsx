@@ -6,7 +6,7 @@ import Logo from './components/Logo';
 import DashboardView from './views/DashboardView';
 import MapView from './views/MapView';
 import ResourcesView from './views/ResourcesView';
-import ServicesView from './views/ServicesView';
+import DirectoryView from './views/DirectoryView';
 import MissingPersonsView from './views/MissingPersonsView';
 import MissingPetsView from './views/MissingPetsView';
 import ChatRoomsView from './views/ChatRoomsView';
@@ -22,7 +22,7 @@ const TAB_ITEMS = [
   { id: 'map', label: 'Mapa', icon: Map },
   { id: 'missing_persons', label: 'Personas', icon: Users },
   { id: 'chat_rooms', label: 'Chats', icon: MessageSquare },
-  { id: 'services', label: 'Servicios', icon: Activity },
+  { id: 'directory', label: 'Directorio', icon: Activity },
 ];
 
 export default function App() {
@@ -177,9 +177,8 @@ export default function App() {
     switch (view) {
       case 'dashboard': return <DashboardView user={user} setView={setView} />;
       case 'map': return <MapView user={user} />;
-      case 'resources': return <ResourcesView user={user} />;
-      case 'services': return (
-        <ServicesView 
+      case 'directory': return (
+        <DirectoryView 
           user={user} 
           onViewProfile={(id) => {
             setViewUserId(id);

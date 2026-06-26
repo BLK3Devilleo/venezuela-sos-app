@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Package, Plus, Search, MessageCircle, MapPin, Trash2, Edit3, Tag, FileText } from 'lucide-react';
 
-export default function ResourcesView({ user }) {
+export default function ResourcesView({ user, isChild = false }) {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -112,14 +112,16 @@ export default function ResourcesView({ user }) {
   };
 
   return (
-    <div style={{ padding: '2rem 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: '2.25rem' }}>Suministros y Refugios</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-            Listado comunitario de bienes de ayuda y espacios de resguardo.
-          </p>
-        </div>
+    <div style={{ padding: isChild ? '0' : '2rem 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        {!isChild && (
+          <div>
+            <h1 className="font-display" style={{ fontSize: '2.25rem' }}>Suministros y Refugios</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
+              Listado comunitario de bienes de ayuda y espacios de resguardo.
+            </p>
+          </div>
+        )}
         <button 
           className="btn btn-primary" 
           style={{ marginLeft: 'auto' }}

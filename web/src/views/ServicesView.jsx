@@ -14,7 +14,7 @@ const formSchema = z.object({
   contacto_whatsapp: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
-export default function ServicesView({ user, onViewProfile }) {
+export default function ServicesView({ user, onViewProfile, isChild = false }) {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -103,11 +103,17 @@ export default function ServicesView({ user, onViewProfile }) {
   return (
     <div style={{ paddingBottom: '2rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800' }}>Servicios y Apoyo</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Directorio comunitario de ayuda.</p>
+      {!isChild && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+          <div>
+            <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800' }}>Servicios y Apoyo</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Directorio comunitario de ayuda.</p>
+          </div>
         </div>
+      )}
+
+      {/* Acciones principales */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
         <button 
           className="btn btn-primary" 
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }} 
