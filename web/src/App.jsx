@@ -396,14 +396,14 @@ export default function App() {
     );
   }
 
-  if ((!user && !isGuest) || (user && needsOnboarding)) {
+  if (view === 'login' || (user && needsOnboarding)) {
     return (
       <LoginView 
         onLogin={handleLogin} 
         onEnterAsGuest={() => {
-          setIsGuest(true);
           setView('dashboard');
         }}
+        onBack={() => setView('dashboard')}
         needsOnboarding={needsOnboarding} 
         authUserId={user?.id}
         authUserName={user?.nombre}
