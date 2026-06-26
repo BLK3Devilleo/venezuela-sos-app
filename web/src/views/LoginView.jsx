@@ -143,7 +143,7 @@ export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = nul
             fontSize: 'clamp(2.5rem, 8vw, 3.5rem)',
             fontWeight: '900',
             lineHeight: '1.05',
-            marginBottom: '0.4rem',
+            marginBottom: '0',
             color: '#fff'
           }}>
             Filo<span style={{
@@ -152,124 +152,107 @@ export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = nul
               WebkitTextFillColor: 'transparent'
             }}>SOS</span>
           </h1>
-          <div style={{
-            fontSize: '0.75rem',
+          <h2 style={{
+            fontSize: '1.25rem',
             fontWeight: '800',
-            color: '#0d9488',
-            letterSpacing: '0.15em',
+            color: '#fff',
+            letterSpacing: '0.05em',
             textTransform: 'uppercase',
-            marginBottom: '1.75rem',
-            opacity: 0.8
+            marginBottom: '1rem',
+            opacity: 0.9
           }}>
-            BY: FILO
-          </div>
+            Venezuela SOS
+          </h2>
           <p style={{
-            color: 'rgba(255,255,255,0.6)',
+            color: 'rgba(255,255,255,0.7)',
             fontSize: '1rem',
             lineHeight: '1.6',
-            marginBottom: '2.5rem'
+            marginBottom: '2.5rem',
+            padding: '0 1rem'
           }}>
-            Red de apoyo comunitaria para coordinar ayuda humanitaria tras el sismo en Venezuela.
+            Canal de comunicación unificado para conectarnos y apoyarnos mutuamente.
           </p>
 
-          {/* Alert badge */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: 'rgba(220,38,38,0.15)',
-            border: '1px solid rgba(220,38,38,0.3)',
-            borderRadius: '2rem',
-            padding: '0.5rem 1rem',
-            marginBottom: '2.5rem',
-            fontSize: '0.8125rem',
-            color: '#f87171',
-            fontWeight: '600'
-          }}>
-            <ShieldAlert size={14} />
-            Sismo M7.5 · Estado de Emergencia Nacional
-          </div>
-
-          {/* Selector de rol como cards grandes */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
-            {[
-              { id: 'afectado', emoji: '🆘', label: 'Necesito\nAyuda' },
-              { id: 'voluntario', emoji: '🤝', label: 'Quiero\nAyudar' }
-            ].map(r => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {onEnterAsGuest && (
               <button
-                key={r.id}
-                onClick={() => setRol(r.id)}
+                onClick={onEnterAsGuest}
                 style={{
-                  padding: '1.25rem 1rem',
-                  borderRadius: '1rem',
-                  border: `2px solid ${rol === r.id ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}`,
-                  background: rol === r.id ? 'rgba(13,148,136,0.15)' : 'rgba(255,255,255,0.04)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  textAlign: 'center'
-                }}
-              >
-                <div style={{ fontSize: '2rem', marginBottom: '0.4rem' }}>{r.emoji}</div>
-                <div style={{
-                  fontSize: '0.875rem',
+                  width: '100%',
+                  padding: '1rem',
+                  borderRadius: '0.875rem',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  fontSize: '1rem',
                   fontWeight: '700',
-                  color: rol === r.id ? 'var(--primary)' : 'rgba(255,255,255,0.7)',
-                  whiteSpace: 'pre-line',
-                  lineHeight: '1.3'
-                }}>{r.label}</div>
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'}
+                onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+              >
+                Explorar como invitado
               </button>
-            ))}
-          </div>
+            )}
 
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '1rem',
-              borderRadius: '0.875rem',
-              background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)',
-              border: 'none',
-              color: '#fff',
-              fontSize: '1rem',
-              fontWeight: '700',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 8px 32px rgba(13,148,136,0.35)'
-            }}
-          >
-            <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
-            <ArrowRight size={18} />
-          </button>
-          
-          {onEnterAsGuest && (
             <button
-              onClick={onEnterAsGuest}
+              onClick={handleGoogleLogin}
+              disabled={loading}
               style={{
                 width: '100%',
-                padding: '0.85rem',
+                padding: '1rem',
                 borderRadius: '0.875rem',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.8)',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                marginTop: '0.75rem',
+                background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)',
+                border: 'none',
+                color: '#fff',
+                fontSize: '1rem',
+                fontWeight: '700',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.2s'
+                gap: '0.5rem',
+                boxShadow: '0 8px 32px rgba(13,148,136,0.35)'
               }}
-              onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-              onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
             >
-              Explorar como Invitado
+              <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
+              <ArrowRight size={18} />
             </button>
-          )}
+          </div>
+
+          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+            <button 
+              onClick={() => { setRol('afectado'); handleGoogleLogin(); }}
+              style={{ background: 'transparent', border: 'none', color: '#f87171', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline' }}>
+              Necesito Ayuda
+            </button>
+            <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+            <button 
+              onClick={() => { setRol('voluntario'); handleGoogleLogin(); }}
+              style={{ background: 'transparent', border: 'none', color: '#4ade80', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline' }}>
+              Quiero Ayudar
+            </button>
+          </div>
+
+          <div style={{
+            marginTop: '2rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(13, 148, 136, 0.05)',
+            border: '1px solid rgba(13, 148, 136, 0.2)',
+            borderRadius: '1rem',
+            fontSize: '0.75rem',
+            color: 'rgba(255,255,255,0.6)',
+            lineHeight: '1.5',
+            textAlign: 'left'
+          }}>
+            <strong>Aviso:</strong> Para proteger a nuestra comunidad, inicia sesión con Google si deseas publicar información. Es 100% seguro.
+            <br/><br/>
+            <em>Nota de transparencia:</em> Aún estamos en desarrollo, por lo que al loguearte verás el enlace técnico de nuestro servidor (<span style={{opacity: 0.6}}>mqjjgbynsslthrhwntra.supabase.co</span>). Puedes confiar en él.
+          </div>
 
           {onBack && (
             <button
@@ -284,7 +267,7 @@ export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = nul
                 fontSize: '0.85rem',
                 fontWeight: '600',
                 cursor: 'pointer',
-                marginTop: '0.5rem',
+                marginTop: '1.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -295,11 +278,10 @@ export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = nul
             </button>
           )}
 
-          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
-            <p>Gratuito · Sin fines comerciales · Código abierto</p>
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Política de Privacidad</a>
-              <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Términos de Servicio</a>
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Privacidad</a>
+              <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Términos</a>
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ import AdminPanelView from './views/AdminPanelView';
 import CookieBanner from './components/CookieBanner';
 import EmergencyShortcutsView from './views/EmergencyShortcutsView';
 import HospitalizedPersonsView from './views/HospitalizedPersonsView';
+import InternationalSheltersView from './views/InternationalSheltersView';
 import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon } from 'lucide-react';
 
 // ─── Error Boundary ────────────────────────────────────────────────
@@ -321,6 +322,7 @@ export default function App() {
       );
       case 'missing_persons': return <MissingPersonsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'hospitalized_persons': return <HospitalizedPersonsView user={user} onRequireLogin={handleRequireLogin} />;
+      case 'international_shelters': return <InternationalSheltersView user={user} onRequireLogin={handleRequireLogin} onBack={() => setView('dashboard')} />;
       case 'missing_pets': return <MissingPetsView user={user} onRequireLogin={handleRequireLogin} />;
       case 'services': return (
         <DirectoryView 

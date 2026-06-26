@@ -109,6 +109,15 @@ const MACRO_CATEGORIES = {
       'transporte': { label: 'Transporte', icon: '🚌' },
       'combustible': { label: 'Combustible / Gas', icon: '⛽' }
     }
+  },
+  acogida_internacional: {
+    label: 'Acogida Internacional',
+    color: '#10b981',
+    bg: 'rgba(16, 185, 129, 0.1)',
+    icon: '🏠',
+    sub: {
+      'refugio': { label: 'Punto de Acogida', icon: '🏠' }
+    }
   }
 };
 
@@ -277,10 +286,26 @@ export default function MapView({ user, onRequireLogin }) {
     console.log('Fetching map data...');
     setLoading(true);
     try {
-      const [resRec, resServ] = await Promise.all([
+      const [resRec, resServ, resAcogida] = await Promise.all([
         supabase.from('recursos').select('*'),
-        supabase.from('servicios').select('*')
+        supabase.from('servicios').select('*'),
+        supabase.from('puntos_acogida').select('*').eq('estado', 'activo')
       ]);
+
+      const formattedAcogida = (resAcogida.data || []).map(r => {
+        const cacheKey = 'acogida_internacional_refugio';
+        const icon = iconsCache[cacheKey] || legacyIcons.albergues;
+        return {
+          ...r,
+          id: `acogida_${r.id}`,
+          mapType: 'acogida_internacional',
+          displayType: 'Punto de Acogida',
+          icon,
+          categoryKey: cacheKey,
+          macro: 'acogida_internacional',
+          sub: 'refugio'
+        };
+      });
 
       const formattedRecursos = (resRec.data || []).map(r => {
         const modernCat = mapItemToModernCategory(r);
@@ -317,7 +342,7 @@ export default function MapView({ user, onRequireLogin }) {
         };
       });
 
-      const allItems = [...formattedRecursos, ...formattedServicios].filter(
+      const allItems = [...formattedRecursos, ...formattedServicios, ...formattedAcogida].filter(
         item => item.ubicacion_lat != null && item.ubicacion_lng != null
       );
       console.log(`Loaded ${allItems.length} map items in total.`);

@@ -118,59 +118,63 @@ export default function DashboardView({ user, setView, onRequireLogin }) {
         </div>
       </div>
 
-      {/* Botones de Acceso Rápido (QUICK ACTIONS) */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h3 className="font-display" style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '0.75rem', color: '#fff' }}>
-          Accesos Rápidos
+      {/* Nueva Sección Conversacional: ¿Qué quieres hacer? */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <h3 className="font-display" style={{ fontSize: '1.35rem', fontWeight: '800', marginBottom: '1rem', color: '#fff' }}>
+          ¿Qué quieres hacer?
         </h3>
-        <div 
-          className="hide-scrollbar"
-          style={{ 
-            display: 'flex', 
-            gap: '0.75rem', 
-            overflowX: 'auto', 
-            paddingBottom: '0.5rem',
-            margin: '0 -1rem',
-            paddingLeft: '1rem',
-            paddingRight: '1rem'
-          }}
-        >
-          {QUICK_ACTIONS.map((act, i) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[
+            { icon: '🧍', label: 'Reportar persona desaparecida', view: 'missing_persons', color: '#dc2626' },
+            { icon: '🐾', label: 'Reportar mascota', view: 'missing_pets', color: '#d97706', restricted: true },
+            { icon: '🏠', label: 'Agregar punto de acogida/refugio', view: 'international_shelters', color: '#0d9488' },
+            { icon: '📦', label: 'Quiero donar recursos', view: 'services', color: '#16a34a', restricted: true },
+            { icon: '⚕️', label: 'Solicito apoyo médico', view: 'services', color: '#2563eb' }
+          ].map((act, i) => (
             <button
               key={i}
-              onClick={() => setView(act.view)}
+              onClick={() => {
+                if (act.restricted && !user) {
+                  onRequireLogin();
+                } else {
+                  setView(act.view);
+                }
+              }}
               style={{
-                flexShrink: 0,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                width: '100px',
-                height: '100px',
+                gap: '1rem',
+                width: '100%',
+                padding: '1rem 1.25rem',
                 borderRadius: '1rem',
-                border: '1px solid var(--border)',
+                border: '1px solid rgba(255,255,255,0.1)',
                 backgroundColor: 'var(--bg-surface)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                gap: '0.35rem',
-                boxShadow: 'var(--shadow-sm)'
+                textAlign: 'left'
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
                 e.currentTarget.style.borderColor = act.color;
-                e.currentTarget.style.boxShadow = `0 8px 20px ${act.color}25`;
+                e.currentTarget.style.backgroundColor = `${act.color}15`;
+                e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                e.currentTarget.style.backgroundColor = 'var(--bg-surface)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
               }}
             >
-              <span style={{ fontSize: '1.75rem' }}>{act.emoji}</span>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.15' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fff' }}>{act.label}</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{act.sublabel}</span>
+              <div style={{ 
+                fontSize: '1.5rem', 
+                backgroundColor: 'var(--bg-surface-soft)', 
+                width: '40px', height: '40px', 
+                borderRadius: '50%', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                {act.icon}
               </div>
+              <span style={{ fontSize: '1rem', fontWeight: '700', color: '#fff', flex: 1 }}>{act.label}</span>
+              <span style={{ color: 'var(--text-muted)' }}>→</span>
             </button>
           ))}
         </div>
