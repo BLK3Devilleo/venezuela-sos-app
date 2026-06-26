@@ -148,10 +148,6 @@ export default function ServicesView({ user, onViewProfile, isChild = false, onR
           className="btn btn-primary" 
           style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)' }} 
           onClick={() => {
-            if (!user) {
-              if (onRequireLogin) onRequireLogin();
-              return;
-            }
             setShowAddForm(true);
           }}
         >

@@ -50,8 +50,8 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      onRequireLogin();
+    if (!formData.responsable || !formData.contacto) {
+      window.showToast('Debes indicar un responsable y contacto.', 'error');
       return;
     }
 
@@ -70,7 +70,7 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
 
     try {
       const { error } = await supabase.from('puntos_acogida').insert({
-        creador_id: user.id,
+        creador_id: user ? user.id : null,
         ...formData,
         ubicacion_lat: 10.4806, // Default Caracas/Latam center for MVP
         ubicacion_lng: -66.9036
@@ -81,8 +81,8 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
       window.showToast('Punto de acogida registrado exitosamente', 'success');
       setShowForm(false);
       setFormData({
-        pais: '', ciudad: '', direccion: '', horarios: '', responsable: user.nombre,
-        contacto: user.contacto, entregas: '', necesidades: '', tiempo_estadia: 'Solo pasar el día'
+        pais: '', ciudad: '', direccion: '', horarios: '', responsable: user?.nombre || '',
+        contacto: user?.contacto || '', entregas: '', necesidades: '', tiempo_estadia: 'Solo pasar el día'
       });
       fetchShelters();
     } catch (err) {
@@ -120,7 +120,7 @@ export default function InternationalSheltersView({ user, onRequireLogin, onBack
         {!showForm && (
           <button 
             className="btn btn-primary"
-            onClick={() => user ? setShowForm(true) : onRequireLogin()}
+            onClick={() => setShowForm(true)}
             style={{ fontSize: '0.85rem', padding: '0.6rem 1rem' }}
           >
             Agregar Punto

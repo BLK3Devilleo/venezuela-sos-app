@@ -1,100 +1,143 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { ShieldAlert, Phone, User, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Phone, User, ArrowRight, Lock, LogIn, UserPlus } from 'lucide-react';
 import { z } from 'zod';
 import Logo from '../components/Logo';
 
 const phoneRegex = /^\d{7,15}$/;
+const pinRegex = /^\d{4,6}$/;
+
 const loginSchema = z.object({
+  telefono: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos."),
+  pin: z.string().regex(pinRegex, "El PIN debe tener entre 4 y 6 números.")
+});
+
+const registerSchema = loginSchema.extend({
   nombre: z.string().min(3, "Ingresa tu nombre completo (mínimo 3 letras)").max(60, "Nombre demasiado largo"),
-  telefono: z.string().regex(phoneRegex, "Teléfono inválido. Solo números y máximo 15 dígitos.")
 });
 
 export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = null, needsOnboarding = false, authUserId = null, authUserName = '' }) {
-  const [step, setStep] = useState(needsOnboarding ? 3 : 1);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [nombre, setNombre] = useState(authUserName || '');
   const [telefono, setTelefono] = useState('');
+  const [pin, setPin] = useState('');
   const [rol, setRol] = useState('afectado');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (needsOnboarding) {
-      setStep(3);
-      if (authUserName) {
-        setNombre(authUserName);
-      }
-      const savedRol = localStorage.getItem('onboarding_rol');
-      if (savedRol) {
-        setRol(savedRol);
-      }
-    } else {
-      setStep(1);
+      setIsRegistering(true);
+      if (authUserName) setNombre(authUserName);
     }
   }, [needsOnboarding, authUserName]);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      // Guardar el rol temporalmente para recuperarlo tras el redirect
-      localStorage.setItem('onboarding_rol', rol);
-
-      // Determinar si estamos corriendo en Capacitor (Android/iOS)
-      const { Capacitor } = await import('@capacitor/core');
-      const isNative = Capacitor.isNativePlatform();
-      const redirectUrl = isNative 
-        ? 'com.filosos.app://login-callback/'
-        : window.location.origin;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: isNative // Si es nativo, obtenemos la URL y la abrimos manualmente
-        }
-      });
-      
-      if (error) throw error;
-
-      if (isNative && data?.url) {
-        const { Browser } = await import('@capacitor/browser');
-        await Browser.open({ url: data.url });
-      }
-    } catch (err) {
-      console.error('Error al iniciar Google Auth:', err);
-      setError('No se pudo conectar con Google. Inténtalo de nuevo.');
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
+    setError('');
     
-    const result = loginSchema.safeParse({ nombre, telefono });
+    // Validar según el modo
+    const schema = isRegistering ? registerSchema : loginSchema;
+    const result = schema.safeParse(isRegistering ? { telefono, pin, nombre } : { telefono, pin });
+    
     if (!result.success) {
       setError(result.error.errors[0].message);
       return;
     }
 
     setLoading(true);
-    setError('');
     
-    // Si estamos en onboarding, usamos el ID de autenticación de Google de Supabase
-    const targetUserId = authUserId || `google_sim_${Date.now()}`;
+    // Truco: Usamos el sistema de Email Auth nativo de Supabase sin costo de SMS
+    const email = `${telefono.trim()}@filosos.local`;
+    // Supabase requiere contraseñas de min 6 caracteres. Si el PIN tiene 4, agregamos '00' al final silenciosamente.
+    const securePassword = pin.length < 6 ? pin.padEnd(6, '0') : pin;
+
     try {
-      const { data, error: dbError } = await supabase
-        .from('usuarios')
-        .insert({ id: targetUserId, nombre: nombre.trim(), contacto: telefono.trim(), rol })
-        .select();
-      if (dbError) throw dbError;
-      
-      localStorage.setItem('sos_user', JSON.stringify(data[0]));
-      onLogin(data[0]);
+      if (isRegistering) {
+        // 1. Sign Up
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password: securePassword,
+          options: { data: { full_name: nombre.trim() } }
+        });
+
+        if (authError) {
+          if (authError.message.includes('already registered')) throw new Error('Este teléfono ya está registrado. Por favor, inicia sesión.');
+          throw authError;
+        }
+
+        const userId = authData.user?.id || `sim_${Date.now()}`;
+
+        // 2. Insertar en perfil
+        const { data: dbData, error: dbError } = await supabase
+          .from('usuarios')
+          .insert({ id: userId, nombre: nombre.trim(), contacto: telefono.trim(), rol })
+          .select();
+          
+        if (dbError) {
+          // Fallback if RLS or something fails
+          console.error("Error al crear perfil", dbError);
+        }
+
+        const profile = dbData?.[0] || { id: userId, nombre: nombre.trim(), contacto: telefono.trim(), rol };
+        localStorage.setItem('sos_user', JSON.stringify(profile));
+        if (onLogin) onLogin(profile);
+
+      } else {
+        // 1. Sign In
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password: securePassword
+        });
+
+        if (authError) throw new Error('Teléfono o PIN incorrectos.');
+
+        // 2. Fetch perfil
+        const { data: dbData } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (dbData) {
+          localStorage.setItem('sos_user', JSON.stringify(dbData));
+          if (onLogin) onLogin(dbData);
+        } else {
+          throw new Error('Perfil no encontrado.');
+        }
+      }
     } catch (err) {
-      console.error('Error al registrar perfil:', err);
-      setError('Error al registrar tu perfil. Inténtalo de nuevo.');
+      console.error('Error Auth:', err);
+      setError(err.message || 'Ocurrió un error. Inténtalo de nuevo.');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      const isNative = Capacitor.isNativePlatform();
+      const redirectUrl = isNative ? 'com.filosos.app://login-callback/' : window.location.origin;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: isNative
+        }
+      });
+      
+      if (error) throw error;
+      if (isNative && data?.url) {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: data.url });
+      }
+    } catch (err) {
+      console.error('Error al iniciar Google Auth:', err);
+      setError('No se pudo conectar con Google.');
       setLoading(false);
     }
   };
@@ -103,358 +146,110 @@ export default function LoginView({ onLogin, onEnterAsGuest = null, onBack = nul
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(160deg, #060d1a 0%, #0b1c2e 50%, #091520 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem 1.25rem',
-      position: 'relative',
-      overflow: 'hidden'
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '2rem 1.25rem', position: 'relative', overflow: 'hidden'
     }}>
-      {/* Decorative glow blobs */}
-      <div style={{
-        position: 'absolute', top: '-100px', right: '-100px',
-        width: '400px', height: '400px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(13,148,136,0.12) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-80px', left: '-80px',
-        width: '350px', height: '350px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
+      {/* Decorative */}
+      <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(to right, #dc2626 33.3%, #eab308 33.3% 66.6%, #1d4ed8 66.6%)' }} />
 
-      {/* Tricolor top strip */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
-        background: 'linear-gradient(to right, #dc2626 33.3%, #eab308 33.3% 66.6%, #1d4ed8 66.6%)'
-      }} />
-
-      {step === 1 ? (
-        /* --- LANDING --- */
-        <div style={{ textAlign: 'center', maxWidth: '380px', width: '100%', animation: 'fadeIn 0.4s ease' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-            <Logo size={110} animated={true} />
-          </div>
-          <h1 className="font-display" style={{
-            fontSize: 'clamp(2.5rem, 8vw, 3.5rem)',
-            fontWeight: '900',
-            lineHeight: '1.05',
-            marginBottom: '0',
-            color: '#fff'
-          }}>
-            Filo<span style={{
-              background: 'linear-gradient(135deg, #0d9488, #06b6d4)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>SOS</span>
-          </h1>
-          <h2 style={{
-            fontSize: '1.25rem',
-            fontWeight: '800',
-            color: '#fff',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            marginBottom: '1rem',
-            opacity: 0.9
-          }}>
-            Venezuela SOS
-          </h2>
-          <p style={{
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            marginBottom: '2.5rem',
-            padding: '0 1rem'
-          }}>
-            Canal de comunicación unificado para conectarnos y apoyarnos mutuamente.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {onEnterAsGuest && (
-              <button
-                onClick={onEnterAsGuest}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  borderRadius: '0.875rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'}
-                onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-              >
-                Explorar como invitado
-              </button>
-            )}
-
-            <button
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                borderRadius: '0.875rem',
-                background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)',
-                border: 'none',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 8px 32px rgba(13,148,136,0.35)'
-              }}
-            >
-              <span>{loading ? 'Redirigiendo...' : 'Ingresar con Google'}</span>
-              <ArrowRight size={18} />
-            </button>
-          </div>
-
-          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-            <button 
-              onClick={() => { setRol('afectado'); handleGoogleLogin(); }}
-              style={{ background: 'transparent', border: 'none', color: '#f87171', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline' }}>
-              Necesito Ayuda
-            </button>
-            <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
-            <button 
-              onClick={() => { setRol('voluntario'); handleGoogleLogin(); }}
-              style={{ background: 'transparent', border: 'none', color: '#4ade80', fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline' }}>
-              Quiero Ayudar
-            </button>
-          </div>
-
-          <div style={{
-            marginTop: '2rem',
-            padding: '1rem',
-            backgroundColor: 'rgba(13, 148, 136, 0.05)',
-            border: '1px solid rgba(13, 148, 136, 0.2)',
-            borderRadius: '1rem',
-            fontSize: '0.75rem',
-            color: 'rgba(255,255,255,0.6)',
-            lineHeight: '1.5',
-            textAlign: 'left'
-          }}>
-            <strong>Aviso:</strong> Para proteger a nuestra comunidad, inicia sesión con Google si deseas publicar información. Es 100% seguro.
-            <br/><br/>
-            <em>Nota de transparencia:</em> Aún estamos en desarrollo, por lo que al loguearte verás el enlace técnico de nuestro servidor (<span style={{opacity: 0.6}}>mqjjgbynsslthrhwntra.supabase.co</span>). Puedes confiar en él.
-          </div>
-
-          {onBack && (
-            <button
-              onClick={onBack}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: '0.875rem',
-                background: 'transparent',
-                border: 'none',
-                color: 'rgba(255, 255, 255, 0.5)',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                marginTop: '1.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textDecoration: 'underline'
-              }}
-            >
-              Volver al inicio
-            </button>
-          )}
-
-          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Privacidad</a>
-              <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Términos</a>
-            </div>
-          </div>
+      <div style={{ width: '100%', maxWidth: '380px', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <Logo size={80} animated={true} />
         </div>
-      ) : (
-        /* --- FORMULARIO & ONBOARDING --- */
+        
         <div style={{
-          width: '100%', maxWidth: '380px',
           backgroundColor: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '1.25rem',
           padding: '2rem 1.5rem',
-          animation: 'slideUp 0.3s ease'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
         }}>
-          {needsOnboarding ? (
-            <button
-              onClick={() => supabase.auth.signOut()}
-              style={{
-                background: 'none', border: 'none',
-                color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
-                fontSize: '0.875rem', marginBottom: '1.25rem',
-                display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0
-              }}
-            >
-              ← Cancelar y salir
-            </button>
-          ) : (
-            <button
-              onClick={() => setStep(1)}
-              style={{
-                background: 'none', border: 'none',
-                color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
-                fontSize: '0.875rem', marginBottom: '1.25rem',
-                display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0
-              }}
-            >
+          
+          {onBack && (
+            <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: 0 }}>
               ← Volver
             </button>
           )}
 
-          <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: '800', color: '#fff', marginBottom: '0.25rem' }}>
-            {needsOnboarding ? 'Completa tu perfil' : 'Tus datos de contacto'}
+          <h2 className="font-display" style={{ fontSize: '1.5rem', fontWeight: '800', color: '#fff', marginBottom: '0.5rem', textAlign: 'center' }}>
+            {isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', marginBottom: '1.75rem' }}>
-            {needsOnboarding 
-              ? 'Has ingresado con Google. Por favor completa tus datos para finalizar el registro.' 
-              : 'Para que puedan contactarte en caso de que tengas información relevante.'}
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginBottom: '1.75rem', textAlign: 'center' }}>
+            {isRegistering ? 'Ingresa tus datos para registrarte.' : 'Accede para gestionar tus reportes.'}
           </p>
 
           {error && (
-            <div style={{
-              backgroundColor: 'rgba(220,38,38,0.15)',
-              border: '1px solid rgba(220,38,38,0.3)',
-              borderRadius: '0.75rem',
-              padding: '0.75rem 1rem',
-              color: '#f87171',
-              fontSize: '0.875rem',
-              marginBottom: '1.25rem',
-              display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}>
-              <ShieldAlert size={16} />
-              {error}
+            <div style={{ backgroundColor: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: '0.75rem', padding: '0.75rem 1rem', color: '#f87171', fontSize: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ShieldAlert size={16} flexShrink={0} />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
-                Nombre Completo
-              </label>
-              <div style={{ position: 'relative' }}>
-                <User size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                <input
-                  type="text"
-                  placeholder="Ej. María González"
-                  value={nombre}
-                  onChange={e => setNombre(e.target.value)}
-                  disabled={loading}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem 0.875rem 0.875rem 2.5rem',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '0.75rem',
-                    color: '#fff',
-                    fontSize: '0.9375rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {isRegistering && (
+              <div>
+                <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Nombre Completo</label>
+                <div style={{ position: 'relative' }}>
+                  <User size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                  <input type="text" placeholder="Ej. María González" value={nombre} onChange={e => setNombre(e.target.value)} disabled={loading} required style={{ width: '100%', padding: '0.875rem 0.875rem 0.875rem 2.5rem', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: '#fff', fontSize: '0.9375rem', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
-              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
-                Tu Rol en la Plataforma
-              </label>
-              <select
-                value={rol}
-                onChange={e => setRol(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '0.75rem',
-                  color: '#fff',
-                  fontSize: '0.9375rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="afectado" style={{ backgroundColor: '#0b1c2e' }}>🆘 Necesito Ayuda / Afectado</option>
-                <option value="voluntario" style={{ backgroundColor: '#0b1c2e' }}>🤝 Quiero Ayudar / Voluntario</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' }}>
-                WhatsApp / Teléfono
-              </label>
+              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>Teléfono (Tu Usuario)</label>
               <div style={{ position: 'relative' }}>
                 <Phone size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                <input
-                  type="tel"
-                  placeholder="Ej. 04121234567"
-                  value={telefono}
-                  onChange={e => setTelefono(e.target.value)}
-                  disabled={loading}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.875rem 0.875rem 0.875rem 2.5rem',
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '0.75rem',
-                    color: '#fff',
-                    fontSize: '0.9375rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
+                <input type="tel" placeholder="Ej. 04141234567" value={telefono} onChange={e => setTelefono(e.target.value)} disabled={loading} required style={{ width: '100%', padding: '0.875rem 0.875rem 0.875rem 2.5rem', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: '#fff', fontSize: '0.9375rem', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                marginTop: '0.5rem',
-                borderRadius: '0.875rem',
-                background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)',
-                border: 'none',
-                color: '#fff',
-                fontSize: '1rem',
-                fontWeight: '700',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 8px 32px rgba(13,148,136,0.3)'
-              }}
-            >
-              {loading ? 'Guardando...' : 'Completar Registro'}
+            <div>
+              <label style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'block' }}>PIN Secreto (4 dígitos)</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                <input type="password" placeholder="****" maxLength="6" value={pin} onChange={e => setPin(e.target.value)} disabled={loading} required style={{ width: '100%', padding: '0.875rem 0.875rem 0.875rem 2.5rem', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '0.75rem', color: '#fff', fontSize: '0.9375rem', outline: 'none', boxSizing: 'border-box', letterSpacing: '0.2em' }} />
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} style={{ width: '100%', padding: '1rem', marginTop: '0.5rem', borderRadius: '0.875rem', background: loading ? 'rgba(13,148,136,0.4)' : 'linear-gradient(135deg, #0d9488, #0891b2)', border: 'none', color: '#fff', fontSize: '1rem', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 8px 32px rgba(13,148,136,0.3)' }}>
+              {isRegistering ? <><UserPlus size={18}/> {loading ? 'Creando...' : 'Crear Cuenta'}</> : <><LogIn size={18}/> {loading ? 'Entrando...' : 'Ingresar'}</>}
             </button>
           </form>
+
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <button 
+              onClick={() => { setIsRegistering(!isRegistering); setError(''); }} 
+              style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              {isRegistering ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
+            </button>
+          </div>
+
+          <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>o</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+          </div>
+
+          <button onClick={handleGoogleLogin} disabled={loading} style={{ width: '100%', padding: '0.85rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.9rem', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            Continuar con Google
+          </button>
         </div>
-      )}
+
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Privacidad</a>
+            <a href="/terms.html" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Términos</a>
+          </div>
+        </div>
+      </div>
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        input::placeholder { color: rgba(255,255,255,0.25); }
+        input::placeholder { color: rgba(255,255,255,0.25); letter-spacing: normal; }
         input:focus { border-color: rgba(13,148,136,0.5) !important; box-shadow: 0 0 0 3px rgba(13,148,136,0.15); }
       `}</style>
     </div>

@@ -80,7 +80,6 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [viewUserId, setViewUserId] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
-  const [showGuestAuthModal, setShowGuestAuthModal] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
   const [theme, setTheme] = useState(() => localStorage.getItem('filoSOS_theme') || 'dark');
 
@@ -294,7 +293,7 @@ export default function App() {
   };
 
   const handleRequireLogin = () => {
-    setShowGuestAuthModal(true);
+    setView('login');
   };
 
   const renderView = () => {
@@ -631,97 +630,6 @@ export default function App() {
           );
         })}
       </nav>
-
-      {/* Modal de Requisito de Login para Invitados */}
-      {showGuestAuthModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(6, 13, 26, 0.8)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1.5rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '1.5rem',
-            padding: '2rem 1.5rem',
-            maxWidth: '360px',
-            width: '100%',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-            textAlign: 'center',
-            position: 'relative'
-          }}>
-            <div style={{
-              fontSize: '2.5rem',
-              marginBottom: '1rem'
-            }}>
-              🤝
-            </div>
-            
-            <h3 className="font-display" style={{
-              fontSize: '1.35rem',
-              fontWeight: '800',
-              color: '#fff',
-              marginBottom: '0.75rem'
-            }}>
-              ¿Quieres aportar?
-            </h3>
-            
-            <p style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.9rem',
-              lineHeight: '1.5',
-              marginBottom: '1.75rem'
-            }}>
-              Para una mejor gestión de los datos te pediremos que crees una cuenta y te sumes a esta gran comunidad.
-            </p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button
-                onClick={() => {
-                  setShowGuestAuthModal(false);
-                  setIsGuest(false);
-                  setUser(null);
-                  setView('login');
-                }}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '0.875rem',
-                  borderRadius: '0.75rem',
-                  fontWeight: '700',
-                  fontSize: '0.95rem'
-                }}
-              >
-                Crear Cuenta / Iniciar Sesión
-              </button>
-              
-              <button
-                onClick={() => setShowGuestAuthModal(false)}
-                className="btn btn-secondary"
-                style={{
-                  width: '100%',
-                  padding: '0.85rem',
-                  borderRadius: '0.75rem',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer'
-                }}
-              >
-                Seguir explorando
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast Alert */}
       {toast.show && (
