@@ -4,6 +4,7 @@ import { Map, Package, Activity, Users, Heart, ShieldAlert, Plus, AlertTriangle,
 
 const QUICK_ACTIONS = [
   { emoji: '🆘', label: 'Persona', sublabel: 'Desaparecida', view: 'missing_persons', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
+  { emoji: '🏥', label: 'Personas', sublabel: 'Hospitalizadas', view: 'hospitalized_persons', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
   { emoji: '🐾', label: 'Mascota', sublabel: 'Perdida', view: 'missing_pets', color: '#d97706', bg: 'rgba(217,119,6,0.1)', restricted: true },
   { emoji: '🍲', label: 'Recurso', sublabel: 'Suministros', view: 'services', color: '#16a34a', bg: 'rgba(22,163,74,0.1)', restricted: true },
   { emoji: '⚕️', label: 'Servicio', sublabel: 'Médico/Apoyo', view: 'services', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' },
