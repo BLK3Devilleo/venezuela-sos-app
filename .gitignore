@@ -28,3 +28,8 @@ build/
 # Logs
 logs/
 *.log
+
+# Documentos informativos y audios
+recursos informativos/
+CONVERSASION GEMINI
+audio 7 min
