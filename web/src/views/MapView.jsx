@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { supabase } from '../supabase';
-import { Plus, MapPin, MessageCircle, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Plus, MapPin, MessageCircle, ChevronDown, ChevronUp, Trash2, Navigation } from 'lucide-react';
 import BottomModal from '../components/BottomModal';
 
 // Fix Leaflet marker icon URLs
@@ -427,6 +427,32 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
     }
   }, [formData.macro]);
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización");
+      return;
+    }
+    if (window.showToast) window.showToast("Obteniendo coordenadas GPS...", "info");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setMapCenter([latitude, longitude]);
+        setMapZoom(16);
+        setNewMarkerPos({ lat: latitude, lng: longitude });
+        if (window.showToast) {
+          window.showToast("Ubicación detectada con éxito", "success");
+        } else {
+          alert("Ubicación detectada con éxito");
+        }
+      },
+      (error) => {
+        console.error("Error obteniendo ubicación:", error);
+        alert("No se pudo obtener tu ubicación. Por favor activa los permisos de ubicación de tu dispositivo.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleCreateMarker = async (e) => {
     e.preventDefault();
     if (!formData.nombre.trim() || !formData.contacto_whatsapp.trim()) {
@@ -517,7 +543,37 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
               Cargando mapa...
             </div>
           )}
+
+          {/* Floating GPS locating button */}
+          <button
+            type="button"
+            onClick={handleGetLocation}
+            style={{
+              position: 'absolute',
+              bottom: '16px',
+              right: '16px',
+              zIndex: 1000,
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+              transition: 'all 0.2s',
+              outline: 'none'
+            }}
+            title="Centrar en mi ubicación GPS"
+          >
+            <Navigation size={20} style={{ transform: 'rotate(45deg)' }} />
+          </button>
+
           <MapContainer 
+
             center={mapCenter} 
             zoom={mapZoom} 
             style={{ height: '100%', width: '100%', zIndex: 1 }}
@@ -885,13 +941,53 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
         title={newMarkerPos ? '📍 Nuevo Reporte en el Mapa' : 'Nuevo Reporte en el Mapa'}
       >
         {newMarkerPos ? (
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <MapPin size={14} style={{ color: 'var(--primary)' }} />
-            Lat {newMarkerPos.lat.toFixed(5)}, Lng {newMarkerPos.lng.toFixed(5)}
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <MapPin size={14} style={{ color: 'var(--primary)' }} />
+              Lat {newMarkerPos.lat.toFixed(5)}, Lng {newMarkerPos.lng.toFixed(5)}
+            </div>
+            <button
+              type="button"
+              onClick={() => setNewMarkerPos(null)}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '600' }}
+            >
+              Cambiar / Limpiar
+            </button>
           </div>
         ) : (
-          <div style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.75rem', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#fca5a5' }}>
-            💡 Toca un punto exacto en el mapa primero para una mayor precisión, o llena este formulario para usar tu ubicación actual.
+          <div style={{ 
+            backgroundColor: 'var(--bg-surface-soft)', 
+            border: '1px solid var(--border)', 
+            borderRadius: '0.75rem', 
+            padding: '1rem', 
+            marginBottom: '1rem', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '0.75rem' 
+          }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+              💡 Toca un punto exacto en el mapa primero para ubicar tu reporte, o detecta tu ubicación GPS actual.
+            </div>
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: 'var(--primary)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '0.5rem',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              📍 Usar mi ubicación GPS actual
+            </button>
           </div>
         )}
 
