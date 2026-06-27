@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Users, Heart, Map, ArrowRight, ShieldAlert, BookOpen, ChevronDown, ChevronUp,
-  Home, PawPrint, ShoppingBag, MessageSquare, Hospital, PhoneCall, HelpCircle
+  Home, PawPrint, ShoppingBag, MessageSquare, Hospital, PhoneCall, HelpCircle, Building2
 } from 'lucide-react';
 
 export default function DashboardView({ setView }) {
@@ -43,6 +43,7 @@ export default function DashboardView({ setView }) {
   const quickAccessFunctions = [
     { id: 'family_reunification', label: 'Protección de Menores', desc: 'Búsqueda de niños perdidos', icon: Heart, color: '#fb7185' },
     { id: 'infrastructure_checklist', label: 'Checklist de Vivienda', desc: 'Seguridad post-terremoto', icon: ShieldAlert, color: '#fcd34d' },
+    { id: 'structural_damage_reports', label: 'Daños Estructurales', desc: 'Evalúa e inspecciona edificios', icon: Building2, color: '#3b82f6' },
     { id: 'resources', label: 'Suministros y Refugio', desc: 'Alimentos y alojamiento', icon: Home, color: '#0d9488' },
     { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Muro de animales extraviados', icon: PawPrint, color: '#fb923c' },
     { id: 'marketplace', label: 'Mercado Solidario', desc: 'Donaciones e intercambio', icon: ShoppingBag, color: '#a855f7' },

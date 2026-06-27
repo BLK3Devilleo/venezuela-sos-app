@@ -70,6 +70,7 @@ const MACRO_CATEGORIES = {
     sub: {
       'atrapados': { label: 'Auxilio Inmediato', icon: '🚨' },
       'colapsos': { label: 'Zonas de Riesgo', icon: '⚠️' },
+      'danos_estructurales': { label: 'Daños Estructurales', icon: '🏢' },
       'control': { label: 'Puntos de Control', icon: '🚧' },
       'primeros_auxilios_campo': { label: 'Primeros Auxilios de Campo', icon: '🩹' }
     }
@@ -300,10 +301,11 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
     console.log('Fetching map data...');
     setLoading(true);
     try {
-      const [resRec, resServ, resAcogida] = await Promise.all([
+      const [resRec, resServ, resAcogida, resDanos] = await Promise.all([
         supabase.from('recursos').select('*'),
         supabase.from('servicios').select('*'),
-        supabase.from('puntos_acogida').select('*').eq('estado', 'activo')
+        supabase.from('puntos_acogida').select('*').eq('estado', 'activo'),
+        supabase.from('danos_estructurales').select('*')
       ]);
 
       const formattedAcogida = (resAcogida.data || []).map(r => {
@@ -361,7 +363,30 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
         };
       });
 
-      const allItems = [...formattedRecursos, ...formattedServicios, ...formattedAcogida].filter(
+      const formattedDanos = (resDanos.data || []).map(r => {
+        const cacheKey = 'rescate_danos_estructurales';
+        const color = r.clasificacion_riesgo === 'inseguro' ? '#ef4444' :
+                      r.clasificacion_riesgo === 'precaucion' ? '#eab308' :
+                      r.clasificacion_riesgo === 'seguro' ? '#22c55e' : '#94a3b8';
+        const icon = createCustomIcon(color, '🏢');
+        return {
+          ...r,
+          id: `dano_${r.id}`,
+          mapType: 'dano_estructural',
+          displayType: 'Edificio Afectado',
+          nombre: r.nombre_edificio,
+          descripcion: `Dirección: ${r.direccion}, ${r.ciudad}. Daños: ${r.descripcion_danos || 'Sin detalles'}. Dictamen: ${r.comentarios_tecnicos || 'Pendiente de inspección'}`,
+          contacto_whatsapp: r.telefono_contacto,
+          icon,
+          categoryKey: cacheKey,
+          tipo: 'rescate',
+          categoria: 'danos_estructurales',
+          macro: 'rescate',
+          sub: 'danos_estructurales'
+        };
+      });
+
+      const allItems = [...formattedRecursos, ...formattedServicios, ...formattedAcogida, ...formattedDanos].filter(
         item => item.ubicacion_lat != null && item.ubicacion_lng != null
       );
       console.log(`Loaded ${allItems.length} map items in total.`);
@@ -674,9 +699,12 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
                             if (!window.confirm('¿Seguro que deseas eliminar este marcador del mapa?')) return;
                             try {
                               const isAcogida = item.mapType === 'acogida_internacional';
+                              const isDano = item.mapType === 'dano_estructural';
                               const table = item.mapType === 'servicio' ? 'servicios' :
-                                            isAcogida ? 'puntos_acogida' : 'recursos';
-                              const realId = isAcogida ? item.id.replace('acogida_', '') : item.id;
+                                            isAcogida ? 'puntos_acogida' :
+                                            isDano ? 'danos_estructurales' : 'recursos';
+                              const realId = isAcogida ? item.id.replace('acogida_', '') :
+                                             isDano ? item.id.replace('dano_', '') : item.id;
                               const { error } = await supabase.from(table).delete().eq('id', realId);
                               if (error) throw error;
                               setActivePopupId(null);

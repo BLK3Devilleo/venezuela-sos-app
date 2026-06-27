@@ -25,7 +25,8 @@ import ApiGlobalSearchView from './views/ApiGlobalSearchView';
 import BottomModal from './components/BottomModal';
 import ExternalSearchView from './views/ExternalSearchView';
 import InfrastructureChecklistView from './views/InfrastructureChecklistView';
-import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText, Search } from 'lucide-react';
+import StructuralDamageReportsView from './views/StructuralDamageReportsView';
+import { Home, Map, Users, Activity, HelpCircle, LogOut, Heart, ShoppingBag, User, MessageSquare, ShieldAlert, Sun, Moon, Menu, Globe, FileText, Search, Building2 } from 'lucide-react';
 
 // ─── Error Boundary ────────────────────────────────────────────────
 // Prevents a crash in one view from making the entire app go black.
@@ -371,6 +372,7 @@ export default function App() {
       case 'legal': return <LegalView setView={setView} />;
       case 'emergency_shortcuts': return <EmergencyShortcutsView setView={setView} />;
       case 'infrastructure_checklist': return <InfrastructureChecklistView onBack={() => setView('dashboard')} />;
+      case 'structural_damage_reports': return <StructuralDamageReportsView user={user} onRequireLogin={handleRequireLogin} onBack={() => setView('dashboard')} />;
       case 'external_sources': return <ExternalSourcesView />;
       case 'api_search': return <ApiGlobalSearchView />;
       default: return <DashboardView user={user} setView={setView} onRequireLogin={handleRequireLogin} setMapInitialState={setMapInitialState} />;
@@ -666,6 +668,7 @@ export default function App() {
               {[
                 { id: 'family_reunification', label: 'Protección de Menores', desc: 'Reencuentro familiar seguro y alerta AMBER (Disclaimer Obligatorio)', icon: Heart, color: '#fb7185' },
                 { id: 'infrastructure_checklist', label: 'Checklist de Vivienda', desc: 'Evalúa la seguridad de tu hogar tras el terremoto (FEMA/ATC-20)', icon: ShieldAlert, color: '#fcd34d' },
+                { id: 'structural_damage_reports', label: 'Daños Estructurales', desc: 'Reporta e inspecciona edificios con ingenieros (FEMA/ATC-20)', icon: Building2, color: '#3b82f6' },
                 { id: 'chat_rooms', label: 'Voluntarios', desc: 'Acceso a salas de coordinación y logística interna en vivo', icon: MessageSquare, color: '#ec4899' },
                 { id: 'external_sources', label: 'Red Solidaria', desc: 'Monitoreo de APIs de desaparecidos y web scraping de terceros', icon: Globe, color: '#1d4ed8' }
               ].map(item => (
