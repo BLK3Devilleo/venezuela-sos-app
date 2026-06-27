@@ -49,6 +49,8 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
   const [isOfflineData, setIsOfflineData] = useState(!navigator.onLine);
   const [compressing, setCompressing] = useState(false);
   const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -203,18 +205,37 @@ export default function MissingPersonsView({ user, onRequireLogin }) {
           }
         }
 
-        const { error } = await supabase.from('desaparecidos').insert({
-          nombre_y_edad: draft.nombre.trim() + " " + draft.apellido.trim() + (draft.edad_aproximada ? ` (${draft.edad_aproximada} años)` : ''),
-          descripcion: draft.descripcion,
-          ultima_ubicacion: draft.ultima_ubicacion,
-          contacto: draft.contacto || '',
-          redes_sociales: draft.redes_sociales || {},
-          estado: draft.estado || 'buscan_a',
-          canales_contacto: draft.canales_contacto || [],
-          fotos: imageUrls,
-          user_id: draft.user_id,
-          creador_id: draft.creador_id || draft.user_id
-        });
+        let error = null;
+        if (draft.isMinor) {
+          const res = await supabase.from('desaparecidos_infancia').insert({
+            creador_id: draft.creador_id || draft.user_id,
+            user_id: draft.creador_id || draft.user_id,
+            nombre_menor: (draft.nombre + " " + draft.apellido).trim(),
+            edad: String(draft.edad_aproximada || ''),
+            senas_particulares: draft.descripcion || '',
+            estado_reencuentro: 'busqueda',
+            nombre_adulto: draft.nombre_contacto || '',
+            documento_adulto: draft.redes_sociales?.cedula || 'No provisto',
+            fotos: imageUrls
+          });
+          error = res.error;
+        } else {
+          const res = await supabase.from('desaparecidos').insert({
+            nombre_y_edad: draft.nombre.trim() + " " + draft.apellido.trim() + (draft.edad_aproximada ? ` (${draft.edad_aproximada} años)` : ''),
+            descripcion: draft.descripcion,
+            ultima_ubicacion: draft.ultima_ubicacion,
+            contacto: draft.contacto || '',
+            redes_sociales: draft.redes_sociales || {},
+            estado: draft.estado || 'buscan_a',
+            canales_contacto: draft.canales_contacto || [],
+            fotos: imageUrls,
+            user_id: draft.user_id,
+            creador_id: draft.creador_id || draft.user_id,
+            nombre_contacto: draft.nombre_contacto,
+            contacto_whatsapp: draft.contacto_whatsapp
+          });
+          error = res.error;
+        }
 
         if (error) {
           console.error('Error al guardar borrador en Supabase:', error);
@@ -374,6 +395,9 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
 
       const nombreCompleto = `${formData.nombre.trim()} ${formData.apellido.trim()}`.trim();
 
+      const parsedAge = parseInt(formData.edad_aproximada, 10);
+      const isMinor = !isNaN(parsedAge) && parsedAge < 18;
+
       if (navigator.onLine) {
         let imageUrls = [];
         if (compressedBlob) {
@@ -392,23 +416,40 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           }
         }
 
-        const { error } = await supabase.from('desaparecidos').insert({
-          nombre_y_edad: nombreCompleto + (formData.edad_aproximada ? ` (${formData.edad_aproximada} años)` : ''),
-          descripcion: fullDescription,
-          ultima_ubicacion: formData.ultimo_lugar_visto.trim() || 'No especificada',
-          contacto: firstPhoneContact,
-          redes_sociales: redes,
-          estado: formData.estado,
-          canales_contacto: channels,
-          fotos: imageUrls,
-          user_id: user?.id || null,
-          creador_id: user?.id || null,
-          nombre_contacto: user ? user.nombre : nombreAutor.trim(),
-          contacto_whatsapp: user ? user.contacto : telefonoAutor.trim()
-        });
+        if (isMinor) {
+          const { error } = await supabase.from('desaparecidos_infancia').insert({
+            creador_id: user?.id || null,
+            user_id: user?.id || null,
+            nombre_menor: nombreCompleto,
+            edad: String(formData.edad_aproximada),
+            senas_particulares: fullDescription,
+            estado_reencuentro: 'busqueda',
+            nombre_adulto: user ? user.nombre : nombreAutor.trim(),
+            documento_adulto: formData.cedula.trim() || 'No provisto',
+            fotos: imageUrls
+          });
 
-        if (error) throw error;
-        alert('Reporte publicado exitosamente.');
+          if (error) throw error;
+          alert('Reporte de menor registrado de forma segura en Protección de Menores.');
+        } else {
+          const { error } = await supabase.from('desaparecidos').insert({
+            nombre_y_edad: nombreCompleto + (formData.edad_aproximada ? ` (${formData.edad_aproximada} años)` : ''),
+            descripcion: fullDescription,
+            ultima_ubicacion: formData.ultimo_lugar_visto.trim() || 'No especificada',
+            contacto: firstPhoneContact,
+            redes_sociales: redes,
+            estado: formData.estado,
+            canales_contacto: channels,
+            fotos: imageUrls,
+            user_id: user?.id || null,
+            creador_id: user?.id || null,
+            nombre_contacto: user ? user.nombre : nombreAutor.trim(),
+            contacto_whatsapp: user ? user.contacto : telefonoAutor.trim()
+          });
+
+          if (error) throw error;
+          alert('Reporte publicado exitosamente.');
+        }
       } else {
         await dbLocal.personasDrafts.add({
           nombre: formData.nombre.trim(),
@@ -425,6 +466,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           creador_id: user?.id || null,
           nombre_contacto: user ? user.nombre : nombreAutor.trim(),
           contacto_whatsapp: user ? user.contacto : telefonoAutor.trim(),
+          isMinor: isMinor,
           created_at: new Date().toISOString()
         });
         alert('Sin conexión. Se guardó localmente y se sincronizará automáticamente al reconectar.');
@@ -647,22 +689,16 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
   };
 
   return (
-    <div style={{ paddingBottom: '4rem' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0 }}>Buscar Personas</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>Red de búsqueda y contacto.</p>
-        </div>
-        <button 
-          className="btn btn-primary" 
-          style={{ padding: '0.625rem 1rem', borderRadius: '2rem', boxShadow: '0 4px 12px rgba(13,148,136,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }} 
-          onClick={() => {
-            setShowAddForm(true);
-          }}
-        >
-          <Plus size={18} /> Reportar
-        </button>
+    <div style={{ paddingBottom: '4rem', animation: 'sos-fade-in 0.3s ease' }}>
+      
+      {/* Cabecera Táctica */}
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <h1 className="font-display" style={{ fontSize: '1.75rem', fontWeight: '900', margin: 0, color: '#fff' }}>
+          Búsqueda de Personas
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+          Localización y reporte de ciudadanos en situaciones de emergencia.
+        </p>
       </div>
 
       {isOfflineData && (
@@ -679,220 +715,100 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           fontSize: '0.85rem'
         }}>
           <AlertTriangle size={16} />
-          <span>Estás en modo sin conexión. Mostrando datos guardados localmente.</span>
+          <span>Modo sin conexión activo. Buscando en caché local del móvil.</span>
         </div>
       )}
 
-      {/* Stories / Carousel for Recent posts in last 24 hours */}
-      {recentPeople.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 className="font-display" style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '0.65rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            🔥 Reportes Recientes (Últimas 24h)
-          </h3>
-          <div 
-            className="hide-scrollbar"
+      {/* Panel Principal de 2 Acciones */}
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '1.25rem', 
+        backgroundColor: 'var(--bg-surface)', 
+        border: '1px solid var(--border)', 
+        borderRadius: '1.5rem', 
+        padding: '1.5rem',
+        boxShadow: 'var(--shadow-lg)',
+        marginBottom: '2rem'
+      }}>
+        
+        {/* Acción 1: Buscador Global Táctico */}
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          setSearch(searchQuery);
+          setHasSearched(true);
+        }} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '800', color: '#fff' }}>
+            🔍 Buscador Global
+          </label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="search-bar" style={{ flex: 1, backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Search size={18} style={{ color: 'var(--text-muted)' }} />
+              <input 
+                type="text" 
+                placeholder="Buscar por Nombre, Cédula o Teléfono..." 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.95rem' }}
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '1rem', fontWeight: '800' }}
+            >
+              Buscar
+            </button>
+          </div>
+        </form>
+
+        <div style={{ height: '1px', backgroundColor: 'var(--border)', margin: '0.25rem 0' }} />
+
+        {/* Acción 2: Reportar Persona */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '800', color: '#fff' }}>
+            📢 ¿No lo encuentras?
+          </label>
+          <button 
+            type="button"
+            className="btn" 
             style={{ 
-              display: 'flex', gap: '0.875rem', overflowX: 'auto', paddingBottom: '0.5rem' 
+              width: '100%',
+              padding: '1.1rem', 
+              borderRadius: '1.25rem', 
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1.5px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              fontWeight: '900',
+              fontSize: '1rem',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '0.5rem',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.08)'
+            }} 
+            onClick={() => {
+              if (!user) {
+                if (onRequireLogin) onRequireLogin();
+                return;
+              }
+              setShowAddForm(true);
             }}
           >
-            {recentPeople.map(p => {
-              const estado = getPersonEstado(p);
-              const statusGradient = estado === 'localizado' ? 'linear-gradient(45deg, #10b981, #059669)' :
-                                     estado === 'peligro' ? 'linear-gradient(45deg, #a855f7, #7c3aed)' :
-                                     estado === 'emergencia' ? 'linear-gradient(45deg, #ef4444, #dc2626)' :
-                                     'linear-gradient(45deg, #f59e0b, #d97706)';
-              return (
-                <div key={p.isDraft ? `draft-avatar-${p.id}` : p.id} onClick={() => setSelected(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }}>
-                  <div style={{ 
-                    width: '68px', height: '68px', borderRadius: '50%', padding: '3px',
-                    background: statusGradient,
-                    marginBottom: '6px',
-                    position: 'relative'
-                  }}>
-                    <img 
-                      src={getImageUrl(p) || AVATAR_PERSON} 
-                      alt="Avatar" 
-                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--bg-primary)' }} 
-                    />
-                    {p.isDraft && (
-                      <span style={{ position: 'absolute', bottom: '0', right: '0', fontSize: '0.75rem', background: '#eab308', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>⏳</span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-primary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', fontWeight: '500' }}>
-                    {p.nombre_y_edad?.split(' ')[0]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Buscador y Filtros */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <div className="search-bar" style={{ flex: 1, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '1rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Search size={18} style={{ color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Buscar por nombre, lugar..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.95rem' }}
-            />
-          </div>
-          
-          <button
-            onClick={() => setAdvSearchOpen(prev => !prev)}
-            style={{
-              padding: '0.75rem 1.25rem',
-              borderRadius: '1rem',
-              border: '1.5px solid',
-              borderColor: advSearchOpen ? 'var(--primary)' : 'var(--border)',
-              backgroundColor: advSearchOpen ? 'var(--primary-glow)' : 'var(--bg-surface)',
-              color: advSearchOpen ? '#fff' : 'var(--text-secondary)',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            🔍 Filtros
+            <Plus size={20} strokeWidth={2.5} /> Reportar Persona No Localizada
           </button>
         </div>
+      </div>
 
-        {/* Panel Búsqueda Avanzada */}
-        {advSearchOpen && (
-          <div style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '1.25rem',
-            padding: '1.25rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-            boxShadow: 'var(--shadow-md)',
-            animation: 'sos-fade-in 0.25s ease'
-          }}>
-            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '800', color: '#fff' }}>Búsqueda Avanzada</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Nombre</span>
-                <input 
-                  className="input-field" 
-                  value={advNombre} 
-                  onChange={e => setAdvNombre(e.target.value)} 
-                  placeholder="Ej. Juan" 
-                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Apellido</span>
-                <input 
-                  className="input-field" 
-                  value={advApellido} 
-                  onChange={e => setAdvApellido(e.target.value)} 
-                  placeholder="Ej. Pérez" 
-                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Cédula</span>
-                <input 
-                  className="input-field" 
-                  value={advCedula} 
-                  onChange={e => setAdvCedula(e.target.value)} 
-                  placeholder="Ej. V12345" 
-                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>Teléfono/Contacto</span>
-                <input 
-                  className="input-field" 
-                  value={advTelefono} 
-                  onChange={e => setAdvTelefono(e.target.value)} 
-                  placeholder="Ej. 412" 
-                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
-                />
-              </div>
-            </div>
+      {/* Resultados de la búsqueda */}
+      {hasSearched && (
+        <div style={{ animation: 'sos-fade-in 0.25s ease' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <h3 className="font-display" style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+              Resultados de Búsqueda
+            </h3>
             
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setAdvNombre('');
-                  setAdvApellido('');
-                  setAdvCedula('');
-                  setAdvTelefono('');
-                }}
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', borderRadius: '0.5rem' }}
-              >
-                Limpiar Filtros
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Toggle de Vistas y Botón de Aleatorizar (Prominente debajo del buscador) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none', flex: 1 }} className="hide-scrollbar">
-            {filterOptions.map(opt => {
-              const isActive = filterStatus === opt.id;
-              const styles = getStatusStyles(opt.id);
-              return (
-                <button 
-                  key={opt.id}
-                  onClick={() => setFilterStatus(opt.id)}
-                  style={{
-                    padding: '0.45rem 0.9rem',
-                    borderRadius: '2rem',
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s',
-                    border: isActive ? `1.5px solid ${styles.color}` : '1.5px solid var(--border)',
-                    backgroundColor: isActive ? styles.bg : 'var(--bg-surface)',
-                    color: isActive ? styles.color : 'var(--text-secondary)'
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              onClick={handleShuffle}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.5rem 0.85rem',
-                borderRadius: '0.5rem',
-                border: '1.5px solid var(--border)',
-                backgroundColor: 'var(--bg-surface)',
-                color: 'var(--text-primary)',
-                fontSize: '0.8rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-              title="Mezclar el orden de las personas al azar"
-            >
-              🎲 Rotar
-            </button>
-
-            {/* Selector de Vista (Lista / Galería) */}
+            {/* Vista control tab */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--bg-surface)', padding: '3px', borderRadius: '8px', border: '1.5px solid var(--border)' }}>
               <button 
                 type="button"
@@ -920,219 +836,249 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
               </button>
             </div>
           </div>
+
+          {/* Filtros rápidos por estado */}
+          <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.8rem', scrollbarWidth: 'none', marginBottom: '1rem' }} className="hide-scrollbar">
+            {filterOptions.map(opt => {
+              const isActive = filterStatus === opt.id;
+              const styles = getStatusStyles(opt.id);
+              return (
+                <button 
+                  key={opt.id}
+                  onClick={() => setFilterStatus(opt.id)}
+                  style={{
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '2rem',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s',
+                    border: isActive ? `1.5px solid ${styles.color}` : '1.5px solid var(--border)',
+                    backgroundColor: isActive ? styles.bg : 'var(--bg-surface)',
+                    color: isActive ? styles.color : 'var(--text-secondary)'
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Grid or List content */}
-      {loading && people.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Cargando...</div>
-      ) : shuffledPeople.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>No se encontraron personas con esos criterios.</div>
-      ) : viewMode === 'list' ? (
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-          {shuffledPeople.map(p => {
-            const estado = getPersonEstado(p);
-            const styles = getStatusStyles(estado);
-            const isRegisteredUser = !!p.creador_id || !!p.user_id;
-            return (
-              <div 
-                key={p.isDraft ? `draft-card-${p.id}` : p.id} 
-                className="card" 
-                onClick={() => setSelected(p)}
-                style={{ 
-                  display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', cursor: 'pointer',
-                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
-                  borderLeft: `5px solid ${styles.color}`,
-                  backgroundColor: 'var(--bg-surface)',
-                  borderRadius: '12px',
-                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : '0 4px 12px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.15s ease',
-                  position: 'relative'
-                }}
-              >
-                <div style={{ display: 'flex', gap: '0.4rem', position: 'absolute', top: '0.25rem', right: '0.5rem' }}>
-                  <span style={{
-                    fontSize: '0.55rem',
-                    fontWeight: '800',
-                    padding: '0.1rem 0.35rem',
-                    borderRadius: '3px',
-                    textTransform: 'uppercase',
-                    backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
-                    border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
-                  }}>
-                    {isRegisteredUser ? '👤 Registrado' : '📢 Ciudadano'}
-                  </span>
-                </div>
-                <img 
-                  src={getImageUrl(p) || AVATAR_PERSON} 
-                  alt="Foto" 
-                  style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', backgroundColor: 'var(--bg-surface-soft)', border: '2px solid var(--border)' }} 
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 className="font-display" style={{ fontSize: '1.05rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)', margin: 0 }}>
-                      {p.nombre_y_edad}
-                    </h3>
+      {hasSearched && (
+        loading && people.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Cargando...</div>
+        ) : shuffledPeople.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>No se encontraron personas con esos criterios.</div>
+        ) : viewMode === 'list' ? (
+          <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+            {shuffledPeople.map(p => {
+              const estado = getPersonEstado(p);
+              const styles = getStatusStyles(estado);
+              const isRegisteredUser = !!p.creador_id || !!p.user_id;
+              return (
+                <div 
+                  key={p.isDraft ? `draft-card-${p.id}` : p.id} 
+                  className="card" 
+                  onClick={() => setSelected(p)}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', cursor: 'pointer',
+                    border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                    borderLeft: `5px solid ${styles.color}`,
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : '0 4px 12px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.15s ease',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '0.4rem', position: 'absolute', top: '0.25rem', right: '0.5rem' }}>
                     <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold',
+                      fontSize: '0.55rem',
+                      fontWeight: '800',
+                      padding: '0.1rem 0.35rem',
+                      borderRadius: '3px',
                       textTransform: 'uppercase',
-                      color: styles.color,
-                      backgroundColor: styles.bg,
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      whiteSpace: 'nowrap'
+                      backgroundColor: isRegisteredUser ? 'rgba(13,148,136,0.12)' : 'rgba(255,255,255,0.05)',
+                      color: isRegisteredUser ? 'var(--primary)' : 'var(--text-secondary)',
+                      border: isRegisteredUser ? '1px solid var(--primary)' : '1px solid var(--border)'
                     }}>
-                      {estado === 'buscan_a' ? 'Buscan a' : estado}
+                      {isRegisteredUser ? '👤 Registrado' : '📢 Ciudadano'}
                     </span>
                   </div>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <MapPin size={12} /> {p.ultima_ubicacion || 'No especificada'}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Gallery View - Premium Vertical Poster Card Grid */
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '1rem',
-          marginTop: '0.5rem'
-        }}>
-          {shuffledPeople.map(p => {
-            const estado = getPersonEstado(p);
-            const styles = getStatusStyles(estado);
-            const isRegisteredUser = !!p.creador_id || !!p.user_id;
-            return (
-              <div 
-                key={p.isDraft ? `draft-gallery-${p.id}` : p.id} 
-                className="card"
-                onClick={() => setSelected(p)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  borderRadius: '1rem',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
-                  backgroundColor: 'var(--bg-surface)',
-                  boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)',
-                  transition: 'transform 0.2s ease, border-color 0.2s ease',
-                  padding: 0
-                }}
-              >
-                {/* Photo container */}
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '1.05', overflow: 'hidden' }}>
                   <img 
                     src={getImageUrl(p) || AVATAR_PERSON} 
-                    alt={p.nombre_y_edad} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    alt="Foto" 
+                    style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', backgroundColor: 'var(--bg-surface-soft)', border: '2px solid var(--border)' }} 
                   />
-                  {p.isDraft && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '6px',
-                      left: '6px',
-                      backgroundColor: '#eab308',
-                      color: '#854d0e',
-                      fontSize: '0.55rem',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: 'bold'
-                    }}>
-                      ⏳ OFFLINE
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <h3 className="font-display" style={{ fontSize: '1.05rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)', margin: 0 }}>
+                        {p.nombre_y_edad}
+                      </h3>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        color: styles.color,
+                        backgroundColor: styles.bg,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {estado === 'buscan_a' ? 'Buscan a' : estado}
+                      </span>
                     </div>
-                  )}
-                  {isRegisteredUser && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '6px',
-                      right: '6px',
-                      backgroundColor: 'rgba(13,148,136,0.9)',
-                      color: '#fff',
-                      fontSize: '0.55rem',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: 'bold',
-                      backdropFilter: 'blur(4px)'
-                    }}>
-                      👤 REGISTRADO
-                    </div>
-                  )}
-                </div>
-                
-                {/* Body Details */}
-                <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
-                  {/* Status badge */}
-                  <div>
-                    <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase',
-                      color: styles.color,
-                      backgroundColor: styles.bg,
-                      border: `1px solid ${styles.border}`,
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      display: 'inline-block'
-                    }}>
-                      {estado === 'buscan_a' ? '🔍 Por localizar' : styles.label}
-                    </span>
-                  </div>
-                  
-                  {/* Name */}
-                  <h3 className="font-display" style={{
-                    fontSize: '0.95rem',
-                    fontWeight: '800',
-                    color: 'var(--text-primary)',
-                    margin: 0,
-                    lineHeight: '1.25',
-                    wordBreak: 'break-word'
-                  }}>
-                    {p.nombre_y_edad}
-                  </h3>
-                  
-                  {/* Age & Gender if available */}
-                  {(p.edad_aproximada || p.genero) && (
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>👤 {p.edad_aproximada ? `${p.edad_aproximada} años` : ''} {p.genero ? `· ${p.genero}` : ''}</span>
-                    </div>
-                  )}
-                  
-                  {/* Location */}
-                  <div style={{ 
-                    fontSize: '0.7rem', 
-                    color: 'var(--text-secondary)', 
-                    display: 'flex', 
-                    alignItems: 'flex-start', 
-                    gap: '4px',
-                    lineHeight: '1.3'
-                  }}>
-                    <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--primary)' }} />
-                    <span style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: '2',
-                      WebkitBoxOrient: 'vertical'
-                    }}>
-                      {p.ultima_ubicacion || 'No especificada'}
-                    </span>
-                  </div>
-                  
-                  {/* Date */}
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '0.25rem', borderTop: '1px solid var(--border)' }}>
-                    📅 {new Date(p.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <MapPin size={12} /> {p.ultima_ubicacion || 'No especificada'}
+                    </p>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Gallery View - Premium Vertical Poster Card Grid */
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: '1rem',
+            marginTop: '0.5rem'
+          }}>
+            {shuffledPeople.map(p => {
+              const estado = getPersonEstado(p);
+              const styles = getStatusStyles(estado);
+              const isRegisteredUser = !!p.creador_id || !!p.user_id;
+              return (
+                <div 
+                  key={p.isDraft ? `draft-gallery-${p.id}` : p.id} 
+                  className="card"
+                  onClick={() => setSelected(p)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: '1rem',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: isRegisteredUser ? '2.5px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: 'var(--bg-surface)',
+                    boxShadow: isRegisteredUser ? '0 8px 24px rgba(13,148,136,0.15)' : 'var(--shadow-sm)',
+                    transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    padding: 0
+                  }}
+                >
+                  {/* Photo container */}
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '1.05', overflow: 'hidden' }}>
+                    <img 
+                      src={getImageUrl(p) || AVATAR_PERSON} 
+                      alt={p.nombre_y_edad} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    {p.isDraft && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '6px',
+                        left: '6px',
+                        backgroundColor: '#eab308',
+                        color: '#854d0e',
+                        fontSize: '0.55rem',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontWeight: 'bold'
+                      }}>
+                        ⏳ OFFLINE
+                      </div>
+                    )}
+                    {isRegisteredUser && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '6px',
+                        right: '6px',
+                        backgroundColor: 'rgba(13,148,136,0.9)',
+                        color: '#fff',
+                        fontSize: '0.55rem',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontWeight: 'bold',
+                        backdropFilter: 'blur(4px)'
+                      }}>
+                        👤 REGISTRADO
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Body Details */}
+                  <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                    {/* Status badge */}
+                    <div>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        color: styles.color,
+                        backgroundColor: styles.bg,
+                        border: `1px solid ${styles.border}`,
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        display: 'inline-block'
+                      }}>
+                        {estado === 'buscan_a' ? '🔍 Por localizar' : styles.label}
+                      </span>
+                    </div>
+                    
+                    {/* Name */}
+                    <h3 className="font-display" style={{
+                      fontSize: '0.95rem',
+                      fontWeight: '800',
+                      color: 'var(--text-primary)',
+                      margin: 0,
+                      lineHeight: '1.25',
+                      wordBreak: 'break-word'
+                    }}>
+                      {p.nombre_y_edad}
+                    </h3>
+                    
+                    {/* Age & Gender if available */}
+                    {(p.edad_aproximada || p.genero) && (
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>👤 {p.edad_aproximada ? `${p.edad_aproximada} años` : ''} {p.genero ? `· ${p.genero}` : ''}</span>
+                      </div>
+                    )}
+                    
+                    {/* Location */}
+                    <div style={{ 
+                      fontSize: '0.7rem', 
+                      color: 'var(--text-secondary)', 
+                      display: 'flex', 
+                      alignItems: 'flex-start', 
+                      gap: '4px',
+                      lineHeight: '1.3'
+                    }}>
+                      <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--primary)' }} />
+                      <span style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: '2',
+                        WebkitBoxOrient: 'vertical'
+                      }}>
+                        {p.ultima_ubicacion || 'No especificada'}
+                      </span>
+                    </div>
+                    
+                    {/* Date */}
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '0.25rem', borderTop: '1px solid var(--border)' }}>
+                      📅 {new Date(p.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* Formulario Bottom Sheet */}

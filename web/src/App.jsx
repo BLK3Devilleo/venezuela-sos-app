@@ -589,14 +589,12 @@ export default function App() {
         {[
           { id: 'dashboard', label: 'Inicio', icon: Home },
           { id: 'map', label: 'Mapa', icon: Map },
-          { id: 'menu', label: 'Menú', icon: Menu, isCenter: true },
-          { id: 'family_reunification', label: 'Familias', icon: Heart, isSpecial: true },
-          { id: 'directory', label: 'Noticias', icon: FileText }
-        ].map(({ id, label, icon: Icon, isSpecial, isCenter }) => {
-          const isMenuTabActive = ['marketplace', 'missing_persons', 'missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal', 'emergency_shortcuts', 'external_search', 'external_sources'].includes(view);
+          { id: 'menu', label: 'Menú', icon: Menu, isCenter: true }
+        ].map(({ id, label, icon: Icon, isCenter }) => {
+          const isMenuTabActive = ['marketplace', 'missing_persons', 'missing_pets', 'chat_rooms', 'services', 'resources', 'international_shelters', 'hospitalized_persons', 'admin_panel', 'legal', 'emergency_shortcuts', 'external_search', 'external_sources', 'family_reunification'].includes(view);
           const isActive = id === 'menu' ? isMenuTabActive : (view === id);
-          const activeColor = isSpecial ? '#fb7185' : (isCenter ? '#a855f7' : 'var(--primary)');
-          const inactiveColor = isSpecial ? 'rgba(251, 113, 133, 0.75)' : (isCenter ? 'rgba(168, 85, 247, 0.75)' : 'var(--text-muted)');
+          const activeColor = isCenter ? '#a855f7' : 'var(--primary)';
+          const inactiveColor = isCenter ? 'rgba(168, 85, 247, 0.75)' : 'var(--text-muted)';
           return (
             <button
               key={id}
@@ -659,89 +657,66 @@ export default function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '1rem' }}>
           
           <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fca5a5', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
+              🚨 Destacados de Emergencia
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {[
+                { id: 'family_reunification', label: 'Protección de Menores', desc: 'Reencuentro familiar seguro y alerta AMBER (Disclaimer Obligatorio)', icon: Heart, color: '#fb7185' },
+                { id: 'chat_rooms', label: 'Voluntarios', desc: 'Acceso a salas de coordinación y logística interna en vivo', icon: MessageSquare, color: '#ec4899' },
+                { id: 'external_sources', label: 'Red Solidaria', desc: 'Monitoreo de APIs de desaparecidos y web scraping de terceros', icon: Globe, color: '#1d4ed8' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
+                  style={{
+                    backgroundColor: 'rgba(251, 113, 133, 0.05)', border: '1px solid rgba(251, 113, 133, 0.2)', borderRadius: '1rem',
+                    padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem',
+                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', width: '100%'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.backgroundColor = 'rgba(251, 113, 133, 0.1)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(251, 113, 133, 0.2)'; e.currentTarget.style.backgroundColor = 'rgba(251, 113, 133, 0.05)'; }}
+                >
+                  <div style={{ background: item.color, borderRadius: '0.75rem', padding: '0.5rem', color: '#fff', display: 'flex' }}>
+                    <item.icon size={22} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#fff', display: 'block' }}>{item.label}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
-              Servicios y Ayuda Directa
+              Otras Herramientas de Apoyo
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               {[
                 { id: 'services', label: 'Servicios y Apoyo', desc: 'Médicos, escombros, etc.', icon: Activity, color: '#2563eb' },
                 { id: 'resources', label: 'Recursos / Comida', desc: 'Centros de acopio, sopa, etc.', icon: Heart, color: '#16a34a' },
-                { id: 'marketplace', label: 'Mercado Solidario', desc: 'Donaciones y apoyo gratis', icon: ShoppingBag, color: '#a855f7' }
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
-                  style={{
-                    backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
-                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
-                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
-                >
-                  <item.icon size={20} style={{ color: item.color }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
-              Búsqueda y Localización
-            </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              {[
-                { id: 'family_reunification', label: 'Reuniendo Familias', desc: 'Niños y reencuentro seguro', icon: Heart, color: '#fb7185' },
-                { id: 'missing_persons', label: 'Personas Buscadas', desc: 'Red de localización familiar', icon: Users, color: '#dc2626' },
-                { id: 'external_sources', label: 'Red Solidaria', desc: 'Plataformas aliadas en tiempo real', icon: Globe, color: '#1d4ed8' },
-                { id: 'api_search', label: 'Buscador Global', desc: 'Busca en todas las APIs conectadas', icon: Search, color: '#4f46e5' },
+                { id: 'marketplace', label: 'Mercado Solidario', desc: 'Donaciones gratis', icon: ShoppingBag, color: '#a855f7' },
                 { id: 'hospitalized_persons', label: 'Hospitalizados', desc: 'Estatus en centros médicos', icon: ShieldAlert, color: '#3b82f6' },
                 { id: 'missing_pets', label: 'Mascotas Perdidas', desc: 'Localización de mascotas', icon: Heart, color: '#d97706' },
-                { id: 'international_shelters', label: 'Puntos de Acogida', desc: 'Refugios internacionales', icon: Home, color: '#0d9488' }
+                { id: 'international_shelters', label: 'Puntos de Acogida', desc: 'Refugios de acogida', icon: Home, color: '#0d9488' },
+                { id: 'api_search', label: 'Buscador Global', desc: 'Búsqueda cruzada de datos', icon: Search, color: '#4f46e5' },
+                { id: 'legal', label: 'Aviso Legal', desc: 'Términos y condiciones', icon: HelpCircle, color: '#6b7280' }
               ].map(item => (
                 <button
                   key={item.id}
                   onClick={() => { setView(item.id); setIsMenuOpen(false); }}
                   style={{
                     backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
-                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
+                    padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
                     textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
                 >
-                  <item.icon size={20} style={{ color: item.color }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.75rem' }}>
-              Comunidad e Información
-            </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              {[
-                { id: 'chat_rooms', label: 'Salas de Chat', desc: 'Coordinación comunitaria', icon: MessageSquare, color: '#ec4899' },
-                { id: 'legal', label: 'Aviso Legal', desc: 'Transparencia y políticas', icon: HelpCircle, color: '#6b7280' }
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => { setView(item.id); setIsMenuOpen(false); }}
-                  style={{
-                    backgroundColor: 'var(--bg-surface-soft)', border: '1px solid var(--border)', borderRadius: '1rem',
-                    padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem',
-                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
-                >
-                  <item.icon size={20} style={{ color: item.color }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
+                  <item.icon size={18} style={{ color: item.color }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#fff' }}>{item.label}</span>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.desc}</span>
                 </button>
               ))}
