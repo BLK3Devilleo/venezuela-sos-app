@@ -314,8 +314,13 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
           id: `acogida_${r.id}`,
           mapType: 'acogida_internacional',
           displayType: 'Punto de Acogida',
+          nombre: `Acogida: ${r.ciudad || ''}, ${r.pais || ''}`,
+          descripcion: `Dirección: ${r.direccion || ''}. Responsable: ${r.responsable || ''}. Horario: ${r.horarios || ''}. Estadía: ${r.tiempo_estadia || ''}`,
+          contacto_whatsapp: r.contacto_whatsapp || r.contacto,
           icon,
           categoryKey: cacheKey,
+          tipo: 'acogida_internacional',
+          categoria: 'refugio',
           macro: 'acogida_internacional',
           sub: 'refugio'
         };
@@ -461,17 +466,38 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
     }
 
     try {
-      const { error } = await supabase.from('recursos').insert({
-        creador_id: user?.id || null,
-        tipo: formData.macro,
-        categoria: formData.sub,
-        nombre: formData.nombre.trim(),
-        descripcion: formData.descripcion.trim(),
-        cantidad: formData.cantidad.trim(),
-        ubicacion_lat: newMarkerPos ? newMarkerPos.lat : 10.5000,
-        ubicacion_lng: newMarkerPos ? newMarkerPos.lng : -66.9000,
-        contacto_whatsapp: formData.contacto_whatsapp.trim()
-      });
+      const isAcogida = formData.macro === 'acogida_internacional';
+      let error = null;
+
+      if (isAcogida) {
+        const res = await supabase.from('puntos_acogida').insert({
+          creador_id: user?.id || null,
+          pais: 'Venezuela',
+          ciudad: formData.nombre.trim(),
+          direccion: formData.descripcion.trim(),
+          horarios: '24 Horas',
+          responsable: user?.nombre || 'Vecino solidario',
+          contacto: formData.contacto_whatsapp.trim(),
+          contacto_whatsapp: formData.contacto_whatsapp.trim(),
+          ubicacion_lat: newMarkerPos ? newMarkerPos.lat : 10.5000,
+          ubicacion_lng: newMarkerPos ? newMarkerPos.lng : -66.9000,
+          estado: 'activo'
+        });
+        error = res.error;
+      } else {
+        const res = await supabase.from('recursos').insert({
+          creador_id: user?.id || null,
+          tipo: formData.macro,
+          categoria: formData.sub,
+          nombre: formData.nombre.trim(),
+          descripcion: formData.descripcion.trim(),
+          cantidad: formData.cantidad.trim(),
+          ubicacion_lat: newMarkerPos ? newMarkerPos.lat : 10.5000,
+          ubicacion_lng: newMarkerPos ? newMarkerPos.lng : -66.9000,
+          contacto_whatsapp: formData.contacto_whatsapp.trim()
+        });
+        error = res.error;
+      }
       
       if (error) throw error;
 
@@ -647,8 +673,11 @@ export default function MapView({ user, onRequireLogin, initialState, setInitial
                           onClick={async () => {
                             if (!window.confirm('¿Seguro que deseas eliminar este marcador del mapa?')) return;
                             try {
-                              const table = item.mapType === 'servicio' ? 'servicios' : 'recursos';
-                              const { error } = await supabase.from(table).delete().eq('id', item.id);
+                              const isAcogida = item.mapType === 'acogida_internacional';
+                              const table = item.mapType === 'servicio' ? 'servicios' :
+                                            isAcogida ? 'puntos_acogida' : 'recursos';
+                              const realId = isAcogida ? item.id.replace('acogida_', '') : item.id;
+                              const { error } = await supabase.from(table).delete().eq('id', realId);
                               if (error) throw error;
                               setActivePopupId(null);
                               fetchMapData();
