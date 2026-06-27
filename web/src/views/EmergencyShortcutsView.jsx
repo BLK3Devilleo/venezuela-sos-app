@@ -88,44 +88,14 @@ const EMERGENCY_DATA = [
     ]
   },
   {
-    category: "🛡️ Protección Civil",
-    icon: "👷",
+    category: "✊ Héroes Civiles de Apoyo",
+    icon: "🤝",
     color: "#2563eb",
     items: [
-      { name: "Protección Civil Nacional 1", phone: "0800-5588427" },
-      { name: "Protección Civil Nacional 2", phone: "0800-2668446" },
-      { name: "Protección Civil Nacional 3", phone: "0800-2624368" },
-      { name: "Instituto de Protección Civil 1", phone: "(0212) 631.86.62" },
-      { name: "Instituto de Protección Civil 2", phone: "(0212) 631.90.58" },
-      { name: "Instituto de Protección Civil 3", phone: "(0212) 662.84.76" },
-      { name: "Instituto de Protección Civil 4", phone: "(0212) 662.32.05" },
-      { name: "Instituto de Protección Civil 5", phone: "(0212) 545.93.91" },
+      { name: "Cuerpo de Emergencias Rescate y Transmisiones", phone: "(0212) 545.47.47" },
       { name: "Defensa Civil Alcaldía Mayor 1", phone: "(0212) 662.67.59" },
       { name: "Defensa Civil Alcaldía Mayor 2", phone: "(0212) 662.32.05" },
-      { name: "Defensa Civil Nacional 1", phone: "0800-28326" },
-      { name: "Defensa Civil Nacional 2", phone: "0800-24845" },
-      { name: "Defensa Civil Nacional 3", phone: "(0212) 483.98.05" },
-      { name: "Defensa Civil Nacional 4", phone: "(0212) 662.22.52" },
-      { name: "Defensa Civil Nacional 5", phone: "(0212) 662.66.19" }
-    ]
-  },
-  {
-    category: "👮 Policía e Investigación",
-    icon: "🚔",
-    color: "#1e3a8a",
-    items: [
-      { name: "CICPC (Cuerpo Técnico Judicial) 1", phone: "(0212) 571.35.33" },
-      { name: "CICPC (Cuerpo Técnico Judicial) 2", phone: "(0212) 571.38.44" },
-      { name: "CICPC (Cuerpo Técnico Judicial) 3", phone: "(0212) 571.32.66" },
-      { name: "Policía Metropolitana 1", phone: "(0212) 862.58.71" },
-      { name: "Policía Metropolitana 2", phone: "(0212) 862.58.72" },
-      { name: "Policía Municipal de Chacao 1", phone: "(0212) 264.12.56" },
-      { name: "Policía Municipal de Chacao 2", phone: "(0212) 264.00.50" },
-      { name: "Policía Municipal de Baruta 1", phone: "(0212) 943.28.55" },
-      { name: "Policía Municipal de Baruta 2", phone: "(0212) 943.62.77" },
-      { name: "Policía Municipal de Sucre 1", phone: "(0212) 242.21.11" },
-      { name: "Policía Municipal de Sucre 2", phone: "(0212) 242.22.11" },
-      { name: "Policía Municipal de El Hatillo", phone: "(0212) 961.16.82" }
+      { name: "Bomberos Metropolitanos", phone: "(0212) 545.45.45" }
     ]
   },
   {

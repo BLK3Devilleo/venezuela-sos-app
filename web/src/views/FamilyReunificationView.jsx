@@ -10,9 +10,9 @@ import { compressImage } from '../utils/imageCompression';
 const AVATAR_CHILD = '/avatar_person.png'; // Fallback avatar
 
 const ESTADO_REENCUENTRO_CONFIG = {
-  busqueda: { label: 'Madre/Padre Buscando', color: '#fb7185', bg: 'rgba(251, 113, 133, 0.15)', border: 'rgba(251, 113, 133, 0.3)', icon: Heart },
-  supervision: { label: 'Niño/a Solo / Bajo Supervisión', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', icon: ShieldAlert },
-  reencontrado: { label: 'Reencuentro Confirmado', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)', icon: CheckCircle }
+  busqueda: { label: 'Buscando Familia', color: '#fca5a5', bg: 'rgba(252, 165, 165, 0.2)', border: 'rgba(252, 165, 165, 0.4)', icon: Heart },
+  supervision: { label: 'Niño/a Solo', color: '#fcd34d', bg: 'rgba(252, 211, 77, 0.2)', border: 'rgba(252, 211, 77, 0.4)', icon: ShieldAlert },
+  reencontrado: { label: 'Reencontrados', color: '#86efac', bg: 'rgba(134, 239, 172, 0.2)', border: 'rgba(134, 239, 172, 0.4)', icon: CheckCircle }
 };
 
 export default function FamilyReunificationView({ user, onRequireLogin }) {
@@ -139,16 +139,10 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
     e.preventDefault();
     setFormErrors({});
 
-    // Validaciones estrictas de seguridad de adultos e información del menor
+    // Validaciones suaves y familiares para el menor
     const errors = {};
-    if (!formData.nombre_menor.trim()) errors.nombre_menor = 'Nombre del menor es requerido';
-    if (!formData.edad.trim()) errors.edad = 'Edad o tiempo estimado es requerido';
-    if (!formData.nombre_adulto.trim()) errors.nombre_adulto = 'Nombre completo del adulto reportante es obligatorio';
-    if (!formData.documento_adulto.trim()) errors.documento_adulto = 'Documento de identidad del adulto es obligatorio para trazabilidad';
-    
-    if (formData.estado_reencuentro === 'supervision' && !formData.validador_info.trim()) {
-      errors.validador_info = 'Debes ingresar el nombre y contacto del voluntario/autoridad a cargo del menor';
-    }
+    if (!formData.nombre_menor.trim()) errors.nombre_menor = 'Ingresa el nombre del menor';
+    if (!formData.edad.trim()) errors.edad = 'Ingresa la edad del menor';
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -309,16 +303,13 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
           <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6, borderLeft: '3px solid #f87171', paddingLeft: '0.75rem' }}>
             ⚠️ <strong>Recordatorio histórico — Tragedia de Vargas (1999):</strong> Tras la catástrofe, decenas de niños fueron separados de sus familias en el caos y entregados a personas desconocidas que alegaban ser familiares. Muchos no pudieron reencontrarse jamás. <strong>No repitamos ese error.</strong>
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)' }}>Protocolo obligatorio al encontrar un menor solo:</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)' }}>Protocolo recomendado al encontrar un menor solo:</p>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               <li>📍 Mantenerlo en un lugar público y seguro bajo tu supervisión directa.</li>
               <li>🆔 Exigir identificación verificada del adulto que reclama parentesco.</li>
-              <li>🚓 Notificar siempre a las autoridades competentes (CICPC, Protección Civil, CECODAP).</li>
+              <li>🤝 Coordinar con los héroes civiles (grupos de rescate comunitarios y voluntarios identificados).</li>
               <li>🤍 No presionar al menor si está en estado de shock. Darle agua, abrigo y calma.</li>
-              <li>📵 No publicar datos completos (nombre, foto, ubicación exacta) en redes sociales abiertas.</li>
             </ul>
-          </div>
           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
             FiloSOS no valida la identidad de los adultos que contactan a través de esta plataforma. Toda entrega debe realizarse en presencia de autoridades.
           </p>
@@ -338,10 +329,70 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
           />
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }} className="hide-scrollbar">
-          <button className={`filter-chip ${filterEstado === 'all' ? 'active' : ''}`} onClick={() => setFilterEstado('all')} style={{ borderColor: filterEstado === 'all' ? '#fb7185' : 'var(--border)' }}>Todos</button>
-          <button className={`filter-chip ${filterEstado === 'busqueda' ? 'active' : ''}`} onClick={() => setFilterEstado('busqueda')} style={{ borderColor: filterEstado === 'busqueda' ? '#fb7185' : 'var(--border)' }}>Buscando Familia</button>
-          <button className={`filter-chip ${filterEstado === 'supervision' ? 'active' : ''}`} onClick={() => setFilterEstado('supervision')} style={{ borderColor: filterEstado === 'supervision' ? '#fb7185' : 'var(--border)' }}>Niño/a Solo</button>
-          <button className={`filter-chip ${filterEstado === 'reencontrado' ? 'active' : ''}`} onClick={() => setFilterEstado('reencontrado')} style={{ borderColor: filterEstado === 'reencontrado' ? '#fb7185' : 'var(--border)' }}>Reencontrados</button>
+          <button 
+            onClick={() => setFilterEstado('all')} 
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '2rem', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
+              cursor: 'pointer',
+              border: filterEstado === 'all' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+              backgroundColor: filterEstado === 'all' ? 'var(--primary-glow)' : 'var(--bg-surface)',
+              color: filterEstado === 'all' ? '#fff' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Todos
+          </button>
+          <button 
+            onClick={() => setFilterEstado('busqueda')} 
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '2rem', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
+              cursor: 'pointer',
+              border: filterEstado === 'busqueda' ? '1.5px solid #fca5a5' : '1px solid var(--border)',
+              backgroundColor: filterEstado === 'busqueda' ? 'rgba(252, 165, 165, 0.25)' : 'var(--bg-surface)',
+              color: filterEstado === 'busqueda' ? '#fca5a5' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Buscando Familia
+          </button>
+          <button 
+            onClick={() => setFilterEstado('supervision')} 
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '2rem', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
+              cursor: 'pointer',
+              border: filterEstado === 'supervision' ? '1.5px solid #fcd34d' : '1px solid var(--border)',
+              backgroundColor: filterEstado === 'supervision' ? 'rgba(252, 211, 77, 0.25)' : 'var(--bg-surface)',
+              color: filterEstado === 'supervision' ? '#fcd34d' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Niño/a Solo
+          </button>
+          <button 
+            onClick={() => setFilterEstado('reencontrado')} 
+            style={{ 
+              padding: '0.5rem 1rem', 
+              borderRadius: '2rem', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
+              cursor: 'pointer',
+              border: filterEstado === 'reencontrado' ? '1.5px solid #86efac' : '1px solid var(--border)',
+              backgroundColor: filterEstado === 'reencontrado' ? 'rgba(134, 239, 172, 0.25)' : 'var(--bg-surface)',
+              color: filterEstado === 'reencontrado' ? '#86efac' : 'var(--text-secondary)',
+              transition: 'all 0.2s'
+            }}
+          >
+            Reencontrados
+          </button>
         </div>
       </div>
 
@@ -510,7 +561,7 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
 
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <p style={{ margin: 0, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                <strong>🧸 Protocolo de Protección Infantil:</strong> Por seguridad de los niños, FILO: SOS exige que cualquier niño encontrado quede bajo la tutela de una autoridad civil o voluntario identificado en el formulario.
+                <strong>🧸 Protocolo de Protección Infantil:</strong> Por seguridad de los niños, FILO: SOS exige que cualquier niño encontrado quede bajo la tutela de los héroes civiles (grupos de rescate o voluntarios comunitarios) identificados en el formulario.
               </p>
               <p style={{ margin: 0 }}>
                 <strong>⚠️ NUNCA</strong> entregue a un menor de edad a ninguna persona que no haya pasado por los canales oficiales y verifique fehacientemente su identidad e ID de validación del reencuentro.
@@ -795,7 +846,7 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
           
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
             <div className="input-group">
-              <label className="input-label">Nombre del Menor *</label>
+              <label className="input-label">Nombre del Menor</label>
               <input 
                 className="input-field" 
                 type="text" 
@@ -807,7 +858,7 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
             </div>
 
             <div className="input-group">
-              <label className="input-label">Edad *</label>
+              <label className="input-label">Edad</label>
               <input 
                 className="input-field" 
                 type="text" 
@@ -820,7 +871,7 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Señas Particulares (ropa que llevaba, marcas) *</label>
+            <label className="input-label">Señas Particulares (ropa que llevaba, marcas)</label>
             <textarea 
               className="input-field" 
               placeholder="Ej. Camiseta azul, lunar en el brazo, cicatriz en frente..." 
@@ -831,21 +882,21 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Estado del Menor *</label>
+            <label className="input-label">Estado del Menor</label>
             <select 
               className="input-field" 
               value={formData.estado_reencuentro} 
               onChange={e => setFormData({ ...formData, estado_reencuentro: e.target.value })}
               style={{ padding: '0.75rem' }}
             >
-              <option value="busqueda">Madre/Padre Buscando</option>
-              <option value="supervision">Niño solo / Bajo Supervisión</option>
+              <option value="busqueda">Buscando Familia</option>
+              <option value="supervision">Niño/a Solo</option>
             </select>
           </div>
 
           {formData.estado_reencuentro === 'supervision' && (
             <div className="input-group">
-              <label className="input-label">Voluntario o Autoridad a Cargo *</label>
+              <label className="input-label">Voluntario a Cargo</label>
               <input 
                 className="input-field" 
                 type="text" 
@@ -857,7 +908,7 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
             </div>
           )}
 
-          {/* Adult validation section - MANDATORY FOR TRACEABILITY */}
+          {/* Adult validation section - OPTIONAL */}
           <div style={{ 
             backgroundColor: 'var(--bg-surface-soft)', 
             border: '1px solid var(--border)', 
@@ -868,11 +919,11 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
             flexDirection: 'column',
             gap: '0.75rem'
           }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fb7185', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              👤 Validación del Adulto Informante (Obligatoria)
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fb7185', letterSpacing: '0.05em' }}>
+              👤 Información del Adulto Informante (Opcional)
             </span>
             <div className="input-group">
-              <label className="input-label" style={{ fontSize: '0.75rem' }}>Nombre Completo del Adulto *</label>
+              <label className="input-label" style={{ fontSize: '0.75rem' }}>Nombre del Adulto</label>
               <input 
                 className="input-field" 
                 type="text" 
@@ -880,18 +931,16 @@ export default function FamilyReunificationView({ user, onRequireLogin }) {
                 value={formData.nombre_adulto} 
                 onChange={e => setFormData({ ...formData, nombre_adulto: e.target.value })} 
               />
-              {formErrors.nombre_adulto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.nombre_adulto}</span>}
             </div>
             <div className="input-group">
-              <label className="input-label" style={{ fontSize: '0.75rem' }}>Cédula de Identidad / Documento *</label>
+              <label className="input-label" style={{ fontSize: '0.75rem' }}>Contacto / Cédula / Identificación</label>
               <input 
                 className="input-field" 
                 type="text" 
-                placeholder="V-12345678" 
+                placeholder="V-12345678 o Número de contacto" 
                 value={formData.documento_adulto} 
                 onChange={e => setFormData({ ...formData, documento_adulto: e.target.value })} 
               />
-              {formErrors.documento_adulto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.documento_adulto}</span>}
             </div>
           </div>
 

@@ -1099,12 +1099,12 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="input-group">
-              <label className="input-label">Nombre *</label>
+              <label className="input-label">Nombre</label>
               <input className="input-field" placeholder="Ej. Carmen" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} />
               {formErrors.nombre && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.nombre}</span>}
             </div>
             <div className="input-group">
-              <label className="input-label">Apellido *</label>
+              <label className="input-label">Apellido</label>
               <input className="input-field" placeholder="Ej. Guzmán" value={formData.apellido} onChange={e => setFormData({ ...formData, apellido: e.target.value })} />
               {formErrors.apellido && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.apellido}</span>}
             </div>
@@ -1125,7 +1125,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="input-group">
-              <label className="input-label">Género *</label>
+              <label className="input-label">Género</label>
               <select 
                 className="input-field" 
                 value={formData.genero} 
@@ -1138,7 +1138,7 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
               </select>
             </div>
             <div className="input-group">
-              <label className="input-label">Estado de Emergencia *</label>
+              <label className="input-label">Estado de Emergencia</label>
               <select 
                 className="input-field" 
                 value={formData.estado} 
@@ -1153,13 +1153,13 @@ Detalles: ${formData.descripcion_adicional.trim() || 'Sin detalles adicionales.'
           </div>
 
           <div className="input-group">
-            <label className="input-label">Último Lugar Visto *</label>
+            <label className="input-label">Último Lugar Visto</label>
             <input className="input-field" placeholder="Ej. Plaza Bolívar, Centro" value={formData.ultimo_lugar_visto} onChange={e => setFormData({ ...formData, ultimo_lugar_visto: e.target.value })} />
             {formErrors.ultimo_lugar_visto && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.ultimo_lugar_visto}</span>}
           </div>
 
           <div className="input-group">
-            <label className="input-label">Descripción Adicional (Ropa, señas particulares) *</label>
+            <label className="input-label">Descripción Adicional (Ropa, señas particulares)</label>
             <textarea className="input-field" style={{ height: '70px', resize: 'none' }} placeholder="Llevaba camisa azul..." value={formData.descripcion_adicional} onChange={e => setFormData({ ...formData, descripcion_adicional: e.target.value })} />
             {formErrors.descripcion_adicional && <span style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '0.25rem' }}>{formErrors.descripcion_adicional}</span>}
           </div>
